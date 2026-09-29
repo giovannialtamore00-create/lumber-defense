@@ -17,6 +17,23 @@ export function hexToScreen(h: Hex): Point {
   };
 }
 
+/** Screen (world) point → the hex whose top surface contains it. */
+export function screenToHex(p: Point): Hex {
+  const r = p.y / ISO_SQUASH / (HEX_SIZE * 1.5);
+  const q = p.x / (HEX_SIZE * Math.sqrt(3)) - r / 2;
+  // Cube rounding.
+  const s = -q - r;
+  let rq = Math.round(q);
+  let rr = Math.round(r);
+  const rs = Math.round(s);
+  const dq = Math.abs(rq - q);
+  const dr = Math.abs(rr - r);
+  const ds = Math.abs(rs - s);
+  if (dq > dr && dq > ds) rq = -rr - rs;
+  else if (dr > ds) rr = -rq - rs;
+  return { q: rq + 0, r: rr + 0 }; // + 0 turns -0 into 0
+}
+
 /** Corner i of a pointy-top hex at `c`, projected. Corner angles are 60°·i − 30° (screen y down). */
 export function hexCorner(c: Point, i: number, scale = 1): Point {
   const a = ((60 * i - 30) * Math.PI) / 180;

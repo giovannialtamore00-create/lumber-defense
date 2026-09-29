@@ -1,12 +1,41 @@
 {
+  "tickRate": 10,
+  "startingWood": 50,
+  "items": {
+    "outpost": { "cost": 50, "craftTimeS": 30, "hp": 150 },
+    "factory": { "cost": 60, "craftTimeS": 45, "hp": 200 },
+    "dock": { "cost": 20, "craftTimeS": 20, "hp": 80 },
+    "carrier": { "cost": 10, "craftTimeS": 10, "hp": 30 },
+    "woodchopper": { "cost": 15, "craftTimeS": 15, "hp": 40 },
+    "bridge": { "cost": 30, "craftTimeS": 20, "hp": 120 },
+    "workshop": { "cost": 50, "craftTimeS": 30, "hp": 120 },
+    "catapult": { "cost": 60, "craftTimeS": 40, "hp": 80 },
+    "gardener": { "cost": 25, "craftTimeS": 20, "hp": 40 }
+  },
   "forest": {
     "woodPool": 100
+  },
+  "stackStages": {
+    "stage2From": 5,
+    "stage3From": 15
   },
   "outpost": {
     "territoryRadius": 3
   },
+  "woodchopper": {
+    "woodPerSecond": 1
+  },
   "carrier": {
+    "capacity": 5,
+    "speedHexPerSecond": 1,
     "maxRouteDistance": 5
+  },
+  "river": {
+    "floatHexPerSecond": 1
+  },
+  "dock": {
+    "capacity": 10,
+    "dispensePerSecond": 1
   },
   "mapRules": {
     "totalHexes": { "target": 300, "tolerancePct": 5 },

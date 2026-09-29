@@ -23,7 +23,9 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 6. Maps are proposed with a rendered screenshot and `validate-map` output, and approved before gameplay builds on them.
 
 ## Commands
-- `npm run dev` — dev server (open 2 tabs for local multiplayer later)
+- `npm run dev` — dev server (open 2 tabs for local multiplayer later). Dev-only URL flags: `?seed=N` (reproducible
+  match), `?coords` (hex coordinates), `?demo&ff=400` (auto-plays the start and fast-forwards N ticks),
+  `?zoom=3` (close-up on your outpost). The dev panel (free items in hand) only exists in dev builds.
 - `npm test` — Vitest (sim unit tests, determinism)
 - `npm run typecheck`
 - `npm run validate-map` — checks map rules from DESIGN §4.3

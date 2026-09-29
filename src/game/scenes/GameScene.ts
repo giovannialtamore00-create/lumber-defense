@@ -1,10 +1,24 @@
 import Phaser from 'phaser';
 import map01 from '../../data/maps/map01.json';
+import { wholeUnits } from '../../sim/fixed';
 import { DIRECTIONS, type Hex, hexKey } from '../../sim/hex';
 import { type MapData, type MapHex, indexHexes, riverStrengthLevel } from '../../sim/map';
-import { HEX_SIZE, ISO_SQUASH, TILE_DEPTH, type Point, edgeCorners, hexCorners, hexToScreen } from '../iso';
+import { PlacementHand } from '../input/placementHand';
+import { HEX_SIZE, ISO_SQUASH, TILE_DEPTH, type Point, edgeCorners, hexCorners, hexToScreen, screenToHex } from '../iso';
+import {
+  PLAYER_COLORS,
+  carrierPosition,
+  drawCarrier,
+  drawPile,
+  drawStack,
+  drawStructure,
+  pilePosition,
+  stackPosition,
+} from '../render/entities';
+import type { SimRunner } from '../simRunner';
 
-const MAP = map01 as MapData;
+export const MAP = map01 as MapData;
+const ORDERED = [...MAP.hexes].sort((a, b) => a.r - b.r || a.q - b.q);
 
 const COLORS = {
   land: 0x9cbf6e,
@@ -42,35 +56,162 @@ function riverColor(r: number): number {
 const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 3;
 
+export const LOCAL_PLAYER = 0;
+
 export class GameScene extends Phaser.Scene {
   private coordLabels: Phaser.GameObjects.Text[] = [];
+  private runner!: SimRunner;
+  private hand!: PlacementHand;
+  private decor!: Phaser.GameObjects.Graphics;
+  private dyn!: Phaser.GameObjects.Graphics;
+  private pileLabels: Phaser.GameObjects.Text[] = [];
+  private forestCount = -1;
+  private hover: Hex | null = null;
 
   constructor() {
     super('GameScene');
   }
 
   create(): void {
+    this.runner = this.registry.get('runner') as SimRunner;
+    this.hand = new PlacementHand(this.runner, LOCAL_PLAYER);
     const idx = indexHexes(MAP);
     const g = this.add.graphics();
 
     // Painter's order: north to south, so things further south draw on top (ARCHITECTURE §4 depth sorting).
-    const ordered = [...MAP.hexes].sort((a, b) => a.r - b.r || a.q - b.q);
-    for (const h of ordered) this.drawTile(g, h);
-
-    const decor = this.add.graphics();
-    for (const h of ordered) {
-      if (h.terrain === 'forest') this.drawTrees(decor, h);
-      if (h.terrain === 'rock') this.drawRock(decor, h);
-    }
+    for (const h of ORDERED) this.drawTile(g, h);
 
     const overlay = this.add.graphics();
     this.drawRiverFlow(overlay);
     this.drawRegionBorders(overlay, idx);
     this.drawWaterfalls(overlay);
+    this.decor = this.add.graphics();
+    this.dyn = this.add.graphics();
     this.drawRegionLabels();
     this.createCoordLabels();
 
     this.setupCamera();
+    this.setupInput();
+  }
+
+  override update(time: number, delta: number): void {
+    this.runner.update(delta);
+    const { state } = this.runner;
+    const forests = state.forestPool.filter((p) => p > 0).length;
+    if (forests !== this.forestCount) {
+      this.forestCount = forests;
+      this.drawDecor();
+    }
+    this.drawDynamic(time);
+  }
+
+  /** Trees (only where the forest pool isn't empty) and rocks. Redrawn when a forest disappears. */
+  private drawDecor(): void {
+    this.decor.clear();
+    const { state, ctx } = this.runner;
+    for (const h of ORDERED) {
+      const i = ctx.indexOf.get(hexKey(h))!;
+      if (state.forestPool[i]! > 0) this.drawTrees(this.decor, h);
+      if (h.terrain === 'rock') this.drawRock(this.decor, h);
+    }
+  }
+
+  /** Everything that changes: territory, previews, structures, stacks, carriers, piles. */
+  private drawDynamic(time: number): void {
+    const g = this.dyn;
+    g.clear();
+    const { state, ctx, alpha } = this.runner;
+    const me = state.players[LOCAL_PLAYER]!;
+
+    // Before the start, highlight the player's own region.
+    if (!me.started) {
+      const color = PLAYER_COLORS[LOCAL_PLAYER]!;
+      g.fillStyle(color, 0.18 + 0.1 * Math.sin(time / 300));
+      g.lineStyle(4, color, 1);
+      MAP.hexes.forEach((h) => {
+        if (h.region !== me.region) return;
+        const corners = hexCorners(hexToScreen(h));
+        g.fillPoints(corners, true);
+        DIRECTIONS.forEach((d, k) => {
+          const n = ctx.indexOf.get(hexKey({ q: h.q + d.q, r: h.r + d.r }));
+          if (n !== undefined && MAP.hexes[n]!.region === me.region) return;
+          const [a, b] = edgeCorners(k);
+          g.lineBetween(corners[a]!.x, corners[a]!.y, corners[b]!.x, corners[b]!.y);
+        });
+      });
+    }
+
+    // Territory: a light tint and a border in the owner's colour.
+    MAP.hexes.forEach((h, i) => {
+      const mask = state.coverage[i]!;
+      if (!mask) return;
+      const owner = Math.log2(mask & -mask);
+      const color = PLAYER_COLORS[owner] ?? 0xffffff;
+      const corners = hexCorners(hexToScreen(h));
+      g.fillStyle(color, 0.1);
+      g.fillPoints(corners, true);
+      g.lineStyle(3, color, 0.9);
+      DIRECTIONS.forEach((d, k) => {
+        const n = ctx.indexOf.get(hexKey({ q: h.q + d.q, r: h.r + d.r }));
+        if (n !== undefined && (state.coverage[n]! & mask) === mask) return;
+        const [a, b] = edgeCorners(k);
+        g.lineBetween(corners[a]!.x, corners[a]!.y, corners[b]!.x, corners[b]!.y);
+      });
+    });
+
+    // Placement preview.
+    const preview = this.hand.preview(this.hover);
+    for (const cell of preview.cells) {
+      g.fillStyle(cell.ok ? 0x3ddc84 : 0xff4d4d, cell.ok ? 0.35 : 0.5);
+      g.fillPoints(hexCorners(hexToScreen(cell.hex)), true);
+    }
+    if (preview.route) {
+      const a = hexToScreen(preview.route.a);
+      const b = hexToScreen(preview.route.b);
+      g.lineStyle(3, 0xffffff, 0.9);
+      g.lineBetween(a.x, a.y, b.x, b.y);
+    }
+    this.registry.set('status', preview.message);
+
+    // Structures, then stacks, carriers and piles on top.
+    const entities = state.entities;
+    for (const e of entities) if (e.type === 'structure') drawStructure(g, e, time);
+    MAP.hexes.forEach((h, i) => {
+      if (state.stacks[i]! <= 0) return;
+      const onDock = entities.some((e) => e.type === 'structure' && e.kind === 'dock' && e.q === h.q && e.r === h.r);
+      drawStack(g, stackPosition(hexToScreen(h), onDock), state.stacks[i]!, ctx);
+    });
+    for (const e of entities) if (e.type === 'carrier') drawCarrier(g, e, carrierPosition(e, this.runner.prevCarrierQ.get(e.id), alpha));
+
+    const piles = entities.filter((e) => e.type === 'pile');
+    while (this.pileLabels.length < piles.length)
+      this.pileLabels.push(this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '10px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 1));
+    this.pileLabels.forEach((t, k) => {
+      const p = piles[k];
+      if (!p || p.type !== 'pile') return t.setVisible(false);
+      const at = pilePosition(p, ctx, ctx.rates.floatSpeed * alpha);
+      drawPile(g, at);
+      t.setPosition(at.x + 9, at.y - 2).setText(String(wholeUnits(p.amount))).setVisible(true);
+    });
+  }
+
+  private setupInput(): void {
+    this.input.mouse?.disableContextMenu();
+    let downAt: { x: number; y: number } | null = null;
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      downAt = { x: p.x, y: p.y };
+      if (p.rightButtonDown()) this.hand.cancel();
+    });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      this.hover = screenToHex(this.cameras.main.getWorldPoint(p.x, p.y));
+    });
+    this.input.on('pointerup', (p: Phaser.Input.Pointer) => {
+      // A click is a press and release without dragging (dragging pans the camera).
+      if (!downAt || p.rightButtonReleased() || Math.hypot(p.x - downAt.x, p.y - downAt.y) > 6) return;
+      if (this.scene.get('UIScene').input.hitTestPointer(p).length > 0) return; // clicked a UI button
+      this.hand.click(screenToHex(this.cameras.main.getWorldPoint(p.x, p.y)));
+    });
+    this.input.keyboard?.on('keydown-ESC', () => this.hand.cancel());
   }
 
   private drawTile(g: Phaser.GameObjects.Graphics, h: MapHex): void {
@@ -241,6 +382,15 @@ export class GameScene extends Phaser.Scene {
     cam.setBounds(minX - 400, minY - 400, maxX - minX + 800, maxY - minY + 800);
     cam.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
     cam.setZoom(Phaser.Math.Clamp(Math.min(this.scale.width / (maxX - minX), (this.scale.height - 40) / (maxY - minY)), ZOOM_MIN, ZOOM_MAX));
+
+    // Dev: `?zoom=2.5` zooms onto the local player's first outpost (close-up screenshots with `?demo`).
+    const zoomParam = new URLSearchParams(window.location.search).get('zoom');
+    const outpost = this.runner.state.entities.find((e) => e.type === 'structure' && e.kind === 'outpost' && e.owner === LOCAL_PLAYER);
+    if (import.meta.env.DEV && zoomParam && outpost?.type === 'structure') {
+      const c = hexToScreen(outpost);
+      cam.setZoom(Number(zoomParam));
+      cam.centerOn(c.x, c.y);
+    }
 
     // Pan: drag with any mouse button.
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {

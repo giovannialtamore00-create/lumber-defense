@@ -100,8 +100,8 @@ One icon that grows in 3 stages with the amount of wood:
 
 | Amount | Icon |
 |---|---|
-| 1–5 | Stage 1: a single log |
-| 5–15 | Stage 2: two logs |
+| 1–4 | Stage 1: a single log |
+| 5–14 | Stage 2: two logs |
 | 15+ | Stage 3: three logs in a pyramid (2 at the bottom, 1 on top), meaning "lots of wood ready" |
 
 ### 6.4 Carrier
@@ -110,6 +110,7 @@ One icon that grows in 3 stages with the amount of wood:
   1. **Point A (pickup):** a hex with a wood pile, such as a forest stack or a dock. It shows green on valid spots.
   2. **Point B (drop-off):** drag or point to a **riverside** or a **factory**.
 - **Loop:** go to A, pick up to capacity, go to B, drop, go back to A, repeat.
+  - At A the carrier **takes whatever is there** (at least 1 wood, at most its capacity) and leaves (decided).
   - At a riverside, the load is dropped into the water and floats downstream.
   - At a factory, the wood becomes the player's.
 - **Max A-to-B distance at level 1: 5 hexes.**
@@ -128,6 +129,8 @@ One icon that grows in 3 stages with the amount of wood:
 ### 6.5 River
 - A dropped load floats downstream as **one pile that keeps its own wood value**. Piles **never merge** while floating.
 - Float speed: **1 hex/second**.
+- **Forks (decided):** at a fork a pile takes either branch with a **random 50/50 chance** (seeded, so every client
+  sees the same result).
 - A pile that no dock stops floats off the southern edge and **disappears**.
 
 ### 6.6 Dock
