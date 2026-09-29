@@ -1,0 +1,23 @@
+{
+  "forest": {
+    "woodPool": 100
+  },
+  "outpost": {
+    "territoryRadius": 3
+  },
+  "carrier": {
+    "maxRouteDistance": 5
+  },
+  "mapRules": {
+    "totalHexes": { "target": 300, "tolerancePct": 5 },
+    "regionCount": 4,
+    "regionHexes": { "target": 75, "tolerancePct": 5 },
+    "forestPerRegion": { "target": 20, "tolerance": 3 },
+    "forestUpperSharePct": 85,
+    "forestCoverageRadius": 3,
+    "rockRatio": { "targetPct": 5, "tolerancePct": 1.5 },
+    "waterRatio": { "targetPct": 15, "tolerancePct": 2 },
+    "minOwnRiverRowsPerRegion": 5,
+    "minLowerRiversideLandPerRegion": 4
+  }
+}
