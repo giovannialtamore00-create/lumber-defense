@@ -8,11 +8,12 @@ import { addEntity, createInitialState } from '../src/sim/state';
 import { recomputeCoverage } from '../src/sim/systems/territory';
 import type { Config, GameState, Structure, StructureKind } from '../src/sim/types';
 
-const TERRAIN: Record<string, Terrain> = { '.': 'land', T: 'forest', '~': 'river', '#': 'rock' };
+const TERRAIN: Record<string, Terrain> = { '.': 'land', T: 'forest', '~': 'river', '=': 'river', '#': 'rock' };
 
 /**
- * Builds a map from ASCII rows (odd-r offset, row 0 = north): `.` land, `T` forest, `~` river, `#` rock. Spaces are
- * ignored. Each river hex flows to the river hexes directly south of it; on the last row it exits. All region 0.
+ * Builds a map from ASCII rows (odd-r offset, row 0 = north): `.` land, `T` forest, `~` river 0, `=` river 1,
+ * `#` rock. Spaces are ignored. Each river hex flows to the river hexes directly south of it; on the last row it
+ * exits. All region 0; no waterfall, so river strength row = map row + 1.
  */
 export function asciiMap(rows: string[]): MapData {
   const grid = rows.map((row) => row.replace(/\s/g, '').split(''));
@@ -21,6 +22,7 @@ export function asciiMap(rows: string[]): MapData {
     cells.forEach((ch, col) => {
       const h: MapHex = { ...offsetToAxial(col, row), terrain: TERRAIN[ch]!, region: 0 };
       if (h.terrain === 'forest') h.woodPool = baseConfig.forest.woodPool;
+      if (h.terrain === 'river') h.river = ch === '=' ? 1 : 0;
       hexes.push(h);
     }),
   );
@@ -47,7 +49,7 @@ export function withConfig(patch: (c: Config) => void): Config {
 
 export function setup(rows: string[], config: Config = baseConfig as Config, players = 1, seed = 1) {
   const map = asciiMap(rows);
-  const ctx: SimContext = createContext(map, config, true);
+  const ctx: SimContext = createContext(map, config);
   const state: GameState = createInitialState(ctx, players, seed);
   for (const p of state.players) p.region = 0;
   return { map, ctx, state };

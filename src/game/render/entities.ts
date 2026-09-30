@@ -28,10 +28,61 @@ export function drawStack(g: G, at: Point, milliWood: number, ctx: SimContext): 
   }
 }
 
-export function drawStructure(g: G, s: Structure, timeMs: number): void {
+/** What a structure's look depends on beyond the structure itself. */
+export interface StructureLook {
+  /** Factory-mill: one water wheel per distinct river, towards that river's hex (DESIGN §6.7). */
+  mills?: Point[];
+  /** Bridge: working, or a half bridge. */
+  working?: boolean;
+}
+
+function drawWheel(g: G, at: Point, timeMs: number): void {
+  g.lineStyle(2, DARK, 1);
+  g.strokeCircle(at.x, at.y, 8);
+  const a = timeMs / 600;
+  for (let k = 0; k < 4; k++) {
+    const t = a + (k * Math.PI) / 4;
+    g.lineBetween(at.x - Math.cos(t) * 8, at.y - Math.sin(t) * 8, at.x + Math.cos(t) * 8, at.y + Math.sin(t) * 8);
+  }
+}
+
+export function drawStructure(g: G, s: Structure, timeMs: number, look: StructureLook = {}): void {
   const c = hexToScreen(s);
   const color = PLAYER_COLORS[s.owner] ?? 0xffffff;
   switch (s.kind) {
+    case 'bridge': {
+      // Planks across the water; a half bridge is broken off at one end and greyed.
+      g.fillStyle(look.working ? PLANK : 0x7d6a55, 1);
+      const width = look.working ? 44 : 26;
+      g.fillRect(c.x - 22, c.y - 5, width, 10);
+      g.lineStyle(1, DARK, 0.7);
+      for (let x = -20; x < width - 22; x += 5) g.lineBetween(c.x + x, c.y - 5, c.x + x, c.y + 5);
+      g.fillStyle(color, 1);
+      g.fillRect(c.x - 22, c.y - 9, 3, 6);
+      if (look.working) g.fillRect(c.x + 19, c.y - 9, 3, 6);
+      break;
+    }
+    case 'workshop': {
+      g.fillStyle(0xb58b5a, 1);
+      g.fillRect(c.x - 12, c.y - 14, 24, 14);
+      g.fillStyle(color, 1);
+      g.fillTriangle(c.x - 15, c.y - 13, c.x + 15, c.y - 13, c.x, c.y - 24);
+      g.lineStyle(3, DARK, 1);
+      g.lineBetween(c.x - 4, c.y - 3, c.x + 4, c.y - 10);
+      break;
+    }
+    case 'catapult': {
+      g.fillStyle(PLANK, 1);
+      g.fillRect(c.x - 12, c.y - 6, 24, 5);
+      g.lineStyle(3, PLANK, 1);
+      g.lineBetween(c.x - 6, c.y - 6, c.x + 9, c.y - 20);
+      g.fillStyle(color, 1);
+      g.fillCircle(c.x + 9, c.y - 21, 3.5);
+      g.fillStyle(DARK, 1);
+      g.fillCircle(c.x - 8, c.y, 3);
+      g.fillCircle(c.x + 8, c.y, 3);
+      break;
+    }
     case 'outpost': {
       g.fillStyle(PLANK, 1);
       g.fillRect(c.x - 7, c.y - 22, 14, 24);
@@ -44,21 +95,14 @@ export function drawStructure(g: G, s: Structure, timeMs: number): void {
       break;
     }
     case 'factory': {
-      // Factory-mill: a building with a water wheel.
+      // Factory-mill: a building with a water wheel on each river side it touches.
       g.fillStyle(0xcfc3a8, 1);
-      g.fillRect(c.x - 14, c.y - 16, 22, 16);
+      g.fillRect(c.x - 11, c.y - 16, 22, 16);
       g.fillStyle(color, 1);
-      g.fillTriangle(c.x - 17, c.y - 15, c.x + 11, c.y - 15, c.x - 3, c.y - 27);
+      g.fillTriangle(c.x - 14, c.y - 15, c.x + 14, c.y - 15, c.x, c.y - 27);
       g.fillStyle(DARK, 1);
-      g.fillRect(c.x - 6, c.y - 8, 6, 8);
-      const wheel = { x: c.x + 13, y: c.y - 6 };
-      g.lineStyle(2, DARK, 1);
-      g.strokeCircle(wheel.x, wheel.y, 8);
-      const a = timeMs / 600;
-      for (let k = 0; k < 4; k++) {
-        const t = a + (k * Math.PI) / 4;
-        g.lineBetween(wheel.x - Math.cos(t) * 8, wheel.y - Math.sin(t) * 8, wheel.x + Math.cos(t) * 8, wheel.y + Math.sin(t) * 8);
-      }
+      g.fillRect(c.x - 3, c.y - 8, 6, 8);
+      for (const m of look.mills ?? []) drawWheel(g, m, timeMs);
       break;
     }
     case 'dock': {

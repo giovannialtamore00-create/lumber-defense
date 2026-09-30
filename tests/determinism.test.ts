@@ -27,8 +27,12 @@ function scriptedCommands(state: GameState, ctx: SimContext): Command[] {
         const b = dropOffs(state, ctx, p.id, chopper.q, chopper.r)[0];
         if (b) cmds.push({ type: 'placeCarrier', player: p.id, aQ: chopper.q, bQ: b.q, r: chopper.r });
       }
-    } else if (state.tick === 20) {
-      cmds.push({ type: 'devGive', player: p.id, item: 'carrier' }, { type: 'devGive', player: p.id, item: 'dock' });
+    } else if (p.queue.length === 0 && p.hand.length === 0) {
+      // Craft a carrier first, then a dock (one factory-mill = one item at a time).
+      const hasCarrier = state.entities.some((e) => e.type === 'carrier' && e.owner === p.id);
+      const hasDock = state.entities.some((e) => e.type === 'structure' && e.kind === 'dock' && e.owner === p.id);
+      if (!hasCarrier) cmds.push({ type: 'craft', player: p.id, item: 'carrier' });
+      else if (!hasDock) cmds.push({ type: 'craft', player: p.id, item: 'dock' });
     }
   }
   return cmds;
@@ -36,7 +40,7 @@ function scriptedCommands(state: GameState, ctx: SimContext): Command[] {
 
 describe('determinism (ARCHITECTURE §5)', () => {
   it('two sims with the same seed and commands have equal hashes every tick', () => {
-    const ctx = createContext(map01 as MapData, config as Config, true);
+    const ctx = createContext(map01 as MapData, config as Config);
     const a = createInitialState(ctx, 4, 12345);
     const b = createInitialState(ctx, 4, 12345);
     let sawPile = false;
@@ -56,7 +60,7 @@ describe('determinism (ARCHITECTURE §5)', () => {
   });
 
   it('a different seed gives a different match', () => {
-    const ctx = createContext(map01 as MapData, config as Config, true);
+    const ctx = createContext(map01 as MapData, config as Config);
     expect(hashState(createInitialState(ctx, 4, 1))).not.toBe(hashState(createInitialState(ctx, 4, 2)));
   });
 });

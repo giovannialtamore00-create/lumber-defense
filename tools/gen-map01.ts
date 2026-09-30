@@ -31,17 +31,25 @@ const at = (h: Hex) => idx.get(hexKey(h));
 const down = new Map<string, Hex[] | 'exit'>();
 const step = (h: Hex, m: string): Hex => (m === 'L' ? { q: h.q - 1, r: h.r + 1 } : { q: h.q, r: h.r + 1 });
 
-/** Lays a river from `start` along `moves`. Stops early when it joins an existing river (a merge). */
-function river(start: Hex, moves: string): Hex {
+/**
+ * Lays river `id` from `start` along `moves`. Stops early when it joins an existing river (a merge); the hexes it
+ * joins keep their own river id. A fork branch passes its parent's id.
+ */
+function river(id: number, start: Hex, moves: string): Hex {
   let h = start;
-  at(h)!.terrain = 'river';
+  const lay = (x: Hex) => {
+    const t = at(x)!;
+    if (t.terrain !== 'river') t.river = id;
+    t.terrain = 'river';
+  };
+  lay(h);
   for (const m of moves) {
     const next = step(h, m);
     if (!at(next)) throw new Error(`river leaves the map at ${hexKey(next)}`);
     const cur = down.get(hexKey(h));
     down.set(hexKey(h), [...(cur && cur !== 'exit' ? cur : []), next]);
     const joined = at(next)!.terrain === 'river';
-    at(next)!.terrain = 'river';
+    lay(next);
     h = next;
     if (joined) break;
   }
@@ -51,15 +59,16 @@ function river(start: Hex, moves: string): Hex {
 // Forks and merges (designer decision). Water stays near 15%: the fork's extra branch is paid for by the central
 // river merging into the east river instead of running to the edge on its own.
 // West river: through NW, then forks around an island in SW and merges again.
-const wFork = river(offsetToAxial(3, 0), 'RRLLRLRLRL');
-river(wFork, 'LLRRR');
-river(wFork, 'RRRLL');
+// River ids: 0 = west, 1 = central, 2 = east.
+const wFork = river(0, offsetToAxial(3, 0), 'RRLLRLRLRL');
+river(0, wFork, 'LLRRR');
+river(0, wFork, 'RRRLL');
 
 // East river: through NE, then bends west through SE.
-river(offsetToAxial(14, 0), 'LLRRLLLLLLLLLLL');
+river(2, offsetToAxial(14, 0), 'LLRRLLLLLLLLLLL');
 // Central river: zigzags down the west/east border (columns 8 and 9) so it touches all four regions, then merges into
 // the east river.
-river(offsetToAxial(8, 0), 'RRLRLRLRLRRRRRR');
+river(1, offsetToAxial(8, 0), 'RRLRLRLRLRRRRRR');
 
 for (const h of hexes) if (h.terrain === 'river' && h.r === HEIGHT - 1) down.set(hexKey(h), 'exit');
 

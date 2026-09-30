@@ -18,7 +18,7 @@ export interface MapRules {
 /** The parts of src/data/config.json the map checks read. */
 export interface MapCheckConfig {
   forest: { woodPool: number };
-  outpost: { territoryRadius: number };
+  outpost: { territoryRadius: number; firstTerritoryRadius: number };
   carrier: { maxRouteDistance: number };
   mapRules: MapRules;
 }
@@ -118,22 +118,18 @@ export function checkMap(map: MapData, config: MapCheckConfig): CheckResult[] {
   }
 
   // Designer decisions: carriers move only east/west within a row and pass through forests and structures. Their
-  // drop-off is the first hex before the closest river on that row. Every forest needs that drop-off within the
-  // carrier's route distance, with no rock on the way (rocks are obstacles).
+  // drop-off is the first hex before the first river east or west of them (player's choice). Every forest needs at
+  // least one such drop-off within the carrier's route distance, with no rock on the way (rocks are obstacles).
   const rowHasRock = (r: number, fromQ: number, toQ: number) =>
     map.hexes.some((m) => m.r === r && m.q >= Math.min(fromQ, toQ) && m.q <= Math.max(fromQ, toQ) && m.terrain === 'rock');
-  const hasDropOff = (f: MapHex) => {
-    const rivers = map.hexes.filter((m) => m.r === f.r && m.terrain === 'river');
-    if (rivers.length === 0) return false;
-    const closest = Math.min(...rivers.map((m) => Math.abs(m.q - f.q)));
-    // Either side may be the closest (a tie); any one that works is enough.
-    return rivers
-      .filter((m) => Math.abs(m.q - f.q) === closest)
-      .some((m) => {
-        const dropQ = m.q + (f.q < m.q ? -1 : 1);
-        return Math.abs(dropQ - f.q) <= carrierMaxRoute && !rowHasRock(f.r, f.q, dropQ);
-      });
-  };
+  const hasDropOff = (f: MapHex) =>
+    [-1, 1].some((dir) => {
+      const ahead = map.hexes.filter((m) => m.r === f.r && m.terrain === 'river' && Math.sign(m.q - f.q) === dir);
+      if (ahead.length === 0) return false;
+      const first = ahead.reduce((a, b) => (Math.abs(b.q - f.q) < Math.abs(a.q - f.q) ? b : a));
+      const dropQ = first.q - dir;
+      return Math.abs(dropQ - f.q) <= carrierMaxRoute && !rowHasRock(f.r, f.q, dropQ);
+    });
   const stranded = map.hexes.filter((f) => f.terrain === 'forest' && !hasDropOff(f));
   add('every forest has a riverside drop-off in its row', stranded.length === 0, `${stranded.length} forest hexes without one within ${carrierMaxRoute}${stranded.length ? ': ' + stranded.map(hexKey).join(' ') : ''}`);
 
@@ -147,7 +143,7 @@ export function checkMap(map: MapData, config: MapCheckConfig): CheckResult[] {
 
   // Designer decision (DESIGN §5): a first outpost is only valid if its territory contains a forest and a riverside.
   // Outposts go on land. Every region needs somewhere to start.
-  const tr = config.outpost.territoryRadius;
+  const tr = config.outpost.firstTerritoryRadius;
   for (const r of regions) {
     const own = inRegion(r).filter((h) => h.terrain === 'land');
     const valid = own.filter((c) => {
@@ -191,6 +187,11 @@ function checkRivers(map: MapData, idx: Map<string, MapHex>): CheckResult[] {
   const flowIdx = new Map(map.riverFlow.map((f) => [hexKey(f), f]));
   const maxRow = Math.max(...map.hexes.map((h) => h.r));
   const minRow = Math.min(...map.hexes.map((h) => h.r));
+
+  // Every river hex names its river (double mills count distinct rivers), and flow never switches river except
+  // into a merge.
+  const noId = rivers.filter((h) => !Number.isInteger(h.river));
+  add('river ids', noId.length === 0, `${new Set(rivers.map((h) => h.river)).size} rivers, ${noId.length} river hexes without an id`);
 
   const missing = rivers.filter((h) => !flowIdx.has(hexKey(h)));
   const extra = map.riverFlow.filter((f) => idx.get(hexKey(f))?.terrain !== 'river');

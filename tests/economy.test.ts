@@ -26,10 +26,10 @@ describe('stack icon stages (DESIGN §6.3)', () => {
 });
 
 describe('woodchopper (DESIGN §6.2)', () => {
-  it('cuts 1 wood/s into a stack on its own hex', () => {
+  it('cuts wood at its config rate into a stack on its own hex', () => {
     const { ctx, state } = setup(RIVER);
     put(state, ctx, 'woodchopper', 0, cell(0, 0));
-    run(state, ctx, 10);
+    run(state, ctx, 1000 / ctx.rates.woodchopper); // ticks to cut 1 wood
     expect(stackOf(state, ctx, cell(0, 0))).toBe(1);
     expect(state.forestPool[idx(ctx, cell(0, 0))!]).toBe(99_000);
   });
@@ -123,6 +123,16 @@ describe('carrier (DESIGN §6.4)', () => {
     expect(dropOffs(state, ctx, 0, cell(0, 0).q, 0)).toEqual([{ q: cell(2, 0).q, riverQ: cell(3, 0).q }]);
   });
 
+  it('between two rivers, either one can be the drop-off (the player picks), even past other forests', () => {
+    const { ctx, state } = setup(['~ . T T T . T ~', '~ . . . . . . ~']);
+    put(state, ctx, 'outpost', 0, cell(4, 1));
+    const options = dropOffs(state, ctx, 0, cell(3, 0).q, 0);
+    expect(options).toEqual([
+      { q: cell(1, 0).q, riverQ: cell(0, 0).q },
+      { q: cell(6, 0).q, riverQ: cell(7, 0).q },
+    ]);
+  });
+
   it('loops A → river: takes what is there, drops it in the river, comes back', () => {
     const { ctx, state } = setup(RIVER);
     put(state, ctx, 'outpost', 0, cell(1, 1));
@@ -132,7 +142,7 @@ describe('carrier (DESIGN §6.4)', () => {
     const carrier = state.entities.find((e): e is Carrier => e.type === 'carrier')!;
     expect(carrier).toBeDefined();
 
-    run(state, ctx, 9); // tick 10: 1 wood in the stack, picked up
+    run(state, ctx, 1000 / ctx.rates.woodchopper - 1); // 1 wood in the stack, picked up
     expect(carrier.load).toBe(1000);
     run(state, ctx, 20); // 2 hexes at 1 hex/s
     expect(carrier.load).toBe(0);
@@ -165,17 +175,23 @@ describe('carrier (DESIGN §6.4)', () => {
 
 describe('match start (DESIGN §5)', () => {
   const START = [
-    '. . T T . . . . ~ .',
-    '. . . . . . . . ~ .',
-    '. . . . . . . . ~ .',
-    '. . . . . . . . ~ .',
+    '. . T T . . ~ . . .',
+    '. . . . . . ~ . . .',
+    '. . . . . . ~ . . .',
+    '. . . . . . ~ . . .',
   ];
 
   it('the first outpost needs a forest and a free riverside in its territory', () => {
     const { ctx, state } = setup(START);
     expect(placementError(state, ctx, 0, 'outpost', cell(1, 1).q, 1)).toBe('no free riverside in this territory');
-    expect(placementError(state, ctx, 0, 'outpost', cell(8, 3).q, 3)).toBe('water');
+    expect(placementError(state, ctx, 0, 'outpost', cell(6, 3).q, 3)).toBe('water');
     expect(placementError(state, ctx, 0, 'outpost', cell(4, 1).q, 1)).toBeNull();
+  });
+
+  it('the first outpost has territory radius 2 (19 hexes)', () => {
+    const { ctx, state } = setup(START);
+    step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
+    expect(state.coverage.filter((c) => c !== 0)).toHaveLength(ctx.map.hexes.filter((h) => Math.abs(h.q - cell(4, 1).q) + Math.abs(h.r - 1) + Math.abs(h.q - cell(4, 1).q + h.r - 1) <= 4).length);
   });
 
   it('placing it gives territory, a woodchopper on the closest forest and a factory in hand', () => {
@@ -189,17 +205,17 @@ describe('match start (DESIGN §5)', () => {
 
   it('the factory-mill must go on the riverside, inside the territory', () => {
     const { ctx, state } = setup(START);
-    step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(5, 1).q, r: 1 }]);
-    expect(placementError(state, ctx, 0, 'factory', cell(5, 2).q, 2)).toBe('factory-mills must be on the riverside');
-    expect(placementError(state, ctx, 0, 'factory', cell(7, 2).q, 2)).toBeNull();
-    step(state, ctx, [{ type: 'place', player: 0, item: 'factory', q: cell(7, 2).q, r: 2 }]);
+    step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
+    expect(placementError(state, ctx, 0, 'factory', cell(3, 2).q, 2)).toBe('factory-mills must be on the riverside');
+    expect(placementError(state, ctx, 0, 'factory', cell(5, 2).q, 2)).toBeNull();
+    step(state, ctx, [{ type: 'place', player: 0, item: 'factory', q: cell(5, 2).q, r: 2 }]);
     expect(state.players[0]!.hand).toEqual([]);
   });
 
   it('a second first-outpost command is ignored', () => {
     const { ctx, state } = setup(START);
     step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
-    step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(6, 3).q, r: 3 }]);
+    step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 3).q, r: 3 }]);
     expect(state.entities.filter((e) => e.type === 'structure' && e.kind === 'outpost')).toHaveLength(1);
   });
 });

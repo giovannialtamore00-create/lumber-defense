@@ -7,6 +7,8 @@ export interface MapHex extends Hex {
   terrain: Terrain;
   region: number;
   woodPool?: number;
+  /** River hexes only: which river this is (fork branches share their river's id; after a merge, the receiving one). */
+  river?: number;
 }
 
 export interface RiverFlow extends Hex {

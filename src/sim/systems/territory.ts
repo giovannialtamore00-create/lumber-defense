@@ -10,7 +10,7 @@ export function recomputeCoverage(state: GameState, ctx: SimContext): void {
   state.coverage.fill(0);
   for (const s of structures(state)) {
     if (s.kind !== 'outpost') continue;
-    for (const h of hexesInRadius(s, ctx.config.outpost.territoryRadius)) {
+    for (const h of hexesInRadius(s, s.radius ?? ctx.config.outpost.territoryRadius)) {
       const i = idx(ctx, h);
       if (i !== undefined) state.coverage[i]! |= 1 << s.owner;
     }

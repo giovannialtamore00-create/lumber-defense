@@ -3,9 +3,10 @@ import type { SimContext } from './context';
 import { MILLI } from './fixed';
 import { distance } from './hex';
 import { addEntity, structureAt } from './state';
+import { craftCost, craftError } from './systems/crafting';
 import { carrierRouteError, dropOffs, isForest, placementError, territoryIndices } from './systems/placement';
 import { recomputeCoverage } from './systems/territory';
-import type { Carrier, Command, GameState, ItemKind, Structure, StructureKind } from './types';
+import type { Carrier, Command, GameState, Structure, StructureKind } from './types';
 
 export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): void {
   const player = state.players[cmd.player];
@@ -14,7 +15,7 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
   switch (cmd.type) {
     case 'placeOutpost': {
       if (player.started || placementError(state, ctx, cmd.player, 'outpost', cmd.q, cmd.r)) return;
-      addStructure(state, ctx, 'outpost', cmd.player, cmd.q, cmd.r);
+      addStructure(state, ctx, 'outpost', cmd.player, cmd.q, cmd.r).radius = ctx.config.outpost.firstTerritoryRadius;
       recomputeCoverage(state, ctx);
       player.started = true;
       placeStartingWoodchopper(state, ctx, cmd.player, cmd.q, cmd.r);
@@ -25,8 +26,11 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
       const h = player.hand.indexOf(cmd.item);
       if (h < 0 || placementError(state, ctx, cmd.player, cmd.item, cmd.q, cmd.r)) return;
       player.hand.splice(h, 1);
-      addStructure(state, ctx, cmd.item, cmd.player, cmd.q, cmd.r);
-      if (cmd.item === 'outpost') recomputeCoverage(state, ctx);
+      const s = addStructure(state, ctx, cmd.item, cmd.player, cmd.q, cmd.r);
+      if (cmd.item === 'outpost') {
+        s.radius = ctx.config.outpost.territoryRadius;
+        recomputeCoverage(state, ctx);
+      }
       return;
     }
     case 'placeCarrier': {
@@ -48,9 +52,10 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
       });
       return;
     }
-    case 'devGive': {
-      if (!ctx.allowDevCommands || !player.started) return;
-      player.hand.push(cmd.item as ItemKind);
+    case 'craft': {
+      if (craftError(state, ctx, cmd.player, cmd.item)) return;
+      player.wood -= craftCost(ctx, cmd.item);
+      player.queue.push({ item: cmd.item, totalTicks: 0, doneTicks: 0 });
       return;
     }
   }
@@ -66,7 +71,7 @@ function addStructure(state: GameState, ctx: SimContext, kind: StructureKind, ow
  */
 function placeStartingWoodchopper(state: GameState, ctx: SimContext, player: number, q: number, r: number): void {
   let best: { i: number; d: number } | null = null;
-  for (const i of territoryIndices(ctx, q, r).sort((a, b) => a - b)) {
+  for (const i of territoryIndices(ctx, q, r, ctx.config.outpost.firstTerritoryRadius).sort((a, b) => a - b)) {
     const h = ctx.map.hexes[i]!;
     if (!isForest(state, i) || structureAt(state, h.q, h.r)) continue;
     const d = distance(h, { q, r });

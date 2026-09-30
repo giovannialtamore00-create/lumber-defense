@@ -3,6 +3,7 @@
 import { applyCommand } from './commands';
 import type { SimContext } from './context';
 import { carriersSystem } from './systems/carriers';
+import { craftingSystem } from './systems/crafting';
 import { docksSystem } from './systems/docks';
 import { forestSystem } from './systems/forest';
 import { riverSystem } from './systems/river';
@@ -11,6 +12,7 @@ import type { Command, GameState } from './types';
 /** Advances `state` by one tick, in place. */
 export function step(state: GameState, ctx: SimContext, commands: readonly Command[]): void {
   for (const cmd of commands) applyCommand(state, ctx, cmd);
+  craftingSystem(state, ctx);
   forestSystem(state, ctx);
   carriersSystem(state, ctx);
   riverSystem(state, ctx);

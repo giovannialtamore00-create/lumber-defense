@@ -15,7 +15,7 @@ export class BootScene extends Phaser.Scene {
     // Single player for now (M2). The host picks the seed; `?seed=123` makes a match reproducible.
     const param = new URLSearchParams(window.location.search).get('seed');
     const seed = param !== null ? Number(param) >>> 0 : crypto.getRandomValues(new Uint32Array(1))[0]!;
-    const runner = new SimRunner(MAP, config as Config, 1, seed, new LocalTransport(), import.meta.env.DEV);
+    const runner = new SimRunner(MAP, config as Config, 1, seed, new LocalTransport());
     this.registry.set('runner', runner);
     this.registry.set('seed', seed);
 

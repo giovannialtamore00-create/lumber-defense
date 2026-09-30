@@ -2,14 +2,12 @@
 // Built once from the map and config; never mutated, never hashed.
 import { perTick, toMilli } from './fixed';
 import { type Hex, hexKey, neighbours } from './hex';
-import type { MapData } from './map';
+import { type MapData, riverStrengthLevel } from './map';
 import type { Config } from './types';
 
 export interface SimContext {
   map: MapData;
   config: Config;
-  /** Allows `devGive` commands (dev builds only). */
-  allowDevCommands: boolean;
   indexOf: Map<string, number>;
   /** Neighbour hex indices per hex, in the fixed DIRECTIONS order (missing neighbours skipped). */
   neighbourIdx: number[][];
@@ -18,6 +16,12 @@ export interface SimContext {
   down: (number[] | 'exit')[];
   /** Land hex adjacent to at least one river hex. */
   riverside: boolean[];
+  /** River id per hex (-1 for land). */
+  riverId: number[];
+  /** River strength row per river hex: 1 at the top of its half … 8 at the bottom (DESIGN §4.3); 0 for land. */
+  riverRow: number[];
+  /** Raw factory-mill bonus (basis points) at which the craft-time reduction reaches its maximum (DESIGN §6.7). */
+  fullBoostRawBp: number;
   rates: {
     woodchopper: number;
     carrierSpeed: number;
@@ -28,7 +32,7 @@ export interface SimContext {
   };
 }
 
-export function createContext(map: MapData, config: Config, allowDevCommands = false): SimContext {
+export function createContext(map: MapData, config: Config): SimContext {
   const indexOf = new Map<string, number>();
   map.hexes.forEach((h, i) => indexOf.set(hexKey(h), i));
   const neighbourIdx = map.hexes.map((h) =>
@@ -43,16 +47,23 @@ export function createContext(map: MapData, config: Config, allowDevCommands = f
     down[i] = f.down === 'exit' ? 'exit' : f.down.map((d) => indexOf.get(hexKey(d))!);
   }
   const riverside = map.hexes.map((h, i) => h.terrain !== 'river' && neighbourIdx[i]!.some((n) => isRiver[n]));
+  const riverId = map.hexes.map((h) => (h.terrain === 'river' ? (h.river ?? 0) : -1));
+  const riverRow = map.hexes.map((h) => (h.terrain === 'river' ? riverStrengthLevel(map, h.r) : 0));
+  const fm = config.factoryMill;
+  const fullBoostRawBp =
+    fm.extraFactoryBp * (fm.maxSetup.factories - 1) + fm.maxSetup.factories * fm.riverBonusBpByRow[fm.maxSetup.riverRow - 1]!;
   const t = config.tickRate;
   return {
     map,
     config,
-    allowDevCommands,
     indexOf,
     neighbourIdx,
     isRiver,
     down,
     riverside,
+    riverId,
+    riverRow,
+    fullBoostRawBp,
     rates: {
       woodchopper: perTick(config.woodchopper.woodPerSecond, t),
       carrierSpeed: perTick(config.carrier.speedHexPerSecond, t),

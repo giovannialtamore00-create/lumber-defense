@@ -72,9 +72,16 @@ Game design for a 2–4 player browser tower-defense / territory game built arou
 
 1. Each player is **randomly assigned one of the 4 regions**.
 2. The player places their **first outpost anywhere inside their region**. This creates the starting territory
-   (radius 3 = 37 hexes, 7 hexes across).
+   (radius **2** = 19 hexes, 5 hexes across; designer decision, smaller than a normal outpost's radius 3).
    **Valid start (decided):** the starting territory must contain **a forest and a riverside**, otherwise the
    outpost can't be placed there.
+   **Turns (decided):** players place their starting outposts **in turns**, one after another, and have to adapt
+   to the placements of the other players. **Once everyone has placed, the game runs in real time.** Turn order and
+   **Turn order and timer (decided):** the order is **random each game** (player 1, 2, 3, 4). **Player 1 has 30 s**
+   to place; **each later player has 15 s** (placeholders). A player whose timer runs out is **removed from the game
+   and a bot takes their place**.
+   **Overlap (decided):** starting territories may cross region borders. Where they overlap another player's
+   territory they form a **conflict zone**, under the normal rules (§9).
 3. The player receives a **factory in hand** (already crafted) and places it **anywhere in their territory**.
 4. The player has a **starting woodchopper**. It **appears automatically** on a forest hex in the starting territory
    as soon as the first outpost is placed in a valid location, on the **forest hex closest to the outpost** (ties
@@ -89,11 +96,11 @@ Game design for a 2–4 player browser tower-defense / territory game built arou
 
 ### 6.2 Woodchopper
 - Placed on a **forest hex**. **Max 1 woodchopper per forest hex.**
-- Automatically cuts trees at **1 wood/second**.
+- Automatically cuts trees at **0.5 wood/second** (halved from 1, designer decision).
 - It **wanders randomly within its hex** as an animation to show it's active. This has no gameplay effect.
 - The cut wood forms **one log stack**, drawn **at the bottom of the same hex**. It doesn't take up another hex.
-- When a forest hex's wood pool reaches 0, **the forest disappears from that hex.** A **gardener/forest guard**
-  placed there can regrow it.
+- When a forest hex's wood pool reaches 0, **the forest disappears from that hex.** The woodchopper stays there.
+  Once woodchoppers level up into **gardeners** (§8.7), they regrow their forest while cutting it.
 
 ### 6.3 Log stack icon (used everywhere wood piles up: forest, dock, neutral factory)
 One icon that grows in 3 stages with the amount of wood:
@@ -117,8 +124,10 @@ One icon that grows in 3 stages with the amount of wood:
 - **Horizontal only (decided):** carriers move **only east/west, within one row**. A and B must be in the same row.
   This is what makes the river the way to move wood north → south. Catapults are not affected.
 - Carriers **pass through anything, including other carriers**, **except rocks and water** (decided).
-- **Drop-off (decided):** the drop-off B is **the first hex encountered on the horizontal path towards the closest
-  river**, i.e. the hex right before the water in the carrier's row.
+- **Drop-off (decided):** the drop-off B is **the first hex encountered on the horizontal path towards a river**,
+  i.e. the hex right before the water in the carrier's row. **Either river** on the row can be used (east or
+  west of A, within the route distance); **the player chooses** which one as point B. (Changed from "closest river
+  only".)
 - **Bridges (decided):** if a bridge is on the row a carrier moves along, the carrier **drops its logs from the
   bridge into the river below**, instead of from the riverside hex.
 - Base stats: **capacity 5**, **speed 1 hex/second**.
@@ -137,7 +146,7 @@ One icon that grows in 3 stages with the amount of wood:
 - Built only **on the side of a river** (left or right bank, adjacent to the river).
 - A floating pile that reaches the dock **stops and is collected** into the dock's stack icon, drawn at the bottom
   of the dock icon, **slightly to the right**.
-- **Capacity 10.** When the dock is partly full, it **takes as much as fits and the rest floats on**.
+- **Capacity 20** (doubled from 10, designer decision). When the dock is partly full, it **takes as much as fits and the rest floats on**.
   - Example: capacity 25, holding 17, a pile of 10 passes → 8 are caught, 2 keep floating.
 - **Any player's dock can catch any floating wood.**
 - A dock adjacent to a factory **dispenses 1 wood/second** into it (upgradable). The dispense timer is there so the dock doesn't empty instantly, which would make its capacity pointless.
@@ -146,16 +155,31 @@ One icon that grows in 3 stages with the amount of wood:
 ### 6.7 Factory
 > **Decided: factory and mill (watermill) become one unified structure**, which **must be built on the riverside**.
 > Its efficacy (its contribution to **crafting productivity**) is **stronger lower down the river**, based on the
-> river strength at its spot (§4.3). The factory and mill rules in §6.7, §7.3 and §8.3 still need to be merged;
-> see Open Question 6.
+> river strength at its spot (§4.3). It replaces both the old factory and the old mill (§8.3).
 >
 > **Decided: productivity.** Pooled productivity is no longer additive (it was "2 factories = half the craft time",
-> §7.2). Instead, **each factory-mill after the first reduces production time with diminishing returns, the same
-> way as the old mill bonus** (§8.3 curve: full value up to 40%, then shrinking, never above 62%).
+> §7.2). Instead, **each factory-mill after the first reduces production time**, together with river strength,
+> along the formula below.
 >
-> **Decided: river strength.** River speed improves factory-mill performance by **3% per hex** of river strength
-> (placeholder): the **first river row counts 0%**, then **+3% for each row** below it (row 8 of a half = +21%).
+> **Decided: river strength.** River speed improves factory-mill performance. The **first river row counts 0%**,
+> and the bonus grows **exponentially** down each half: **little in the middle rows, most at the bottom** (not a
+> flat +3% per row). The whole boost (river and number of factory-mills) is **nerfed from the start**.
+> **Max boost (decided): 90%**, reached with **5 factory-mills all at the strongest river row**. Wood cost keeps
+> overproduction in check.
+>
+> **Decided: formula** *(placeholder numbers)*:
+> - raw = **6%** × (factory-mills − 1) + Σ over every watermill of its **river bonus** by row (strongest row of that
+>   river): row 1–8 of a half = **0 / 0.4 / 0.9 / 1.8 / 3.0 / 4.9 / 7.8 / 12%** (each row worth ×1.5 the one above).
+> - Craft-time reduction is **linear** in raw, reaching **90%** at the max setup (5 × row 8: raw 84%), then capped:
+>   reduction = 90% × min(1, raw / 84%). Craft time = base time × (1 − reduction). (−90% = 10× faster.)
+> - Beyond the max setup (more factory-mills, double mills), the reduction stays at 90%; extra factory-mills still
+>   add queue slots (§7.2).
+> Exact numbers: still open (Open Question 6).
 > **Every factory-mill's spot matters, including the first one.**
+>
+> **Decided: double mills.** A factory-mill that touches **two distinct rivers** gets **two watermills**, one drawn
+> on each river's side, and gets the river-strength boost **from both**. Touching several water hexes of the **same**
+> river (including both branches of a fork) still counts as **one** watermill, using that river's **strongest row**.
 >
 > **Decided: cost.** Factory-mills and river strength **do not reduce cost**, only production time. Cost is reduced
 > only by an **upgrade on the factory**.
@@ -175,9 +199,14 @@ One icon that grows in 3 stages with the amount of wood:
 ### 7.2 Crafting flow
 1. Click an item. It must be unlocked and affordable (a "legal purchase").
 2. A **Craft/Build** button appears. Press it to confirm, and the cost is paid.
-3. Items can be **queued**.
-4. **Production is abstract and pooled.** All your factories add their productivity together (2 factories = half
-   the craft time). Where the item is "built" doesn't matter.
+3. Items can be **queued**. **Decided: the number of factory-mills limits the queue.** A single factory-mill can
+   only craft one item; more factory-mills allow more items in production, on top of making crafting faster.
+   Items are still **crafted one at a time globally** (the others wait in the queue).
+   Confirmed details: an item's craft time is fixed when it **starts** crafting (so new factory-mills speed up
+   waiting items); crafting **pauses** while you have no factory-mill; crafted items are placed from the hand
+   **oldest first**.
+4. **Production is abstract and pooled.** Your factory-mills together set one craft speed (formula in §6.7).
+   Where the item is "built" doesn't matter.
 5. **Every factory you own shows the grey icon** of the item currently being crafted, filling with color from the
    bottom as the timer finishes.
 6. When done, the item is **in your hand** (on the mouse). You deploy it "from the sky" onto the map.
@@ -188,7 +217,7 @@ One icon that grows in 3 stages with the amount of wood:
 - Illegal hexes: **water, trees (forest), rocks, other structures**, plus each item's own rules:
   - Woodchopper: forest hex only, max 1 per forest hex.
   - Dock: adjacent to a river.
-  - Mill: adjacent to a river **and** adjacent to one of your factories.
+  - Factory-mill: adjacent to a river (riverside).
   - Carrier: route rules in §6.4.
 
 ### 7.4 Unlocks
@@ -199,20 +228,18 @@ One icon that grows in 3 stages with the amount of wood:
 ## 8. Structures and machines
 
 ### 8.1 Base stats *(placeholder costs, times and HP)*
-Craft times assume 1 factory.
+Craft times are base times, before the factory-mill reduction (§6.7).
 
 | Item | Cost | Craft time | HP | Other stats |
 |---|---|---|---|---|
 | Outpost | 50 | 30 s | 150 | Territory radius 3 |
-| Factory | 60 | 45 s | 200 | Adds 1× productivity to the pool |
-| Dock | 20 | 20 s | 80 | Capacity 10, dispenses 1 wood/s to an adjacent factory |
+| Factory-mill | 60 | 45 s | 200 | Riverside; reduces craft time (§6.7); one queue slot (§7.2) |
+| Dock | 20 | 20 s | 80 | Capacity 20, dispenses 1 wood/s to an adjacent factory |
 | Carrier | 10 | 10 s | 30 | Capacity 5, speed 1 hex/s, max A-to-B distance 5 hexes |
-| Woodchopper | 15 | 15 s | 40 | 1 wood/s |
-| Mill | 40 | 30 s | 100 | See §8.3 |
+| Woodchopper | 15 | 15 s | 40 | 0.5 wood/s |
 | Bridge | 30 | 20 s | 120 | Lets wheeled units cross a river |
 | Workshop | 50 | 30 s | 120 | Where upgrades (the dev tree) are bought |
 | Catapult | 60 | 40 s | 80 | Range 4 hexes, 10 dmg/hit, 0.5 hits/s, speed 0.5 hex/s |
-| Gardener | 25 | 20 s | 40 | Regrows its forest hex at 0.5 wood/s, up to 100 |
 
 Fixed values: starting wood **50**, forest **100 wood per hex**.
 
@@ -221,19 +248,14 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
 - Where territories of different players overlap, there's a **conflict zone** (§9).
 
 ### 8.3 Mill
-- Must be **adjacent to a river and adjacent to one of your factories**.
-- Each such mill reduces **global crafting time and cost by 10%**, with **diminishing returns**: full value up to
-  40%, then shrinking returns, and it can never exceed 62%.
-- Formula *(placeholder, thresholds editable)*: raw = 10% × number of mills.
-  effective = raw if raw ≤ 40%; otherwise 40% + 22% × (1 − e^(−(raw − 40%) / 22%)).
-
-| Mills | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 10 |
-|---|---|---|---|---|---|---|---|---|---|
-| Effective reduction | 10% | 20% | 30% | 40% | 48% | 53% | 56% | 58% | 61% |
+- *Replaced (decided):* the mill is now part of the **factory-mill** (§6.7), which has its own formula.
 
 ### 8.4 Bridge
 - Connects the two banks of a river so **wheeled units** can cross.
 - **Carriers and catapults are the only wheeled units** for now. They travel on **land and bridges** and can't cross water any other way.
+- **Placement (decided):** on **any water hex**. If it connects two lands, the bridge is **finished and working**.
+  If the water is wider, it stays a **half bridge** and doesn't allow movement until more bridge pieces complete
+  the crossing: a **straight run of bridge pieces, in any direction, with land at both ends** works (decided).
 
 ### 8.5 Workshop
 - Where the **dev tree** is bought (§10).
@@ -248,7 +270,9 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
 - **No ammo resource.** An upgrade can change the projectile type (for example fireballs), still at no cost per shot.
 
 ### 8.7 Gardener / forest guard
-- Placed on a depleted forest hex to regrow it (replanting keeps forests going in long games).
+- *Changed (decided):* the gardener is **not a separate item** any more. It is an **evolution of the woodchopper**:
+  on level-up (dev tree, §10), **existing woodchoppers become gardeners**, which **cut and regrow at the same time**,
+  keeping the forest evergreen. Which upgrade path/level and the numbers: Open Question 12.
 
 ## 9. Territory, conflict and capture
 
@@ -297,7 +321,7 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
 **Dock**
 | Path | L1 | L2 | L3 |
 |---|---|---|---|
-| Capacity | 10 → 20 | → 35 | → 50 |
+| Capacity | 20 → 40 | → 70 | → 100 |
 | Dispense | 1 → 2 wood/s | → 3 wood/s | ★ Chute: feeds a factory up to 2 hexes away |
 
 **Carrier**
@@ -312,11 +336,8 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
 | Output | 1 → 1.5 wood/s | → 2 | → 3 |
 | ★ Log Slide | Forest hexes adjacent to a river drop logs straight into it at 0.5 wood/s | 1 wood/s | Also from 1 hex away |
 
-**Mill**
-| Path | L1 | L2 | L3 |
-|---|---|---|---|
-| Power | Raw bonus per mill 10% → 12% (still goes through the diminishing curve) | → 14% | → 16% |
-| ★ Toll | Skims 10% of every pile floating past its river hex, straight into your factory | 20% | 30% |
+**Mill** — *dropped (decided): the mill is now part of the factory-mill, and its old paths (Power, Toll) are
+irrelevant.*
 
 **Bridge**
 | Path | L1 | L2 | L3 |
@@ -336,7 +357,8 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
 | Range | 4 → 5 hexes | → 6 | → 7 |
 | Firepower | 10 → 15 dmg | Fireball: 20 dmg plus burning damage over time | ★ Firestorm: fireballs also burn forest hexes in conflict zones |
 
-**Gardener**
+**Gardener** — *the gardener is now an evolution of the woodchopper (§8.7). How these paths fit into the woodchopper's
+tree is Open Question 12.*
 | Path | L1 | L2 | L3 |
 |---|---|---|---|
 | Growth | Regrowth 0.5 → 1 wood/s | → 1.5 | → 2 |
@@ -374,13 +396,14 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
    Still open for M5: do catapults block hexes or pass through units?
 5. **Bot strategy:** bots use the same rules as humans, but how they decide what to do is not designed yet.
 6. **Factory-mill (unified structure):**
-   - Its name, cost, craft time and HP (factory was 60 / 45 s / 200, mill 40 / 30 s / 100).
-   - ~~Productivity model~~: decided, each additional factory-mill reduces production time along the §8.3 curve.
-   - ~~River strength~~: decided, first row 0%, +3% per row below. ~~First spot~~: decided, every spot matters.
-     Still open for M3: the exact formula combining the +3% with the §8.3 curve (proposal to be confirmed then).
+   - Its cost, craft time and HP: using the old factory's placeholders (60 / 45 s / 200) for now.
+   - ~~Productivity, river strength, curve, max boost, first spot~~: decided, formula in §6.7.
+   - ~~Queue~~: decided, one slot per factory-mill, items crafted one at a time globally (§7.2).
    - ~~Cost~~: decided, factory-mills only reduce time; cost is reduced by the factory's **Efficiency** path, which
      replaces New Technologies (§10.3, placeholder numbers −10% / −20% / −30%).
-   - "Riverside" means adjacent to a river hex? If it touches river hexes of different strength, which one counts?
+   - "Riverside" means adjacent to a river hex? ~~Two rivers~~: decided, two distinct rivers = two watermills, both
+     boosts count. ~~Same river, several rows~~: decided, the **strongest row** counts.
+   - ~~Old mill upgrade paths (Power, Toll)~~: decided, dropped; they are irrelevant now.
    - ~~Start without riverside~~: decided, a first outpost is only valid if its territory has a forest and a
      riverside (§5).
    - Does a dock adjacent to it still dispense into it (§6.6), and do its upgrade paths (§10.3 Factory and Mill) merge?
@@ -388,5 +411,15 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
    float (1 hex/s everywhere). ~~Waterfall~~: decided, piles just keep floating.
 8. **Horizontal carriers:** ~~passing through~~: decided, carriers **can pass through forests and structures**.
    ~~Bridges~~: decided, a carrier on a row with a bridge drops its logs from the bridge (§6.4).
-   ~~Drop-off~~: decided, the first hex before the closest river on the carrier's row (§6.4).
+   ~~Drop-off~~: decided, the first hex before a river on the carrier's row, either direction, player's choice (§6.4).
 9. **Future unlocks:** New Technologies was replaced by Efficiency, so how future structures (§13) get unlocked is open.
+10. **Starting turns (§5):** ~~real time~~: decided, the game runs in real time only after everyone has placed.
+    ~~Order and timer~~: decided, random order each game; 30 s for player 1, 15 s for each later player.
+    ~~Timeout~~: decided, a player whose timer runs out is **removed from the game and a bot takes their place** (§5).
+11. ~~**Starting territory crossing into a neighbour's region**~~: decided, allowed; overlaps are conflict zones (§5).
+12. **Gardener as a woodchopper evolution (§8.7):** which upgrade turns woodchoppers into gardeners (a new
+    woodchopper path, or replacing Output / Log Slide)? Regrowth rate vs cutting rate: regrowth 0.5 wood/s while
+    cutting 1 wood/s still depletes the forest; should regrowth match cutting so it's truly evergreen? Do the old
+    Gardener paths (Growth, Afforest) become its later levels? Needed for M6.
+13. ~~**Bridges (§8.4)**~~: decided, measured in **any direction**, and bridge pieces **join**: a straight run of
+    bridge pieces with land at both ends is a working bridge.

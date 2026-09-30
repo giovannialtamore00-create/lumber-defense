@@ -25,9 +25,8 @@ export class SimRunner {
     playerCount: number,
     seed: number,
     private readonly transport: Transport,
-    allowDevCommands: boolean,
   ) {
-    this.ctx = createContext(map, config, allowDevCommands);
+    this.ctx = createContext(map, config);
     this.state = createInitialState(this.ctx, playerCount, seed);
     this.tickMs = 1000 / config.tickRate;
     transport.onMessage((msg) => {

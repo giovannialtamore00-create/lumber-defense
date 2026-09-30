@@ -23,6 +23,7 @@ export function createInitialState(ctx: SimContext, playerCount: number, seed: n
       region: regions[id]!,
       wood: toMilli(config.startingWood),
       hand: [],
+      queue: [],
       started: false,
     })),
     entities: [],

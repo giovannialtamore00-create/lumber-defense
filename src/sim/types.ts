@@ -4,9 +4,19 @@ import type { Rng } from './rng';
 
 export type Config = typeof config;
 
-/** The factory is the unified factory-mill (DESIGN §6.7): built on the riverside. */
-export type StructureKind = 'outpost' | 'factory' | 'dock' | 'woodchopper';
+/**
+ * The factory is the unified factory-mill (DESIGN §6.7): built on the riverside. The catapult is placed and stands
+ * idle until its behaviour arrives in M5.
+ */
+export type StructureKind = 'outpost' | 'factory' | 'dock' | 'woodchopper' | 'bridge' | 'workshop' | 'catapult';
 export type ItemKind = StructureKind | 'carrier';
+
+/** An item in the craft queue. `totalTicks` is fixed when the item starts crafting (0 = still waiting). */
+export interface CraftJob {
+  item: ItemKind;
+  totalTicks: number;
+  doneTicks: number;
+}
 
 export interface Player {
   id: number;
@@ -15,6 +25,8 @@ export interface Player {
   wood: number;
   /** Crafted items waiting to be placed, oldest first. */
   hand: ItemKind[];
+  /** Paid items being crafted, one at a time, oldest first (DESIGN §7.2). */
+  queue: CraftJob[];
   /** True once the first outpost is placed. */
   started: boolean;
 }
@@ -27,6 +39,8 @@ export interface Structure {
   q: number;
   r: number;
   hp: number;
+  /** Outposts only: territory radius in hexes (the first outpost's is smaller, DESIGN §5). */
+  radius?: number;
 }
 
 /** A carrier loops A → B along one row (DESIGN §6.4). Positions are milli-hex along the row's q axis. */
@@ -79,5 +93,5 @@ export type Command =
   | { type: 'placeOutpost'; player: number; q: number; r: number }
   | { type: 'place'; player: number; item: StructureKind; q: number; r: number }
   | { type: 'placeCarrier'; player: number; aQ: number; bQ: number; r: number }
-  /** Dev builds only (M2 testing, replaced by crafting in M3): puts an item in the player's hand for free. */
-  | { type: 'devGive'; player: number; item: ItemKind };
+  /** Pay for an item and add it to the craft queue (DESIGN §7.2). */
+  | { type: 'craft'; player: number; item: ItemKind };

@@ -15,6 +15,10 @@ import {
   pilePosition,
   stackPosition,
 } from '../render/entities';
+import { ownFactories, watermills } from '../../sim/systems/crafting';
+import { isWorkingBridge } from '../../sim/systems/placement';
+import type { Structure } from '../../sim/types';
+import { drawItemIcon } from '../render/icons';
 import type { SimRunner } from '../simRunner';
 
 export const MAP = map01 as MapData;
@@ -171,11 +175,39 @@ export class GameScene extends Phaser.Scene {
       g.lineStyle(3, 0xffffff, 0.9);
       g.lineBetween(a.x, a.y, b.x, b.y);
     }
+    if (preview.ghost) {
+      // The building being placed, floating over the hovered hex.
+      const c = hexToScreen(preview.ghost.hex);
+      g.fillStyle(0x000000, 0.35).fillEllipse(c.x, c.y + 2, 26, 9);
+      drawItemIcon(g, preview.ghost.item, c.x, c.y - 16, 30, preview.ghost.ok ? 0xffffff : 0xffb0b0, 0.9);
+    }
     this.registry.set('status', preview.message);
 
     // Structures, then stacks, carriers and piles on top.
     const entities = state.entities;
-    for (const e of entities) if (e.type === 'structure') drawStructure(g, e, time);
+    for (const e of entities) {
+      if (e.type !== 'structure') continue;
+      const i = ctx.indexOf.get(hexKey(e))!;
+      drawStructure(g, e, time, {
+        mills: e.kind === 'factory' ? this.millPositions(e) : undefined,
+        working: e.kind === 'bridge' ? isWorkingBridge(state, ctx, i) : undefined,
+      });
+    }
+
+    // Every factory-mill the player owns shows the item being crafted: a grey icon filling with colour from the
+    // bottom (DESIGN §7.2).
+    const job = me.queue[0];
+    if (job && job.totalTicks > 0) {
+      const progress = Math.min(1, (job.doneTicks + alpha) / job.totalTicks);
+      for (const f of ownFactories(state, LOCAL_PLAYER)) {
+        const c = hexToScreen(f);
+        const box = { x: c.x - 11, y: c.y - 58, s: 22 };
+        g.fillStyle(0x6f6f6f, 0.95).fillRect(box.x, box.y, box.s, box.s);
+        g.fillStyle(PLAYER_COLORS[LOCAL_PLAYER]!, 1).fillRect(box.x, box.y + box.s * (1 - progress), box.s, box.s * progress);
+        g.lineStyle(1, 0x000000, 0.8).strokeRect(box.x, box.y, box.s, box.s);
+        drawItemIcon(g, job.item, c.x, box.y + box.s / 2, 18, 0x1e1e1e);
+      }
+    }
     MAP.hexes.forEach((h, i) => {
       if (state.stacks[i]! <= 0) return;
       const onDock = entities.some((e) => e.type === 'structure' && e.kind === 'dock' && e.q === h.q && e.r === h.r);
@@ -192,6 +224,17 @@ export class GameScene extends Phaser.Scene {
       const at = pilePosition(p, ctx, ctx.rates.floatSpeed * alpha);
       drawPile(g, at);
       t.setPosition(at.x + 9, at.y - 2).setText(String(wholeUnits(p.amount))).setVisible(true);
+    });
+  }
+
+  /** One water wheel per distinct river, on the factory-mill's side facing that river's strongest touching hex. */
+  private millPositions(f: Structure): Point[] {
+    const { ctx } = this.runner;
+    const c = hexToScreen(f);
+    return watermills(ctx, f).map((m) => {
+      const n = ctx.neighbourIdx[ctx.indexOf.get(hexKey(f))!]!.find((j) => ctx.riverId[j] === m.river && ctx.riverRow[j] === m.row)!;
+      const w = hexToScreen(ctx.map.hexes[n]!);
+      return { x: c.x + (w.x - c.x) * 0.55, y: c.y + (w.y - c.y) * 0.55 - 4 };
     });
   }
 

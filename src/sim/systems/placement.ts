@@ -28,9 +28,11 @@ export function placementError(state: GameState, ctx: SimContext, player: number
   }
   if (item === 'carrier') return 'carriers are placed with a route';
   if (!isCoveredBy(state, i, player)) return 'outside your territory';
+  if (structureAt(state, hex.q, hex.r)) return 'already taken';
+  // Bridges are the one thing built on water (DESIGN §8.4).
+  if (item === 'bridge') return ctx.isRiver[i] ? null : 'bridges go on water';
   if (ctx.isRiver[i]) return 'water';
   if (isRock(ctx, i)) return 'rock';
-  if (structureAt(state, hex.q, hex.r)) return 'already taken';
 
   switch (item) {
     case 'woodchopper':
@@ -42,8 +44,38 @@ export function placementError(state: GameState, ctx: SimContext, player: number
       if (isForest(state, i)) return 'trees';
       return ctx.riverside[i] ? null : 'docks must be next to a river';
     case 'outpost':
+    case 'workshop':
+    case 'catapult':
       return isForest(state, i) ? 'trees' : null;
   }
+}
+
+// --- Bridges ----------------------------------------------------------------------------------------------------
+
+const isBridgeAt = (state: GameState, ctx: SimContext, i: number) => {
+  const h = ctx.map.hexes[i]!;
+  return structureAt(state, h.q, h.r)?.kind === 'bridge';
+};
+
+/**
+ * A bridge works when a straight run of bridge pieces through it, in any of the three hex directions, has land at
+ * both ends. Otherwise it's a half bridge and nothing can cross it (DESIGN §8.4).
+ */
+export function isWorkingBridge(state: GameState, ctx: SimContext, i: number): boolean {
+  if (!isBridgeAt(state, ctx, i)) return false;
+  const h = ctx.map.hexes[i]!;
+  const landAtEnd = (dq: number, dr: number) => {
+    for (let k = 1; ; k++) {
+      const j = idx(ctx, { q: h.q + dq * k, r: h.r + dr * k });
+      if (j === undefined) return false;
+      if (!ctx.isRiver[j]) return true;
+      if (!isBridgeAt(state, ctx, j)) return false;
+    }
+  };
+  // The three axes: east–west, north-east–south-west, north-west–south-east.
+  return (
+    (landAtEnd(1, 0) && landAtEnd(-1, 0)) || (landAtEnd(1, -1) && landAtEnd(-1, 1)) || (landAtEnd(0, -1) && landAtEnd(0, 1))
+  );
 }
 
 /**
@@ -54,14 +86,15 @@ function firstOutpostError(state: GameState, ctx: SimContext, player: number, i:
   const hex = ctx.map.hexes[i]!;
   if (hex.region !== state.players[player]!.region) return 'outside your region';
   if (!isOpenLand(state, ctx, i)) return ctx.isRiver[i] ? 'water' : isRock(ctx, i) ? 'rock' : isForest(state, i) ? 'trees' : 'already taken';
-  const territory = territoryIndices(ctx, hex.q, hex.r);
+  const territory = territoryIndices(ctx, hex.q, hex.r, ctx.config.outpost.firstTerritoryRadius);
   if (!territory.some((t) => isForest(state, t))) return 'no forest in this territory';
   if (!territory.some((t) => t !== i && ctx.riverside[t] && isOpenLand(state, ctx, t))) return 'no free riverside in this territory';
   return null;
 }
 
-export function territoryIndices(ctx: SimContext, q: number, r: number): number[] {
-  return hexesInRadius({ q, r }, ctx.config.outpost.territoryRadius)
+/** Hexes an outpost at (q, r) would cover with territory radius `radius`. */
+export function territoryIndices(ctx: SimContext, q: number, r: number, radius: number): number[] {
+  return hexesInRadius({ q, r }, radius)
     .map((h) => idx(ctx, h))
     .filter((t): t is number => t !== undefined);
 }
@@ -87,18 +120,21 @@ export function pickupError(state: GameState, ctx: SimContext, player: number, q
 /** Hex index at (q, r), or undefined. */
 const at = (ctx: SimContext, q: number, r: number) => idx(ctx, { q, r });
 
-/** Carriers pass through anything except rocks and water (DESIGN §6.4). */
-function rowPassable(ctx: SimContext, r: number, fromQ: number, toQ: number): boolean {
+/** Carriers pass through anything except rocks and water; a working bridge carries them over water (DESIGN §6.4, §8.4). */
+function rowPassable(state: GameState, ctx: SimContext, r: number, fromQ: number, toQ: number): boolean {
   for (let q = Math.min(fromQ, toQ); q <= Math.max(fromQ, toQ); q++) {
     const i = at(ctx, q, r);
-    if (i === undefined || ctx.isRiver[i] || isRock(ctx, i)) return false;
+    if (i === undefined || isRock(ctx, i)) return false;
+    if (ctx.isRiver[i] && !isWorkingBridge(state, ctx, i)) return false;
   }
   return true;
 }
 
 /**
- * Valid drop-offs B for pickup A (DESIGN §6.4): carriers only move along A's row. B is either the first hex before
- * the closest river on that row, or one of the player's factories on that row. Both within the route distance.
+ * Valid drop-offs B for pickup A (DESIGN §6.4): carriers only move along A's row. B is one of the player's factories
+ * on that row, or a river drop-off: the first hex before the first river east or west of A (the player picks
+ * either), or, if a working bridge crosses that river on the row, the bridge itself (the logs drop from the bridge
+ * into the river below). All within the route distance.
  */
 export function dropOffs(state: GameState, ctx: SimContext, player: number, aQ: number, r: number): DropOff[] {
   const max = ctx.config.carrier.maxRouteDistance;
@@ -107,24 +143,25 @@ export function dropOffs(state: GameState, ctx: SimContext, player: number, aQ: 
   // Factories first: if one stands on the river drop-off hex, the wood goes into the factory.
   for (const s of structures(state)) {
     if (s.kind !== 'factory' || s.owner !== player || s.r !== r) continue;
-    if (Math.abs(s.q - aQ) <= max && rowPassable(ctx, r, aQ, s.q)) out.push({ q: s.q, riverQ: null });
+    if (Math.abs(s.q - aQ) <= max && rowPassable(state, ctx, r, aQ, s.q)) out.push({ q: s.q, riverQ: null });
   }
 
-  // Closest river on the row, looking both ways (a tie gives two options).
-  let best = Infinity;
+  // The first river in each direction along the row (west, then east).
   const rivers: number[] = [];
-  for (let d = 1; d <= max + 1 && d <= best; d++) {
-    for (const q of [aQ - d, aQ + d]) {
-      const i = at(ctx, q, r);
-      if (i !== undefined && ctx.isRiver[i]) {
-        best = d;
-        rivers.push(q);
+  for (const dir of [-1, 1]) {
+    for (let d = 1; d <= max + 1; d++) {
+      const i = at(ctx, aQ + dir * d, r);
+      if (i === undefined) break;
+      if (ctx.isRiver[i]) {
+        rivers.push(aQ + dir * d);
+        break;
       }
     }
   }
   for (const riverQ of rivers) {
-    const q = riverQ + (riverQ > aQ ? -1 : 1);
-    if (Math.abs(q - aQ) <= max && rowPassable(ctx, r, aQ, q) && !out.some((d) => d.q === q)) out.push({ q, riverQ });
+    const onBridge = isWorkingBridge(state, ctx, at(ctx, riverQ, r)!);
+    const q = onBridge ? riverQ : riverQ + (riverQ > aQ ? -1 : 1);
+    if (Math.abs(q - aQ) <= max && rowPassable(state, ctx, r, aQ, q) && !out.some((d) => d.q === q)) out.push({ q, riverQ });
   }
   return out;
 }

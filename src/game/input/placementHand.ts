@@ -5,20 +5,15 @@ import type { Hex } from '../../sim/hex';
 import { carrierRouteError, dropOffs, pickupError, placementError } from '../../sim/systems/placement';
 import type { ItemKind } from '../../sim/types';
 import type { SimRunner } from '../simRunner';
-
-export const ITEM_NAMES: Record<ItemKind, string> = {
-  outpost: 'Outpost',
-  factory: 'Factory-mill',
-  dock: 'Dock',
-  woodchopper: 'Woodchopper',
-  carrier: 'Carrier',
-};
+import { ITEM_NAMES } from '../ui/items';
 
 export interface Preview {
   /** Hexes to tint: green if ok, red if not. */
   cells: { hex: Hex; ok: boolean }[];
   /** Carrier route being drawn, A → B. */
   route?: { a: Hex; b: Hex };
+  /** The icon of the item being placed, shown on the hovered hex. */
+  ghost?: { hex: Hex; item: ItemKind; ok: boolean };
   /** One line for the UI: what to do, or why the hovered hex is illegal. */
   message: string;
 }
@@ -55,6 +50,7 @@ export class PlacementHand {
         const pickups = ctx.map.hexes.filter((h) => pickupError(state, ctx, this.player, h.q, h.r) === null);
         const err = onMap ? pickupError(state, ctx, this.player, onMap.q, onMap.r) : null;
         return {
+          ghost: onMap ? { hex: onMap, item, ok: !err } : undefined,
           cells: [...pickups.map((h): Preview['cells'][number] => ({ hex: h, ok: true })), ...(onMap && err ? [{ hex: onMap, ok: false }] : [])],
           message: err ? `Carrier pickup: ${err}` : 'Carrier: click a pickup A (a wood pile, woodchopper or dock). Right-click cancels.',
         };
@@ -63,6 +59,7 @@ export class PlacementHand {
       const options = dropOffs(state, ctx, this.player, a.q, a.r);
       const target = onMap && onMap.r === a.r && options.some((d) => d.q === onMap.q) ? onMap : null;
       return {
+        ghost: onMap ? { hex: onMap, item, ok: !!target } : undefined,
         cells: [{ hex: a, ok: true }, ...options.map((d) => ({ hex: { q: d.q, r: a.r }, ok: true }))],
         route: target ? { a, b: target } : undefined,
         message: options.length ? 'Carrier: click a drop-off B on the same row (green). Right-click cancels.' : 'Carrier: no drop-off on this row. Right-click cancels.',
@@ -72,6 +69,7 @@ export class PlacementHand {
     const err = onMap ? placementError(state, ctx, this.player, item, onMap.q, onMap.r) : null;
     const what = started ? `${ITEM_NAMES[item]} in hand` : 'Place your first outpost in your region';
     return {
+      ghost: onMap ? { hex: onMap, item, ok: !err } : undefined,
       cells: onMap ? [{ hex: onMap, ok: !err }] : [],
       message: err ? `${what}: ${err}` : `${what}: click to place.`,
     };
