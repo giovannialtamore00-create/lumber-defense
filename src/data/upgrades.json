@@ -1,0 +1,156 @@
+{
+  "pricing": {
+    "levels": [
+      { "cost": 40, "timeS": 20 },
+      { "cost": 80, "timeS": 40 },
+      { "cost": 160, "timeS": 60 }
+    ],
+    "secondPathCostMultiplier": 2
+  },
+  "types": [
+    {
+      "type": "outpost",
+      "name": "Outpost",
+      "paths": [
+        { "id": "reach", "name": "Reach", "levels": [
+          { "desc": "Every outpost's territory radius +1", "radiusBonus": 1 },
+          { "desc": "Radius +2", "radiusBonus": 2 },
+          { "desc": "Radius +3", "radiusBonus": 3 }
+        ] },
+        { "id": "archer", "name": "Archer", "levels": [
+          { "desc": "An archer on top: range 2, 5 dmg, 1 hit/s", "locked": "combat" },
+          { "desc": "Range 3, 8 dmg", "locked": "combat" },
+          { "desc": "Fire arrows: burning damage", "locked": "combat" }
+        ] }
+      ]
+    },
+    {
+      "type": "factory",
+      "name": "Factory-mill",
+      "paths": [
+        { "id": "efficiency", "name": "Efficiency", "levels": [
+          { "desc": "All crafting costs −10%", "costReductionPct": 10 },
+          { "desc": "Crafting costs −20%", "costReductionPct": 20 },
+          { "desc": "Crafting costs −30%", "costReductionPct": 30 }
+        ] },
+        { "id": "improvedFrames", "name": "Improved Frames", "levels": [
+          { "desc": "All your structures +15% HP", "locked": "combat" },
+          { "desc": "+30% HP", "locked": "combat" },
+          { "desc": "+50% HP", "locked": "combat" }
+        ] }
+      ]
+    },
+    {
+      "type": "dock",
+      "name": "Dock",
+      "paths": [
+        { "id": "capacity", "name": "Capacity", "levels": [
+          { "desc": "Holds 40 wood", "capacity": 40 },
+          { "desc": "Holds 70 wood", "capacity": 70 },
+          { "desc": "Holds 100 wood", "capacity": 100 }
+        ] },
+        { "id": "dispense", "name": "Dispense", "levels": [
+          { "desc": "Feeds its factory-mill 2 wood/s", "dispensePerS": 2, "feedRange": 1 },
+          { "desc": "Feeds 3 wood/s", "dispensePerS": 3, "feedRange": 1 },
+          { "desc": "Chute: feeds a factory-mill up to 2 hexes away", "dispensePerS": 3, "feedRange": 2 }
+        ] }
+      ]
+    },
+    {
+      "type": "carrier",
+      "name": "Carrier",
+      "paths": [
+        { "id": "capacity", "name": "Capacity", "levels": [
+          { "desc": "Carries 10, but 10% slower", "capacity": 10, "speedPct": -10 },
+          { "desc": "Carries 15, 20% slower", "capacity": 15, "speedPct": -20 },
+          { "desc": "Carries 20, 30% slower", "capacity": 20, "speedPct": -30 }
+        ] },
+        { "id": "mobility", "name": "Mobility", "levels": [
+          { "desc": "20% faster, route up to 6 hexes", "speedPct": 20, "route": 6 },
+          { "desc": "40% faster, route up to 7", "speedPct": 40, "route": 7 },
+          { "desc": "60% faster, route up to 8", "speedPct": 60, "route": 8 }
+        ] }
+      ]
+    },
+    {
+      "type": "woodchopper",
+      "name": "Woodchopper",
+      "paths": [
+        { "id": "output", "name": "Output", "levels": [
+          { "desc": "Cuts 0.375 wood/s", "woodPerS": 0.375 },
+          { "desc": "Cuts 0.5 wood/s", "woodPerS": 0.5 },
+          { "desc": "Cuts 0.75 wood/s", "woodPerS": 0.75 }
+        ] },
+        { "id": "logSlide", "name": "Log Slide", "levels": [
+          { "desc": "On a riverside forest, slides its wood into the river at 0.125 wood/s", "slidePerS": 0.125, "riverRange": 1 },
+          { "desc": "Slides 0.25 wood/s", "slidePerS": 0.25, "riverRange": 1 },
+          { "desc": "Also when the river is 2 hexes away", "slidePerS": 0.25, "riverRange": 2 }
+        ] }
+      ]
+    },
+    {
+      "type": "bridge",
+      "name": "Bridge",
+      "paths": [
+        { "id": "drawbridge", "name": "Drawbridge", "levels": [
+          { "desc": "Other players' wheeled units can't cross", "blockOthers": 1 },
+          { "desc": "Grate: floating wood stops here for your carriers", "blockOthers": 1, "grate": 1 },
+          { "desc": "Gatehouse archer (like the outpost archer)", "locked": "combat" }
+        ] },
+        { "id": "causeway", "name": "Causeway", "levels": [
+          { "desc": "Your wheeled units +50% speed for 10 s after crossing", "boostPct": 50, "boostS": 10, "span": 1 },
+          { "desc": "Spans 2 water hexes along its row", "boostPct": 50, "boostS": 10, "span": 2 },
+          { "desc": "Spans 3 water hexes", "boostPct": 50, "boostS": 10, "span": 3 }
+        ] }
+      ]
+    },
+    {
+      "type": "workshop",
+      "name": "Workshop",
+      "paths": [
+        { "id": "discount", "name": "Discount", "levels": [
+          { "desc": "Upgrades cost 10% less", "upgradeCostReductionPct": 10 },
+          { "desc": "Upgrades cost 20% less", "upgradeCostReductionPct": 20 },
+          { "desc": "Upgrades cost 30% less", "upgradeCostReductionPct": 30 }
+        ] },
+        { "id": "fastResearch", "name": "Fast Research", "levels": [
+          { "desc": "Research 20% faster", "researchTimeReductionPct": 20 },
+          { "desc": "Research 35% faster", "researchTimeReductionPct": 35 },
+          { "desc": "Research 50% faster", "researchTimeReductionPct": 50 }
+        ] }
+      ]
+    },
+    {
+      "type": "catapult",
+      "name": "Catapult",
+      "paths": [
+        { "id": "range", "name": "Range", "levels": [
+          { "desc": "Range 4 → 5", "locked": "combat" },
+          { "desc": "Range 6", "locked": "combat" },
+          { "desc": "Range 7", "locked": "combat" }
+        ] },
+        { "id": "firepower", "name": "Firepower", "levels": [
+          { "desc": "10 → 15 dmg", "locked": "combat" },
+          { "desc": "Fireball: 20 dmg + burning", "locked": "combat" },
+          { "desc": "Firestorm: burns forests in conflict zones", "locked": "combat" }
+        ] }
+      ]
+    },
+    {
+      "type": "forestGuard",
+      "name": "Forest guard",
+      "paths": [
+        { "id": "growth", "name": "Growth", "levels": [
+          { "desc": "Each visit gives 12.5 s of growth", "refreshGrowthS": 12.5 },
+          { "desc": "Each visit gives 15 s", "refreshGrowthS": 15 },
+          { "desc": "Each visit gives 20 s", "refreshGrowthS": 20 }
+        ] },
+        { "id": "afforest", "name": "Afforest", "levels": [
+          { "desc": "Also turns 1 empty land hex in its area into forest", "newForests": 1 },
+          { "desc": "Up to 2 new forest hexes", "newForests": 2 },
+          { "desc": "Also in conflict zones", "locked": "combat" }
+        ] }
+      ]
+    }
+  ]
+}

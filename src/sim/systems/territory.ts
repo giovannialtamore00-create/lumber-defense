@@ -4,13 +4,16 @@ import { hexesInRadius } from '../hex';
 import { idx } from '../context';
 import { structures } from '../state';
 import type { GameState } from '../types';
+import { upgradeValue } from '../upgrades';
 
 /** Recomputes which players cover each hex. Call after outposts are added or removed. */
 export function recomputeCoverage(state: GameState, ctx: SimContext): void {
   state.coverage.fill(0);
   for (const s of structures(state)) {
     if (s.kind !== 'outpost') continue;
-    for (const h of hexesInRadius(s, s.radius ?? ctx.config.outpost.territoryRadius)) {
+    // Reach (DESIGN §10.3) grows every outpost of the owner.
+    const reach = upgradeValue(state, ctx, s.owner, 'outpost', 'reach', 'radiusBonus', 0);
+    for (const h of hexesInRadius(s, (s.radius ?? ctx.config.outpost.territoryRadius) + reach)) {
       const i = idx(ctx, h);
       if (i !== undefined) state.coverage[i]! |= 1 << s.owner;
     }

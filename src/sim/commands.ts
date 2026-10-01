@@ -2,15 +2,25 @@
 import type { SimContext } from './context';
 import { MILLI } from './fixed';
 import { distance } from './hex';
-import { addEntity, structureAt } from './state';
+import { idx } from './context';
+import { addEntity, removeEntity, structureAt } from './state';
+import { spawnPile } from './systems/river';
+import { startResearch, upgradeError } from './upgrades';
+import { isWater } from './water';
 import { craftCost, craftError } from './systems/crafting';
 import { carrierRouteError, dropOffs, isForest, placementError, territoryIndices } from './systems/placement';
 import { recomputeCoverage } from './systems/territory';
-import type { Carrier, Command, GameState, Structure, StructureKind } from './types';
+import type { Carrier, Command, ForestGuard, GameState, StoneCutter, Structure, StructureKind } from './types';
 
 export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): void {
   const player = state.players[cmd.player];
   if (!player) return;
+  if (cmd.type === 'takeControl') {
+    player.bot = false; // step back in, at whatever progress the bot has reached (DESIGN §5)
+    return;
+  }
+  if (player.bot) return; // the bot has this slot
+  if (state.phase === 'start' && cmd.type !== 'placeOutpost') return; // only first outposts during starting turns
 
   switch (cmd.type) {
     case 'placeOutpost': {
@@ -45,20 +55,97 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
         aQ: cmd.aQ,
         bQ: cmd.bQ,
         riverQ: drop.riverQ,
+        pickupQ: cmd.aQ,
         posQ: cmd.aQ * MILLI,
         phase: 'toA',
         load: 0,
         hp: ctx.config.items.carrier.hp,
+        boostTicks: 0,
       });
+      return;
+    }
+    case 'placeGuard': {
+      const h = player.hand.indexOf('forestGuard');
+      if (h < 0 || placementError(state, ctx, cmd.player, 'forestGuard', cmd.q, cmd.r)) return;
+      player.hand.splice(h, 1);
+      addEntity<ForestGuard>(state, {
+        type: 'guard',
+        owner: cmd.player,
+        homeQ: cmd.q,
+        homeR: cmd.r,
+        q: cmd.q,
+        r: cmd.r,
+        toQ: null,
+        toR: null,
+        moveTicks: 0,
+        attendTicks: 0,
+        afforested: 0,
+        hp: ctx.config.items.forestGuard.hp,
+      });
+      return;
+    }
+    case 'placeCutter': {
+      const h = player.hand.indexOf('stoneCutter');
+      if (h < 0 || placementError(state, ctx, cmd.player, 'stoneCutter', cmd.q, cmd.r)) return;
+      player.hand.splice(h, 1);
+      addEntity<StoneCutter>(state, { type: 'cutter', owner: cmd.player, q: cmd.q, r: cmd.r, hp: ctx.config.items.stoneCutter.hp });
+      return;
+    }
+    case 'store': {
+      // Bin the item in hand into the warehouse (DESIGN §7.3b).
+      const item = player.hand.shift();
+      if (item) player.warehouse.push(item);
+      return;
+    }
+    case 'retrieve': {
+      // Pick a warehouse item back up: it becomes the next item to place.
+      if (!Number.isInteger(cmd.index) || cmd.index < 0 || cmd.index >= player.warehouse.length) return;
+      player.hand.unshift(player.warehouse.splice(cmd.index, 1)[0]!);
+      return;
+    }
+    case 'dismantle': {
+      // Dismantle one of your own structures (not outposts) or units; half its cost stays where it stood, plus
+      // whatever a carrier was carrying (DESIGN §7.3c).
+      const e = state.entities.find((x) => x.id === cmd.id);
+      if (!e || e.type === 'pile' || e.owner !== cmd.player) return;
+      if (e.type === 'structure' && e.kind === 'outpost') return;
+      const kind = e.type === 'structure' ? e.kind : e.type === 'carrier' ? 'carrier' : e.type === 'cutter' ? 'stoneCutter' : 'forestGuard';
+      const at = e.type === 'carrier' ? { q: Math.round(e.posQ / MILLI), r: e.r } : { q: e.q, r: e.r };
+      let wood = Math.floor((ctx.config.items[kind].cost * MILLI * ctx.config.hammer.refundPct) / 100);
+      if (e.type === 'carrier') wood += e.load;
+      removeEntity(state, e.id);
+      dropWood(state, ctx, at.q, at.r, wood);
+      return;
+    }
+    case 'buyUpgrade': {
+      if (upgradeError(state, ctx, cmd.player, cmd.upgradeType, cmd.path)) return;
+      startResearch(state, ctx, cmd.player, cmd.upgradeType, cmd.path);
+      return;
+    }
+    case 'give': {
+      // Trading (DESIGN §7.3d): whole wood, to another player, up to what you have.
+      const to = state.players[cmd.to];
+      const amount = cmd.amount * MILLI;
+      if (!to || cmd.to === cmd.player || !Number.isInteger(cmd.amount) || cmd.amount < 1 || amount > player.wood) return;
+      player.wood -= amount;
+      to.wood += amount;
       return;
     }
     case 'craft': {
       if (craftError(state, ctx, cmd.player, cmd.item)) return;
-      player.wood -= craftCost(ctx, cmd.item);
+      player.wood -= craftCost(state, ctx, cmd.player, cmd.item);
       player.queue.push({ item: cmd.item, totalTicks: 0, doneTicks: 0 });
       return;
     }
   }
+}
+
+/** Leaves wood on a hex: a stack on land, a floating pile on water. */
+function dropWood(state: GameState, ctx: SimContext, q: number, r: number, amount: number): void {
+  const i = idx(ctx, { q, r });
+  if (i === undefined || amount <= 0) return;
+  if (isWater(state, ctx, i)) spawnPile(state, ctx, q, r, amount);
+  else state.stacks[i]! += amount;
 }
 
 function addStructure(state: GameState, ctx: SimContext, kind: StructureKind, owner: number, q: number, r: number): Structure {

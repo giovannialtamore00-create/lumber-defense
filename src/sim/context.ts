@@ -3,11 +3,13 @@
 import { perTick, toMilli } from './fixed';
 import { type Hex, hexKey, neighbours } from './hex';
 import { type MapData, riverStrengthLevel } from './map';
-import type { Config } from './types';
+import defaultUpgrades from '../data/upgrades.json';
+import type { Config, UpgradesData } from './types';
 
 export interface SimContext {
   map: MapData;
   config: Config;
+  upgrades: UpgradesData;
   indexOf: Map<string, number>;
   /** Neighbour hex indices per hex, in the fixed DIRECTIONS order (missing neighbours skipped). */
   neighbourIdx: number[][];
@@ -20,6 +22,8 @@ export interface SimContext {
   riverId: number[];
   /** River strength row per river hex: 1 at the top of its half … 8 at the bottom (DESIGN §4.3); 0 for land. */
   riverRow: number[];
+  /** River hex that is the first hex of a branch right below a fork (a dam there diverts instead of blocking). */
+  forkBranch: boolean[];
   /** Raw factory-mill bonus (basis points) at which the craft-time reduction reaches its maximum (DESIGN §6.7). */
   fullBoostRawBp: number;
   rates: {
@@ -32,7 +36,7 @@ export interface SimContext {
   };
 }
 
-export function createContext(map: MapData, config: Config): SimContext {
+export function createContext(map: MapData, config: Config, upgrades: UpgradesData = defaultUpgrades): SimContext {
   const indexOf = new Map<string, number>();
   map.hexes.forEach((h, i) => indexOf.set(hexKey(h), i));
   const neighbourIdx = map.hexes.map((h) =>
@@ -49,6 +53,8 @@ export function createContext(map: MapData, config: Config): SimContext {
   const riverside = map.hexes.map((h, i) => h.terrain !== 'river' && neighbourIdx[i]!.some((n) => isRiver[n]));
   const riverId = map.hexes.map((h) => (h.terrain === 'river' ? (h.river ?? 0) : -1));
   const riverRow = map.hexes.map((h) => (h.terrain === 'river' ? riverStrengthLevel(map, h.r) : 0));
+  const forkBranch = map.hexes.map(() => false);
+  for (const d of down) if (d !== 'exit' && d.length > 1) for (const b of d) forkBranch[b] = true;
   const fm = config.factoryMill;
   const fullBoostRawBp =
     fm.extraFactoryBp * (fm.maxSetup.factories - 1) + fm.maxSetup.factories * fm.riverBonusBpByRow[fm.maxSetup.riverRow - 1]!;
@@ -56,6 +62,7 @@ export function createContext(map: MapData, config: Config): SimContext {
   return {
     map,
     config,
+    upgrades,
     indexOf,
     neighbourIdx,
     isRiver,
@@ -63,6 +70,7 @@ export function createContext(map: MapData, config: Config): SimContext {
     riverside,
     riverId,
     riverRow,
+    forkBranch,
     fullBoostRawBp,
     rates: {
       woodchopper: perTick(config.woodchopper.woodPerSecond, t),

@@ -8,8 +8,12 @@ export const ITEM_NAMES: Record<ItemKind, string> = {
   carrier: 'Carrier',
   woodchopper: 'Woodchopper',
   bridge: 'Bridge',
+  dam: 'Dam',
   workshop: 'Workshop',
   catapult: 'Catapult',
+  forestGuard: 'Forest guard',
+  stoneCutter: 'Stone cutter',
+  excavator: 'Excavator',
 };
 
 export const ITEM_DESCRIPTIONS: Record<ItemKind, string> = {
@@ -19,6 +23,10 @@ export const ITEM_DESCRIPTIONS: Record<ItemKind, string> = {
   carrier: 'Carries wood along its row, A → B, forever',
   woodchopper: 'On a forest hex. Cuts wood into a log stack',
   bridge: 'On water. Works once it connects two lands',
-  workshop: 'Where upgrades are bought (upgrades come in M6)',
+  dam: 'On a river. Stops floating wood; on a fork, sends it down the other branch',
+  workshop: 'Researches upgrades (Workshop tab); more workshops research faster',
   catapult: 'Offensive machine (its behaviour comes in M5)',
+  forestGuard: 'Walks the hexes around it, replanting spent forests',
+  stoneCutter: 'On a rock. Breaks it in 5 min for 1 stone (several add up)',
+  excavator: 'On empty land. Digs it in 3 min so water can flow there',
 };

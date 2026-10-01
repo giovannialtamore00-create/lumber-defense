@@ -21,7 +21,7 @@ describe('factory-mill boost (DESIGN §6.7)', () => {
     put(state, ctx, 'outpost', 0, cell(1, 3));
     const top = put(state, ctx, 'factory', 0, cell(4, 0));
     // At the top it touches river rows 1 and 2: row 2 counts (0.4% raw → 90% × 40 / 8400).
-    expect(watermills(ctx, top)).toEqual([{ river: 0, row: 2, bonusBp: 40 }]);
+    expect(watermills(state, ctx, top)).toEqual([{ river: 0, row: 2, bonusBp: 40 }]);
     expect(craftReductionBp(state, ctx, 0)).toBe(42);
 
     const second = setup(RIVER8);
@@ -44,12 +44,12 @@ describe('factory-mill boost (DESIGN §6.7)', () => {
     const { ctx, state } = setup(TWO_RIVERS);
     put(state, ctx, 'outpost', 0, cell(1, 3));
     const double = put(state, ctx, 'factory', 0, cell(3, 7));
-    expect(watermills(ctx, double).map((m) => m.river)).toEqual([0, 1]);
+    expect(watermills(state, ctx, double).map((m) => m.river)).toEqual([0, 1]);
     expect(craftReductionBp(state, ctx, 0)).toBe(2571); // 2400 raw
 
     const same = setup(Array.from({ length: 8 }, () => '. . ~ . ~ .'));
     put(same.state, same.ctx, 'outpost', 0, cell(1, 3));
-    expect(watermills(same.ctx, put(same.state, same.ctx, 'factory', 0, cell(3, 7)))).toHaveLength(1);
+    expect(watermills(same.state, same.ctx, put(same.state, same.ctx, 'factory', 0, cell(3, 7)))).toHaveLength(1);
   });
 
   it('the reduction stops at 90%', () => {
@@ -67,6 +67,7 @@ describe('crafting (DESIGN §7.2)', () => {
     const { ctx, state } = setup(RIVER8);
     put(state, ctx, 'outpost', 0, cell(1, 3));
     put(state, ctx, 'factory', 0, cell(4, 7));
+    put(state, ctx, 'woodchopper', 0, cell(0, 3)); // a pickup, so the carrier has somewhere to go
     step(state, ctx, [{ type: 'craft', player: 0, item: 'carrier' }]);
     expect(state.players[0]!.wood).toBe(40_000);
     expect(state.players[0]!.queue[0]!.totalTicks).toBe(88); // 100 ticks × (1 − 12.85%), rounded up

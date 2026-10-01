@@ -1,10 +1,11 @@
 // The placement hand (ARCHITECTURE.md §8): what the local player is placing, green/red previews and clicks.
 // Legality always comes from the sim's own placement functions, so the preview can't disagree with the sim.
 import { idx } from '../../sim/context';
-import type { Hex } from '../../sim/hex';
+import { type Hex, hexesInRadius } from '../../sim/hex';
 import { carrierRouteError, dropOffs, pickupError, placementError } from '../../sim/systems/placement';
 import type { ItemKind } from '../../sim/types';
 import type { SimRunner } from '../simRunner';
+import { type Thing, canDismantle, hexOf, kindOf, refundOf, thingAt } from '../ui/describe';
 import { ITEM_NAMES } from '../ui/items';
 
 export interface Preview {
@@ -21,6 +22,10 @@ export interface Preview {
 export class PlacementHand {
   /** Carrier pickup chosen, waiting for a drop-off. */
   private carrierA: Hex | null = null;
+  /** Hammer tool active: clicking one of our items asks to dismantle it (DESIGN §7.3c). */
+  hammer = false;
+  /** Called with an entity id when the player asks to dismantle it; the UI shows the confirmation. */
+  onAskDismantle: (id: number) => void = () => {};
 
   constructor(
     private readonly runner: SimRunner,
@@ -36,14 +41,32 @@ export class PlacementHand {
 
   cancel(): void {
     this.carrierA = null;
+    this.hammer = false;
+  }
+
+  /** Our item on this hex that the hammer may dismantle (anything but outposts), if any. */
+  private hammerTarget(hex: Hex) {
+    const t = thingAt(this.runner, hex);
+    return t && canDismantle(t, this.player) ? t : null;
   }
 
   preview(hover: Hex | null): Preview {
     const { state, ctx } = this.runner;
     const item = this.current();
     const started = state.players[this.player]!.started;
-    if (!item) return { cells: [], message: '' };
     const onMap = hover && idx(ctx, hover) !== undefined ? hover : null;
+    if (this.hammer) {
+      // Everything we can dismantle is highlighted; the hovered one in red.
+      const target = onMap ? this.hammerTarget(onMap) : null;
+      const all = state.entities.filter((e): e is Thing => e.type !== 'pile' && canDismantle(e, this.player));
+      return {
+        cells: [...all.map((e) => ({ hex: hexOf(e), ok: true })), ...(target ? [{ hex: hexOf(target), ok: false }] : [])],
+        message: target
+          ? `Hammer: click to dismantle this ${ITEM_NAMES[kindOf(target)]} (${refundOf(this.runner, target)} wood back). Right-click cancels.`
+          : 'Hammer: click one of your highlighted items to dismantle it for half its cost. Right-click cancels.',
+      };
+    }
+    if (!item) return { cells: [], message: '' };
 
     if (item === 'carrier') {
       if (!this.carrierA) {
@@ -68,9 +91,14 @@ export class PlacementHand {
 
     const err = onMap ? placementError(state, ctx, this.player, item, onMap.q, onMap.r) : null;
     const what = started ? `${ITEM_NAMES[item]} in hand` : 'Place your first outpost in your region';
+    // A forest guard shows the hexes it will look after.
+    const area =
+      item === 'forestGuard' && onMap && !err
+        ? hexesInRadius(onMap, ctx.config.forestGuard.range).filter((h) => idx(ctx, h) !== undefined && !(h.q === onMap.q && h.r === onMap.r))
+        : [];
     return {
       ghost: onMap ? { hex: onMap, item, ok: !err } : undefined,
-      cells: onMap ? [{ hex: onMap, ok: !err }] : [],
+      cells: [...(onMap ? [{ hex: onMap, ok: !err }] : []), ...area.map((h) => ({ hex: h, ok: true }))],
       message: err ? `${what}: ${err}` : `${what}: click to place.`,
     };
   }
@@ -79,6 +107,11 @@ export class PlacementHand {
     const { state, ctx } = this.runner;
     const item = this.current();
     const p = state.players[this.player]!;
+    if (this.hammer) {
+      const target = this.hammerTarget(hex);
+      if (target) this.onAskDismantle(target.id); // the confirmation dialog does the rest
+      return;
+    }
     if (!item) return;
 
     if (!p.started) {
@@ -98,7 +131,9 @@ export class PlacementHand {
       }
       return;
     }
-    if (!placementError(state, ctx, this.player, item, hex.q, hex.r))
-      this.runner.submit({ type: 'place', player: this.player, item, q: hex.q, r: hex.r });
+    if (placementError(state, ctx, this.player, item, hex.q, hex.r)) return;
+    if (item === 'forestGuard') this.runner.submit({ type: 'placeGuard', player: this.player, q: hex.q, r: hex.r });
+    else if (item === 'stoneCutter') this.runner.submit({ type: 'placeCutter', player: this.player, q: hex.q, r: hex.r });
+    else this.runner.submit({ type: 'place', player: this.player, item, q: hex.q, r: hex.r });
   }
 }

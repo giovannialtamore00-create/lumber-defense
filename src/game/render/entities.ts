@@ -4,7 +4,8 @@ import type Phaser from 'phaser';
 import type { SimContext } from '../../sim/context';
 import { MILLI } from '../../sim/fixed';
 import { stackStage } from '../../sim/stack';
-import type { Carrier, Pile, Structure } from '../../sim/types';
+import type { Carrier, ForestGuard, GameState, Pile, StoneCutter, Structure } from '../../sim/types';
+import { downstream } from '../../sim/water';
 import { HEX_SIZE, type Point, hexToScreen } from '../iso';
 
 export const PLAYER_COLORS = [0xe0533d, 0x3d7be0, 0xe8c547, 0x9b5de5];
@@ -34,6 +35,14 @@ export interface StructureLook {
   mills?: Point[];
   /** Bridge: working, or a half bridge. */
   working?: boolean;
+  /** Dam: HP left as a fraction of full. */
+  hpFraction?: number;
+  /** Dock: screen vector from the dock's hex centre to the centre of a water hex next to it. */
+  toWater?: Point;
+  /** Bridge: screen vector from its centre to the next hex along the direction it spans. */
+  span?: Point;
+  /** Excavator, workshop: work done, 0..1 (excavator digging). */
+  progress?: number;
 }
 
 function drawWheel(g: G, at: Point, timeMs: number): void {
@@ -51,24 +60,81 @@ export function drawStructure(g: G, s: Structure, timeMs: number, look: Structur
   const color = PLAYER_COLORS[s.owner] ?? 0xffffff;
   switch (s.kind) {
     case 'bridge': {
-      // Planks across the water; a half bridge is broken off at one end and greyed.
+      // A curved deck from one bank to the other: it starts and ends on the neighbouring hexes' edges and arches up
+      // in the middle. A half bridge stops halfway and is greyed.
+      const d = look.span ?? { x: HEX_SIZE * Math.sqrt(3), y: 0 };
+      const reach = 0.62;
+      const from = { x: c.x - d.x * reach, y: c.y - d.y * reach };
+      const to = look.working ? { x: c.x + d.x * reach, y: c.y + d.y * reach } : { x: c.x + d.x * 0.1, y: c.y + d.y * 0.1 };
+      const len = Math.hypot(to.x - from.x, to.y - from.y);
+      const nx = (-(to.y - from.y) / len) * 5;
+      const ny = ((to.x - from.x) / len) * 5;
+      const steps = 12;
+      const curve: Point[] = [];
+      for (let k = 0; k <= steps; k++) {
+        const t = k / steps;
+        const lift = Math.sin(Math.PI * t) * 9; // arch
+        curve.push({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t - lift });
+      }
+      // Deck: the curve widened both ways.
       g.fillStyle(look.working ? PLANK : 0x7d6a55, 1);
-      const width = look.working ? 44 : 26;
-      g.fillRect(c.x - 22, c.y - 5, width, 10);
+      g.fillPoints([...curve.map((p) => ({ x: p.x + nx, y: p.y + ny })), ...[...curve].reverse().map((p) => ({ x: p.x - nx, y: p.y - ny }))], true);
       g.lineStyle(1, DARK, 0.7);
-      for (let x = -20; x < width - 22; x += 5) g.lineBetween(c.x + x, c.y - 5, c.x + x, c.y + 5);
+      for (const p of curve.slice(1, -1)) g.lineBetween(p.x + nx, p.y + ny, p.x - nx, p.y - ny);
+      // Rails, and a post in the owner's colour at each end.
+      g.lineStyle(2, DARK, 0.9);
+      g.strokePoints(curve.map((p) => ({ x: p.x - nx, y: p.y - ny - 3 })), false);
       g.fillStyle(color, 1);
-      g.fillRect(c.x - 22, c.y - 9, 3, 6);
-      if (look.working) g.fillRect(c.x + 19, c.y - 9, 3, 6);
+      g.fillRect(from.x - 2, from.y - 9, 3, 7);
+      if (look.working) g.fillRect(to.x - 1, to.y - 9, 3, 7);
+      break;
+    }
+    case 'dam': {
+      // A wooden wall across the water, with an HP bar once damaged.
+      g.fillStyle(PLANK, 1);
+      g.fillRect(c.x - 20, c.y - 9, 40, 12);
+      g.lineStyle(1, DARK, 0.7);
+      for (let x = -16; x < 20; x += 6) g.lineBetween(c.x + x, c.y - 9, c.x + x, c.y + 3);
+      g.fillStyle(color, 1);
+      g.fillRect(c.x - 20, c.y - 12, 40, 3);
+      if (look.hpFraction !== undefined && look.hpFraction < 1) {
+        g.fillStyle(0x000000, 0.7).fillRect(c.x - 16, c.y + 7, 32, 4);
+        g.fillStyle(look.hpFraction > 0.3 ? 0x3ddc84 : 0xff4d4d, 1).fillRect(c.x - 16, c.y + 7, 32 * look.hpFraction, 4);
+      }
       break;
     }
     case 'workshop': {
+      // A workshop with a small tower, so it's easy to tell apart from a factory-mill.
       g.fillStyle(0xb58b5a, 1);
-      g.fillRect(c.x - 12, c.y - 14, 24, 14);
+      g.fillRect(c.x - 15, c.y - 13, 20, 13);
       g.fillStyle(color, 1);
-      g.fillTriangle(c.x - 15, c.y - 13, c.x + 15, c.y - 13, c.x, c.y - 24);
+      g.fillTriangle(c.x - 18, c.y - 12, c.x + 8, c.y - 12, c.x - 5, c.y - 22);
       g.lineStyle(3, DARK, 1);
-      g.lineBetween(c.x - 4, c.y - 3, c.x + 4, c.y - 10);
+      g.lineBetween(c.x - 9, c.y - 2, c.x - 3, c.y - 9);
+      g.fillStyle(0x9c7448, 1);
+      g.fillRect(c.x + 6, c.y - 30, 9, 30);
+      g.fillStyle(DARK, 1);
+      g.fillRect(c.x + 8, c.y - 24, 5, 5);
+      g.fillStyle(color, 1);
+      g.fillTriangle(c.x + 4, c.y - 30, c.x + 17, c.y - 30, c.x + 10.5, c.y - 39);
+      break;
+    }
+    case 'excavator': {
+      // A small digger with a progress bar while it digs.
+      g.fillStyle(0xe0b13a, 1);
+      g.fillRect(c.x - 12, c.y - 8, 16, 7);
+      g.fillRect(c.x - 9, c.y - 15, 8, 7);
+      g.fillStyle(DARK, 1);
+      g.fillRect(c.x - 13, c.y - 1, 18, 4);
+      const swing = Math.sin(timeMs / 300) * 3;
+      g.lineStyle(3, 0xe0b13a, 1);
+      g.lineBetween(c.x + 2, c.y - 10, c.x + 10, c.y - 16 + swing);
+      g.lineBetween(c.x + 10, c.y - 16 + swing, c.x + 14, c.y - 4 + swing);
+      g.fillStyle(color, 1);
+      g.fillRect(c.x - 9, c.y - 18, 8, 3);
+      const f = look.progress ?? 0;
+      g.fillStyle(0x000000, 0.6).fillRect(c.x - 14, c.y + 6, 28, 4);
+      g.fillStyle(0x8a5a2b, 1).fillRect(c.x - 14, c.y + 6, 28 * f, 4);
       break;
     }
     case 'catapult': {
@@ -106,21 +172,36 @@ export function drawStructure(g: G, s: Structure, timeMs: number, look: Structur
       break;
     }
     case 'dock': {
+      // A pier from the middle of its hex out over the water, on posts in the owner's colour.
+      const w = look.toWater ?? { x: HEX_SIZE * Math.sqrt(3), y: 0 };
+      const len = Math.hypot(w.x, w.y);
+      const ux = w.x / len;
+      const uy = w.y / len;
+      const px = -uy * 8;
+      const py = ux * 8;
+      const start = { x: c.x - ux * 6, y: c.y - uy * 6 };
+      const end = { x: c.x + w.x * 0.78, y: c.y + w.y * 0.78 }; // reaches into the water hex
       g.fillStyle(PLANK, 1);
       g.fillPoints(
         [
-          { x: c.x - 16, y: c.y - 4 },
-          { x: c.x + 14, y: c.y - 4 },
-          { x: c.x + 18, y: c.y + 4 },
-          { x: c.x - 12, y: c.y + 4 },
+          { x: start.x + px, y: start.y + py },
+          { x: end.x + px, y: end.y + py },
+          { x: end.x - px, y: end.y - py },
+          { x: start.x - px, y: start.y - py },
         ],
         true,
       );
       g.lineStyle(1, DARK, 0.6);
-      for (let x = -10; x <= 10; x += 6) g.lineBetween(c.x + x, c.y - 4, c.x + x + 4, c.y + 4);
+      for (let k = 1; k < 6; k++) {
+        const t = k / 6;
+        const m = { x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t };
+        g.lineBetween(m.x + px, m.y + py, m.x - px, m.y - py);
+      }
       g.fillStyle(color, 1);
-      g.fillRect(c.x - 15, c.y - 14, 3, 12);
-      g.fillRect(c.x + 13, c.y - 14, 3, 12);
+      for (const s2 of [1, -1]) {
+        g.fillRect(end.x + px * s2 - 1.5, end.y + py * s2 - 10, 3, 12);
+        g.fillRect(start.x + px * s2 - 1.5, start.y + py * s2 - 10, 3, 10);
+      }
       break;
     }
     case 'woodchopper': {
@@ -164,13 +245,13 @@ export function drawCarrier(g: G, c: Carrier, at: Point): void {
 }
 
 /** A pile drifts from its hex towards the next one as it progresses (straight down at a fork, until it picks). */
-export function pilePosition(p: Pile, ctx: SimContext, extraProgress: number): Point {
+export function pilePosition(p: Pile, state: GameState, ctx: SimContext, extraProgress: number): Point {
   const here = hexToScreen(p);
   const i = ctx.indexOf.get(`${p.q},${p.r}`)!;
-  const down = ctx.down[i]!;
+  const down = downstream(state, ctx, i);
   const t = Math.min(1, (p.progress + extraProgress) / MILLI);
   const next =
-    down === 'exit' || down.length !== 1 ? { x: here.x, y: here.y + HEX_SIZE * 0.6 } : hexToScreen(ctx.map.hexes[down[0]!]!);
+    down === 'exit' || down.length !== 1 ? { x: here.x, y: here.y + (down === 'exit' || down.length > 1 ? HEX_SIZE * 0.6 : 0) } : hexToScreen(ctx.map.hexes[down[0]!]!);
   return { x: here.x + (next.x - here.x) * t, y: here.y + (next.y - here.y) * t };
 }
 
@@ -181,4 +262,62 @@ export function drawPile(g: G, at: Point): void {
   g.fillStyle(LOG_END, 1);
   g.fillCircle(at.x + 7, at.y - 1, 2);
   g.fillCircle(at.x + 7, at.y - 4, 2);
+}
+
+/** Where a forest guard is drawn: between the hex it's leaving and the one it's walking to. */
+export function guardPosition(g: ForestGuard, ctx: SimContext, alpha: number): Point {
+  const from = hexToScreen(g);
+  if (g.toQ === null || g.toR === null) return from;
+  const to = hexToScreen({ q: g.toQ, r: g.toR });
+  const stepTicks = Math.round(ctx.config.forestGuard.secondsPerHex * ctx.config.tickRate);
+  const t = Math.min(1, (g.moveTicks + alpha) / stepTicks);
+  return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
+}
+
+/** A forest guard: a ranger with a green hat; a little watering can while attending. */
+export function drawGuard(g: G, guard: ForestGuard, at: Point, timeMs: number): void {
+  const color = PLAYER_COLORS[guard.owner] ?? 0xffffff;
+  const bob = guard.toQ !== null ? Math.abs(Math.sin(timeMs / 120)) * 2 : 0;
+  const y = at.y - bob;
+  g.fillStyle(color, 1);
+  g.fillRect(at.x - 3, y - 10, 6, 9);
+  g.fillStyle(0xf1c9a5, 1);
+  g.fillCircle(at.x, y - 13, 3);
+  g.fillStyle(0x2f6b34, 1);
+  g.fillTriangle(at.x - 5, y - 14, at.x + 5, y - 14, at.x, y - 20);
+  if (guard.attendTicks > 0) {
+    g.fillStyle(0x7fb8e0, 1);
+    g.fillRect(at.x + 4, y - 8, 5, 4);
+    for (let k = 0; k < 3; k++) g.fillCircle(at.x + 11 + k * 2, y - 3 + ((timeMs / 60 + k * 3) % 6), 1);
+  }
+}
+
+/** A baby forest: sprouts that grow with it, and a thin growth bar. */
+export function drawSapling(g: G, c: Point, fraction: number): void {
+  const h = 4 + 12 * fraction;
+  for (const dx of [-10, 0, 10]) {
+    g.fillStyle(0x6b4a2b, 1);
+    g.fillRect(c.x + dx - 1, c.y - 1, 2, 3);
+    g.fillStyle(0x4fa35a, 1);
+    g.fillTriangle(c.x + dx - 4, c.y, c.x + dx + 4, c.y, c.x + dx, c.y - h);
+  }
+  g.fillStyle(0x000000, 0.5).fillRect(c.x - 12, c.y + 6, 24, 3);
+  g.fillStyle(0x4fa35a, 1).fillRect(c.x - 12, c.y + 6, 24 * fraction, 3);
+}
+
+/** Stone cutters on a rock: little figures chipping at it, and the rock's progress bar (DESIGN §8.4d). */
+export function drawCutters(g: G, cutters: StoneCutter[], at: Point, progress: number, timeMs: number): void {
+  cutters.forEach((c, k) => {
+    const x = at.x - 10 + k * 8;
+    const y = at.y + 6;
+    g.fillStyle(PLAYER_COLORS[c.owner] ?? 0xffffff, 1);
+    g.fillRect(x - 2.5, y - 8, 5, 7);
+    g.fillStyle(0xf1c9a5, 1);
+    g.fillCircle(x, y - 11, 2.5);
+    const swing = Math.sin(timeMs / 120 + c.id) * 0.9;
+    g.lineStyle(2, DARK, 1);
+    g.lineBetween(x + 2, y - 6, x + 2 + Math.cos(swing) * 6, y - 6 - Math.sin(swing) * 6);
+  });
+  g.fillStyle(0x000000, 0.6).fillRect(at.x - 14, at.y + 9, 28, 4);
+  g.fillStyle(0xb3b6ba, 1).fillRect(at.x - 14, at.y + 9, 28 * progress, 4);
 }

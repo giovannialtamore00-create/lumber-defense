@@ -1,58 +1,84 @@
-// Runs the sim at its fixed tick rate for the game layer, and remembers previous positions for smooth rendering.
-// Single player acts as its own host: commands go through the transport and are stepped on the next tick.
-// Lockstep scheduling with input delay and hash checks replaces this in M4.
-import type { Transport } from '../net/transport';
+// Runs the sim for the game layer through a lockstep session: the host's clock closes one bundle per tick, and every
+// client steps each tick once its bundle has arrived. Remembers previous positions for smooth rendering.
+import type { LockstepSession } from '../net/lockstep';
+import { HASH_EVERY_TICKS } from '../net/lockstep';
 import { type SimContext, createContext } from '../sim/context';
+import { hashState } from '../sim/hash';
 import type { MapData } from '../sim/map';
 import { createInitialState } from '../sim/state';
 import { step } from '../sim/tick';
 import type { Command, Config, GameState } from '../sim/types';
 
-const MAX_CATCH_UP_TICKS = 10;
+const MAX_STEPS_PER_UPDATE = 10;
 
 export class SimRunner {
   readonly ctx: SimContext;
   readonly state: GameState;
   /** Carrier q positions (milli-hex) before the last tick, by entity id, for interpolation. */
   readonly prevCarrierQ = new Map<number, number>();
-  private pending: Command[] = [];
-  private acc = 0;
+  private clock = 0;
+  private lastNow: number | null = null;
+  private sinceStep = 0;
   private readonly tickMs: number;
 
   constructor(
     map: MapData,
     config: Config,
-    playerCount: number,
-    seed: number,
-    private readonly transport: Transport,
+    readonly session: LockstepSession,
   ) {
     this.ctx = createContext(map, config);
-    this.state = createInitialState(this.ctx, playerCount, seed);
+    const { slots, seed } = session.info;
+    this.state = createInitialState(
+      this.ctx,
+      slots.length,
+      seed,
+      slots.map((s) => s.name === null),
+    );
     this.tickMs = 1000 / config.tickRate;
-    transport.onMessage((msg) => {
-      if (msg.type === 'command') this.pending.push(msg.command);
-    });
+  }
+
+  /** Our player slot. */
+  get localPlayer(): number {
+    return this.session.info.you;
   }
 
   submit(command: Command): void {
-    this.transport.send({ type: 'command', command });
+    this.session.submit(command);
   }
 
-  update(dtMs: number): void {
-    this.acc += dtMs;
-    for (let n = 0; this.acc >= this.tickMs && n < MAX_CATCH_UP_TICKS; n++) {
+  /**
+   * Advances by real time (measured here, so the host's clock doesn't depend on the frame rate or on Phaser's smoothed
+   * frame delta), or by `dtMs` when given (tests, fast-forward). Safe to call from several drivers.
+   */
+  update(dtMs?: number): void {
+    if (dtMs === undefined) {
+      const now = performance.now();
+      dtMs = this.lastNow === null ? 0 : now - this.lastNow;
+      this.lastNow = now;
+    }
+    if (this.session.isHost) {
+      this.clock += dtMs;
+      for (let n = 0; this.clock >= this.tickMs && n < MAX_STEPS_PER_UPDATE; n++) {
+        this.session.hostTick();
+        this.clock -= this.tickMs;
+      }
+      if (this.clock > this.tickMs) this.clock = this.tickMs; // don't spiral after a long pause
+    }
+
+    this.sinceStep += dtMs;
+    for (let n = 0; n < MAX_STEPS_PER_UPDATE; n++) {
+      const commands = this.session.takeBundle(this.state.tick);
+      if (!commands) break;
       this.prevCarrierQ.clear();
       for (const e of this.state.entities) if (e.type === 'carrier') this.prevCarrierQ.set(e.id, e.posQ);
-      const commands = this.pending;
-      this.pending = [];
       step(this.state, this.ctx, commands);
-      this.acc -= this.tickMs;
+      this.sinceStep = 0;
+      if (this.state.tick % HASH_EVERY_TICKS === 0) this.session.reportHash(this.state.tick, hashState(this.state));
     }
-    if (this.acc > this.tickMs) this.acc = this.tickMs; // don't spiral after a long pause
   }
 
   /** How far we are between the last tick and the next one, 0..1. */
   get alpha(): number {
-    return this.acc / this.tickMs;
+    return Math.min(1, this.sinceStep / this.tickMs);
   }
 }

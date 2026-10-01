@@ -47,11 +47,16 @@ export function withConfig(patch: (c: Config) => void): Config {
   return c;
 }
 
-export function setup(rows: string[], config: Config = baseConfig as Config, players = 1, seed = 1) {
+/** The base config without passive income, so tests can count wood exactly. Income has its own test. */
+export const quietConfig: Config = withConfig((c) => (c.passiveIncome.wood = 0));
+
+export function setup(rows: string[], config: Config = quietConfig, players = 1, seed = 1) {
   const map = asciiMap(rows);
   const ctx: SimContext = createContext(map, config);
   const state: GameState = createInitialState(ctx, players, seed);
   for (const p of state.players) p.region = 0;
+  // System tests run with the game clock going; the starting turns have their own tests.
+  state.phase = 'running';
   return { map, ctx, state };
 }
 

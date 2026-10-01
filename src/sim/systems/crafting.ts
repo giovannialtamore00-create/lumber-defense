@@ -3,8 +3,11 @@
 import { type SimContext, idx } from '../context';
 import { structures } from '../state';
 import type { GameState, ItemKind, Structure } from '../types';
+import { canPlaceAnywhere } from './placement';
+import { upgradeValue } from '../upgrades';
+import { bonusRow, isWater, riverIdAt } from '../water';
 
-export const CRAFTABLE: readonly ItemKind[] = ['outpost', 'factory', 'dock', 'carrier', 'woodchopper', 'bridge', 'workshop', 'catapult'];
+export const CRAFTABLE: readonly ItemKind[] = ['outpost', 'factory', 'dock', 'carrier', 'woodchopper', 'bridge', 'dam', 'workshop', 'catapult', 'forestGuard', 'stoneCutter', 'excavator'];
 
 export interface Watermill {
   river: number;
@@ -14,12 +17,12 @@ export interface Watermill {
 }
 
 /** One watermill per distinct river the factory-mill touches, at that river's strongest touching row (DESIGN §6.7). */
-export function watermills(ctx: SimContext, factory: Structure): Watermill[] {
+export function watermills(state: GameState, ctx: SimContext, factory: Structure): Watermill[] {
   const best = new Map<number, number>();
   for (const n of ctx.neighbourIdx[idx(ctx, factory)!]!) {
-    if (!ctx.isRiver[n]) continue;
-    const river = ctx.riverId[n]!;
-    best.set(river, Math.max(best.get(river) ?? 0, ctx.riverRow[n]!));
+    if (!isWater(state, ctx, n)) continue;
+    const river = riverIdAt(state, ctx, n);
+    best.set(river, Math.max(best.get(river) ?? 0, bonusRow(state, ctx, n)));
   }
   // Sorted by river id so the order never depends on Map insertion.
   return [...best.entries()]
@@ -40,7 +43,7 @@ export function craftReductionBp(state: GameState, ctx: SimContext, player: numb
   const factories = ownFactories(state, player);
   if (factories.length === 0) return 0;
   let raw = fm.extraFactoryBp * (factories.length - 1);
-  for (const f of factories) for (const w of watermills(ctx, f)) raw += w.bonusBp;
+  for (const f of factories) for (const w of watermills(state, ctx, f)) raw += w.bonusBp;
   return Math.min(fm.maxReductionBp, Math.floor((raw * fm.maxReductionBp) / ctx.fullBoostRawBp));
 }
 
@@ -50,8 +53,10 @@ export function craftTicks(state: GameState, ctx: SimContext, player: number, it
   return Math.max(1, Math.ceil((base * (10_000 - craftReductionBp(state, ctx, player))) / 10_000));
 }
 
-export function craftCost(ctx: SimContext, item: ItemKind): number {
-  return ctx.config.items[item].cost * 1000;
+/** Wood (milli) to craft `item`, after the Factory-mill Efficiency upgrade (DESIGN §10.3). */
+export function craftCost(state: GameState, ctx: SimContext, player: number, item: ItemKind): number {
+  const off = upgradeValue(state, ctx, player, 'factory', 'efficiency', 'costReductionPct', 0);
+  return Math.floor((ctx.config.items[item].cost * 1000 * (100 - off)) / 100);
 }
 
 /** Why the player can't craft `item` now, or null. */
@@ -63,7 +68,7 @@ export function craftError(state: GameState, ctx: SimContext, player: number, it
   const slots = ownFactories(state, player).length;
   if (slots === 0) return 'you need a factory-mill';
   if (p.queue.length >= slots) return slots === 1 ? 'one factory-mill crafts one item at a time' : `queue full (${slots} factory-mills = ${slots} slots)`;
-  if (p.wood < craftCost(ctx, item)) return 'not enough wood';
+  if (p.wood < craftCost(state, ctx, player, item)) return 'not enough wood';
   return null;
 }
 
@@ -76,7 +81,8 @@ export function craftingSystem(state: GameState, ctx: SimContext): void {
     job.doneTicks++;
     if (job.doneTicks >= job.totalTicks) {
       p.queue.shift();
-      p.hand.push(job.item);
+      // Into the hand, or the warehouse if it can't be placed anywhere right now (DESIGN §7.3b).
+      (canPlaceAnywhere(state, ctx, p.id, job.item) ? p.hand : p.warehouse).push(job.item);
     }
   }
 }

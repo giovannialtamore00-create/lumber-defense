@@ -20,7 +20,7 @@ export function demoCommands(runner: SimRunner, player: number): Command[] {
     const b = dropOffs(state, ctx, player, chopper.q, chopper.r).find((d) => d.riverQ !== null);
     return b ? [{ type: 'placeCarrier', player, aQ: chopper.q, bQ: b.q, r: chopper.r }] : [];
   }
-  if (item) {
+  if (item && item !== 'forestGuard' && item !== 'stoneCutter') {
     const h = legal(item);
     return h ? [{ type: 'place', player, item, q: h.q, r: h.r }] : [];
   }

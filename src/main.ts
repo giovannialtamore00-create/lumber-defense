@@ -1,16 +1,59 @@
 import Phaser from 'phaser';
+import config from './data/config.json';
+import { MAX_PLAYERS, newSeed } from './net/lobby';
+import { LocalNetwork } from './net/localTransport';
+import { LockstepSession } from './net/lockstep';
+import type { Config } from './sim/types';
+import { fastForwardDemo } from './game/demo';
 import { BootScene } from './game/scenes/BootScene';
-import { GameScene } from './game/scenes/GameScene';
+import { GameScene, MAP } from './game/scenes/GameScene';
 import { UIScene } from './game/scenes/UIScene';
+import { SimRunner } from './game/simRunner';
+import { runLobby } from './game/ui/lobbyScreen';
 
-new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: 'game',
-  backgroundColor: '#1b1f24',
-  scale: {
-    mode: Phaser.Scale.RESIZE,
-    width: window.innerWidth,
-    height: window.innerHeight,
-  },
-  scene: [BootScene, GameScene, UIScene],
-});
+/** Everyone in a room must run the same rules and map, or lockstep would desync. */
+function gameVersion(): string {
+  const text = JSON.stringify(config) + JSON.stringify(MAP);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(16);
+}
+
+/** Shows the game for a started match. */
+function startGame(runner: SimRunner): void {
+  // Dev: expose the runner for automated browser checks.
+  if (import.meta.env.DEV) (window as unknown as { __runner: SimRunner }).__runner = runner;
+  // Keep the match going even when the tab is in the background and stops drawing frames (browsers still run
+  // timers there, if less often; the runner catches up on real time).
+  setInterval(() => runner.update(), 100);
+  const game = new Phaser.Game({
+    type: Phaser.AUTO,
+    parent: 'game',
+    backgroundColor: '#1b1f24',
+    scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
+    scene: [BootScene, GameScene, UIScene],
+    callbacks: { preBoot: (g) => g.registry.set('runner', runner) },
+  });
+  if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;
+}
+
+const params = new URLSearchParams(location.search);
+if (import.meta.env.DEV && params.has('demo')) {
+  // Dev: skip the lobby, play solo and fast-forward (see CLAUDE.md).
+  const t = new LocalNetwork().join('host');
+  const seed = params.has('seed') ? Number(params.get('seed')) >>> 0 : newSeed();
+  const slots = [{ name: 'Demo' }, ...Array.from({ length: MAX_PLAYERS - 1 }, () => ({ name: null }))];
+  const runner = new SimRunner(MAP, config as Config, new LockstepSession(t, { seed, slots, you: 0, hostId: 'host' }, true));
+  fastForwardDemo(runner, 0, Number(params.get('ff') ?? 20));
+  startGame(runner);
+} else {
+  const auto = import.meta.env.DEV
+    ? {
+        host: params.get('host') ?? undefined,
+        join: params.get('join') ?? undefined,
+        name: params.get('name') ?? undefined,
+        autostart: params.has('autostart') ? Number(params.get('autostart')) : undefined,
+      }
+    : {};
+  void runLobby(gameVersion(), auto).then((session) => startGame(new SimRunner(MAP, config as Config, session)));
+}

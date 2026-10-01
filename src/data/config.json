@@ -1,6 +1,17 @@
 {
   "tickRate": 10,
   "startingWood": 50,
+  "passiveIncome": {
+    "wood": 1,
+    "everyS": 0.5
+  },
+  "hammer": {
+    "refundPct": 50
+  },
+  "startTurns": {
+    "firstTurnS": 30,
+    "laterTurnS": 15
+  },
   "items": {
     "outpost": { "cost": 50, "craftTimeS": 30, "hp": 150 },
     "factory": { "cost": 60, "craftTimeS": 45, "hp": 200 },
@@ -8,8 +19,12 @@
     "carrier": { "cost": 10, "craftTimeS": 10, "hp": 30 },
     "woodchopper": { "cost": 15, "craftTimeS": 15, "hp": 40 },
     "bridge": { "cost": 30, "craftTimeS": 20, "hp": 120 },
+    "dam": { "cost": 30, "craftTimeS": 20, "hp": 240 },
     "workshop": { "cost": 50, "craftTimeS": 30, "hp": 120 },
-    "catapult": { "cost": 60, "craftTimeS": 40, "hp": 80 }
+    "catapult": { "cost": 60, "craftTimeS": 40, "hp": 80 },
+    "forestGuard": { "cost": 25, "craftTimeS": 20, "hp": 40 },
+    "stoneCutter": { "cost": 50, "craftTimeS": 30, "hp": 40 },
+    "excavator": { "cost": 40, "craftTimeS": 30, "hp": 100 }
   },
   "factoryMill": {
     "extraFactoryBp": 600,
@@ -29,7 +44,7 @@
     "firstTerritoryRadius": 2
   },
   "woodchopper": {
-    "woodPerSecond": 0.5
+    "woodPerSecond": 0.25
   },
   "carrier": {
     "capacity": 5,
@@ -41,7 +56,30 @@
   },
   "dock": {
     "capacity": 20,
-    "dispensePerSecond": 1
+    "dispensePerSecond": 1,
+    "catchPct": 50,
+    "minCatch": 1
+  },
+  "dam": {
+    "pressureHpPerRowPerS": 1,
+    "reliefPerDugHexPct": 10
+  },
+  "stoneCutter": {
+    "secondsPerRock": 300
+  },
+  "excavator": {
+    "digS": 180
+  },
+  "workshops": {
+    "extraWorkshopBp": 600,
+    "maxReductionBp": 9000
+  },
+  "forestGuard": {
+    "range": 1,
+    "attendS": 5,
+    "refreshGrowthS": 10,
+    "growS": 60,
+    "secondsPerHex": 2.5
   },
   "mapRules": {
     "totalHexes": { "target": 300, "tolerancePct": 5 },

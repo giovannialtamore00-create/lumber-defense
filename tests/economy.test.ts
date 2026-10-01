@@ -38,7 +38,7 @@ describe('woodchopper (DESIGN §6.2)', () => {
     const { ctx, state } = setup(RIVER);
     put(state, ctx, 'woodchopper', 0, cell(0, 0));
     state.forestPool[idx(ctx, cell(0, 0))!] = 500;
-    run(state, ctx, 10);
+    run(state, ctx, 500 / ctx.rates.woodchopper);
     expect(isForest(state, idx(ctx, cell(0, 0))!)).toBe(false);
     expect(stackOf(state, ctx, cell(0, 0))).toBe(0.5);
   });
@@ -86,22 +86,33 @@ describe('river (DESIGN §6.5)', () => {
 });
 
 describe('dock (DESIGN §6.6)', () => {
-  it('partial catch: capacity 25, holding 17, pile of 10 → 8 caught, 2 float on', () => {
-    const cfg = withConfig((c) => (c.dock.capacity = 25));
-    const { ctx, state } = setup(RIVER, cfg);
+  it('catches half a pile, rounded down to whole wood: a pile of 5 gives 2, 3 float on', () => {
+    const { ctx, state } = setup(RIVER);
     put(state, ctx, 'dock', 0, cell(4, 1));
-    setStack(state, ctx, cell(4, 1), 17);
-    spawnPile(state, ctx, cell(3, 1).q, 1, 10_000);
-    expect(stackOf(state, ctx, cell(4, 1))).toBe(25);
-    expect(piles(state).map((p) => p.amount)).toEqual([2000]);
+    spawnPile(state, ctx, cell(3, 1).q, 1, 5000);
+    expect(stackOf(state, ctx, cell(4, 1))).toBe(2);
+    expect(piles(state).map((p) => p.amount)).toEqual([3000]);
   });
 
-  it('catches a pile floating past', () => {
+  it('never catches more than fits: capacity 25 holding 22, pile of 10 → 3 caught, 7 float on', () => {
+    const cfg = withConfig((c) => {
+      c.dock.capacity = 25;
+      c.passiveIncome.wood = 0;
+    });
+    const { ctx, state } = setup(RIVER, cfg);
+    put(state, ctx, 'dock', 0, cell(4, 1));
+    setStack(state, ctx, cell(4, 1), 22);
+    spawnPile(state, ctx, cell(3, 1).q, 1, 10_000);
+    expect(stackOf(state, ctx, cell(4, 1))).toBe(25);
+    expect(piles(state).map((p) => p.amount)).toEqual([7000]);
+  });
+
+  it('a pile floating past meets the dock on each river hex it touches, half each time', () => {
     const { ctx, state } = setup(RIVER);
-    put(state, ctx, 'dock', 0, cell(4, 2));
-    spawnPile(state, ctx, cell(3, 0).q, 0, 3000);
-    run(state, ctx, 20);
-    expect(stackOf(state, ctx, cell(4, 2))).toBe(3);
+    put(state, ctx, 'dock', 0, cell(4, 2)); // touches the river in rows 1, 2 and 3
+    spawnPile(state, ctx, cell(3, 0).q, 0, 4000);
+    run(state, ctx, 30);
+    expect(stackOf(state, ctx, cell(4, 2))).toBe(4); // 2 of 4, then 1 of 2, then the last 1 (at least 1 wood)
     expect(piles(state)).toHaveLength(0);
   });
 
