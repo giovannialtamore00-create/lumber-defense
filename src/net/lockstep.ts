@@ -29,6 +29,10 @@ export class LockstepSession {
   /** Slots whose player disconnected. */
   readonly left = new Set<number>();
   hostGone = false;
+  /** Match paused: the host stops closing bundles, so every client (and the bots in the sim) freezes. */
+  paused = false;
+  /** Who pressed pause last. */
+  pausedBy: number | null = null;
 
   /**
    * @param peerSlots host only: which peer id plays which slot, so a client can only send its own slot's commands.
@@ -65,6 +69,17 @@ export class LockstepSession {
         case 'left':
           this.left.add(msg.slot);
           break;
+        case 'pause': {
+          const slot = this.peerSlots.get(from);
+          if (this.isHost && slot !== undefined) this.applyPause(msg.paused, slot);
+          break;
+        }
+        case 'paused':
+          if (!this.isHost) {
+            this.paused = msg.paused;
+            this.pausedBy = msg.slot;
+          }
+          break;
       }
     });
     transport.onPeerLeft((peer) => {
@@ -82,6 +97,18 @@ export class LockstepSession {
   submit(command: Command): void {
     if (this.isHost) this.queue.push(command);
     else this.transport.send(this.info.hostId, { t: 'cmd', command });
+  }
+
+  /** Pause or resume the match for everyone. Any player can press it. */
+  setPaused(paused: boolean): void {
+    if (this.isHost) this.applyPause(paused, this.info.you);
+    else this.transport.send(this.info.hostId, { t: 'pause', paused });
+  }
+
+  private applyPause(paused: boolean, slot: number): void {
+    this.paused = paused;
+    this.pausedBy = slot;
+    broadcast(this.transport, { t: 'paused', paused, slot });
   }
 
   /** Host only, once per tick of real time: close the next bundle and send it to everyone. */

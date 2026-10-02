@@ -17,4 +17,7 @@ export type NetMessage =
   | { t: 'bundle'; tick: number; commands: Command[] }
   | { t: 'hash'; tick: number; hash: number }
   | { t: 'desync'; tick: number; slot: number }
-  | { t: 'left'; slot: number };
+  | { t: 'left'; slot: number }
+  // Pause: a client asks the host; the host decides and tells everyone (slot = who pressed it).
+  | { t: 'pause'; paused: boolean }
+  | { t: 'paused'; paused: boolean; slot: number };

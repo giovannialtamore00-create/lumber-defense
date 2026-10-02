@@ -38,6 +38,9 @@ export class UIScene extends Phaser.Scene {
   private warehouseKey = '';
   private warehouseAt = { x: 0, y: 0 };
   private statusText!: Phaser.GameObjects.Text;
+  private clockText!: Phaser.GameObjects.Text;
+  private pauseButton!: Phaser.GameObjects.Text;
+  private pausedBanner!: Phaser.GameObjects.Text;
   private debugText!: Phaser.GameObjects.Text;
   private tutorial!: Phaser.GameObjects.Container;
   private tutorialTitle!: Phaser.GameObjects.Text;
@@ -101,6 +104,18 @@ export class UIScene extends Phaser.Scene {
     );
     icon.fillStyle(0xb3b6ba, 1).fillTriangle(sx + 6, 20, sx + 16, 14, sx + 14, 28);
     this.stoneText = this.add.text(sx + 40, 8, '', { fontFamily: 'sans-serif', fontSize: '34px', fontStyle: 'bold', color: '#d9dbe0' });
+
+    // Time played (match ticks, so it stops while paused) and the pause button, left of the stone count.
+    this.clockText = this.add.text(sx - 16, 12, '', { ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', fixedWidth: 92, align: 'center' }).setOrigin(1, 0);
+    this.pauseButton = this.add
+      .text(this.clockText.getBounds().left - 8, 12, '', { ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', fixedWidth: 110, align: 'center' })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.runner.setPaused(!this.runner.paused));
+    this.pausedBanner = this.add
+      .text((width - PANEL_W) / 2, height / 2, '', { ...BIG, fontSize: '40px', align: 'center', backgroundColor: '#000000cc' })
+      .setOrigin(0.5)
+      .setDepth(400);
 
     const left = width - PANEL_W - 12;
     // Tabs: Build, and Workshop next to it once you own a workshop (DESIGN §12). Clicking the open tab closes it.
@@ -232,6 +247,17 @@ export class UIScene extends Phaser.Scene {
     const me = state.players[this.local]!;
     this.woodText.setText(String(wholeUnits(me.wood)));
     this.stoneText.setText(String(me.stone));
+
+    const secs = Math.floor(state.tick / ctx.config.tickRate);
+    const mm = String(Math.floor(secs / 60) % 60).padStart(2, '0');
+    const ss = String(secs % 60).padStart(2, '0');
+    this.clockText.setText(secs >= 3600 ? `${Math.floor(secs / 3600)}:${mm}:${ss}` : `${mm}:${ss}`);
+    const paused = this.runner.paused;
+    this.pauseButton.setText(paused ? '▶ Resume' : '⏸ Pause').setBackgroundColor(paused ? '#2f6b34' : '#000000aa');
+    const by = this.runner.session.pausedBy;
+    this.pausedBanner
+      .setText(`PAUSED\n${by === null || by === this.local ? 'by you' : `by ${this.slotName(by)}`}`)
+      .setVisible(paused);
 
     // Build menu: price and craft time with the current reduction; selected row highlighted.
     const sel = this.registry.get('buildSel') as ItemKind | undefined;

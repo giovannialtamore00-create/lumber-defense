@@ -163,7 +163,7 @@ One icon that grows in 3 stages with the amount of wood:
 - A dock not adjacent to a factory needs a **carrier** (A = dock, B = factory).
 
 ### 6.6b Passive income (decided)
-- Every player always gets **1 wood every 0.5 s** (2 wood/s), straight into their wood count, once the game is
+- Every player always gets **1 wood every 5 s** (0.2 wood/s), straight into their wood count, once the game is
   running (not during the starting turns). Bots too.
 
 ### 6.7 Factory

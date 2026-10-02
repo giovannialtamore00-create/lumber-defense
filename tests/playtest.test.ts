@@ -16,12 +16,12 @@ const wood = (state: GameState, p = 0) => state.players[p]!.wood / 1000;
 const RIVER = ['T . . ~ . .', '. . . ~ . .', '. . . ~ . .', '. . . ~ . .'];
 
 describe('passive income (§6.6b)', () => {
-  it('every player gets 1 wood every 0.5 s while the game runs, not during the starting turns', () => {
+  it('every player gets 1 wood every 5 s while the game runs, not during the starting turns', () => {
     const { ctx, state } = setup(RIVER, config, 2);
-    run(state, ctx, 10);
+    run(state, ctx, 100);
     expect([wood(state, 0), wood(state, 1)]).toEqual([52, 52]);
     state.phase = 'start';
-    run(state, ctx, 10);
+    run(state, ctx, 100);
     expect(wood(state, 0)).toBe(52);
   });
 });

@@ -43,7 +43,16 @@ export class SimRunner {
   }
 
   submit(command: Command): void {
+    if (this.session.paused) return; // nothing happens while paused
     this.session.submit(command);
+  }
+
+  get paused(): boolean {
+    return this.session.paused;
+  }
+
+  setPaused(paused: boolean): void {
+    this.session.setPaused(paused);
   }
 
   /**
@@ -56,7 +65,9 @@ export class SimRunner {
       dtMs = this.lastNow === null ? 0 : now - this.lastNow;
       this.lastNow = now;
     }
-    if (this.session.isHost) {
+    if (this.session.isHost && this.session.paused) {
+      this.clock = 0;
+    } else if (this.session.isHost) {
       this.clock += dtMs;
       for (let n = 0; this.clock >= this.tickMs && n < MAX_STEPS_PER_UPDATE; n++) {
         this.session.hostTick();

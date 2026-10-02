@@ -3,7 +3,7 @@
   "startingWood": 50,
   "passiveIncome": {
     "wood": 1,
-    "everyS": 0.5
+    "everyS": 5
   },
   "hammer": {
     "refundPct": 50
