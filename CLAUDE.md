@@ -36,6 +36,10 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 - `npm test` — Vitest (sim unit tests, determinism)
 - `npm run typecheck`
 - `npm run validate-map` — checks map rules from DESIGN §4.3
+- `npm run share` — builds, serves `dist/` on http://localhost:4180 and opens a Cloudflare tunnel; prints the public
+  link for playtests with friends. Ctrl+C stops it.
+- `tools/browser.mjs` — headless-Chrome helper for automated checks and screenshots (dev hooks `window.__runner`,
+  `window.__game`).
 - `npm run build` then `npm run zip` — `dist/` → `build.zip` for itch.io (HTML5, "played in the browser").
   Vite uses `base: './'` so paths work in itch.io's iframe.
 

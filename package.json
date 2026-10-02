@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate-map": "tsx tools/validate-map.ts",
-    "zip": "tsx tools/zip-dist.ts"
+    "zip": "tsx tools/zip-dist.ts",
+    "share": "vite build && node tools/share.mjs"
   },
   "dependencies": {
     "peerjs": "^1.5.5",
