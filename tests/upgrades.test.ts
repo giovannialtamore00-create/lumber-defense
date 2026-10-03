@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import upgrades from '../src/data/upgrades.json';
 import { idx } from '../src/sim/context';
-import { craftCost } from '../src/sim/systems/crafting';
+import { craftCost, craftTicks } from '../src/sim/systems/crafting';
 import { dockCapacity } from '../src/sim/systems/docks';
 import { carrierRoute, dropOffs, isWorkingBridge } from '../src/sim/systems/placement';
 import { spawnPile } from '../src/sim/systems/river';
@@ -162,5 +162,22 @@ describe('forest guard upgrades (§10.3)', () => {
     expect(state.grownForest.filter(Boolean)).toHaveLength(1);
     const grown = state.grownForest.findIndex(Boolean);
     expect(state.forestPool[grown]).toBe(100_000);
+  });
+});
+
+describe('playtest mode (DESIGN §7.5)', () => {
+  it('halves crafting and upgrade costs and times for everyone, switched by any player', () => {
+    const { ctx, state } = world();
+    const t = typeIndex(ctx, 'dock');
+    const before = { cost: craftCost(state, ctx, 0, 'carrier'), ticks: craftTicks(state, ctx, 0, 'carrier'), up: upgradePrice(state, ctx, 0, t, 0)! };
+    step(state, ctx, [{ type: 'setPlaytest', player: 0, on: true }]);
+    expect(state.playtest).toBe(true);
+    expect(craftCost(state, ctx, 0, 'carrier')).toBe(before.cost / 2);
+    expect(craftTicks(state, ctx, 0, 'carrier')).toBe(Math.ceil(before.ticks / 2));
+    const up = upgradePrice(state, ctx, 0, t, 0)!;
+    expect(up.cost).toBe(before.up.cost / 2);
+    expect(up.ticks).toBe(Math.ceil(before.up.ticks / 2));
+    step(state, ctx, [{ type: 'setPlaytest', player: 0, on: false }]);
+    expect(craftCost(state, ctx, 0, 'carrier')).toBe(before.cost);
   });
 });

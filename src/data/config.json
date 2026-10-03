@@ -5,6 +5,10 @@
     "wood": 1,
     "everyS": 5
   },
+  "playtestMode": {
+    "costPct": 50,
+    "timePct": 50
+  },
   "hammer": {
     "refundPct": 50
   },

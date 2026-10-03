@@ -231,6 +231,8 @@ export interface GameState {
   phase: 'start' | 'running' | 'over';
   /** The winner once the match is over; null for nobody (everyone lost at once). */
   winner: number | null;
+  /** Playtest mode: crafting and upgrades cheaper and faster for everyone (DESIGN §7.5). */
+  playtest: boolean;
   startTurns: StartTurns;
   players: Player[];
   /** Always sorted by id: new entities are appended with increasing ids, removal keeps order. */
@@ -288,5 +290,7 @@ export type Command =
   | { type: 'give'; player: number; to: number; amount: number }
   /** Place a catapult from the hand on a land hex (DESIGN §8.6). */
   | { type: 'placeCatapult'; player: number; q: number; r: number }
+  /** Switch playtest mode on or off for the whole match (DESIGN §7.5). */
+  | { type: 'setPlaytest'; player: number; on: boolean }
   /** Give up: outposts and catapults dismantled, the rest turns neutral (DESIGN §11). */
   | { type: 'surrender'; player: number };

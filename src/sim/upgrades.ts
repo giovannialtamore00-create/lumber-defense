@@ -2,6 +2,7 @@
 // queue (one slot per workshop) and research one at a time; extra workshops shorten research (DESIGN §8.5). The first
 // path picked is cheaper; the other costs more. Effects apply to every existing and future item of the type: systems
 // read them through `upgradeValue` each time, so nothing has to be patched on purchase.
+import { playtestCost, playtestTicks } from './playtest';
 import type { SimContext } from './context';
 import { structures } from './state';
 import { maxHp } from './systems/combat';
@@ -63,7 +64,7 @@ function researchTicks(state: GameState, ctx: SimContext, player: number, level:
   const base = ctx.upgrades.pricing.levels[level - 1]!;
   const faster = upgradeValue(state, ctx, player, 'workshop', 'fastResearch', 'researchTimeReductionPct', 0);
   const pool = researchPoolBp(state, ctx, player);
-  return Math.max(1, Math.ceil((base.timeS * ctx.config.tickRate * (100 - faster) * (10_000 - pool)) / 1_000_000));
+  return playtestTicks(state, ctx, Math.max(1, Math.ceil((base.timeS * ctx.config.tickRate * (100 - faster) * (10_000 - pool)) / 1_000_000)));
 }
 
 /**
@@ -80,7 +81,7 @@ export function upgradePrice(state: GameState, ctx: SimContext, player: number, 
   if (!base) return null;
   const second = prog.first !== -1 && prog.first !== path;
   const discount = upgradeValue(state, ctx, player, 'workshop', 'discount', 'upgradeCostReductionPct', 0);
-  const cost = Math.floor((base.cost * (second ? ctx.upgrades.pricing.secondPathCostMultiplier : 1) * (100 - discount)) / 100);
+  const cost = playtestCost(state, ctx, Math.floor((base.cost * (second ? ctx.upgrades.pricing.secondPathCostMultiplier : 1) * (100 - discount)) / 100));
   return { cost, ticks: researchTicks(state, ctx, player, level), level };
 }
 

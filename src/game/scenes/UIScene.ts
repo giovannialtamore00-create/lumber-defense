@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { wholeUnits } from '../../sim/fixed';
 import { hashState } from '../../sim/hash';
-import { CRAFTABLE, craftError, craftReductionBp, craftTicks, ownFactories } from '../../sim/systems/crafting';
+import { CRAFTABLE, craftCost, craftError, craftReductionBp, craftTicks, ownFactories } from '../../sim/systems/crafting';
 import { currentTurnPlayer } from '../../sim/systems/startTurns';
 import type { ItemKind } from '../../sim/types';
 import { drawItemIcon } from '../render/icons';
@@ -41,6 +41,7 @@ export class UIScene extends Phaser.Scene {
   private clockText!: Phaser.GameObjects.Text;
   private pauseButton!: Phaser.GameObjects.Text;
   private pausedBanner!: Phaser.GameObjects.Text;
+  private playtestButton!: Phaser.GameObjects.Text;
   private debugText!: Phaser.GameObjects.Text;
   private tutorial!: Phaser.GameObjects.Container;
   private tutorialTitle!: Phaser.GameObjects.Text;
@@ -140,6 +141,12 @@ export class UIScene extends Phaser.Scene {
           () => this.runner.submit({ type: 'surrender', player: this.local }),
         );
       });
+    // Playtest mode (DESIGN §7.5): under Surrender, anyone can switch it for the whole match.
+    this.playtestButton = this.add
+      .text(fb.left, 50, '', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold' })
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.runner.submit({ type: 'setPlaytest', player: this.local, on: !this.runner.state.playtest }));
     this.defeatText = this.add
       .text((width - PANEL_W) / 2, 142, 'You are out of the match: watching until it ends.', { ...TEXT_STYLE, fontSize: '16px', fontStyle: 'bold', backgroundColor: '#8a2a1ecc' })
       .setOrigin(0.5, 0)
@@ -289,6 +296,10 @@ export class UIScene extends Phaser.Scene {
     if (state.phase === 'over' && !this.endShown) this.showEndScreen();
     const paused = this.runner.paused;
     this.pauseButton.setText(paused ? '▶ Resume' : '⏸ Pause').setBackgroundColor(paused ? '#2f6b34' : '#000000aa');
+    const pm = ctx.config.playtestMode;
+    this.playtestButton
+      .setText(state.playtest ? `Playtest ON: costs ${pm.costPct}%, times ${pm.timePct}%` : 'Playtest mode: off')
+      .setBackgroundColor(state.playtest ? '#7a5a12' : '#000000aa');
     const by = this.runner.session.pausedBy;
     this.pausedBanner
       .setText(`PAUSED\n${by === null || by === this.local ? 'by you' : `by ${this.slotName(by)}`}`)
@@ -297,10 +308,11 @@ export class UIScene extends Phaser.Scene {
     // Build menu: price and craft time with the current reduction; selected row highlighted.
     const sel = this.registry.get('buildSel') as ItemKind | undefined;
     for (const row of this.rows) {
-      const c = ctx.config.items[row.item];
-      const secs = me.started ? craftTicks(state, ctx, this.local, row.item) / ctx.config.tickRate : c.craftTimeS;
-      row.price.setText(`${c.cost} wood\n${secs.toFixed(1)} s`);
-      row.price.setColor(me.wood >= c.cost * 1000 ? '#f3e3c3' : '#e06a5a');
+      // Price and time as they are now: Efficiency, factory-mills and playtest mode included.
+      const secs = craftTicks(state, ctx, this.local, row.item) / ctx.config.tickRate;
+      const cost = craftCost(state, ctx, this.local, row.item);
+      row.price.setText(`${wholeUnits(cost)} wood\n${secs.toFixed(1)} s`);
+      row.price.setColor(me.wood >= cost ? '#f3e3c3' : '#e06a5a');
       row.bg.setFillStyle(0xffffff, row.item === sel ? 0.12 : 0);
     }
     if (this.craftButton) {

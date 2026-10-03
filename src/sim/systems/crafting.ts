@@ -1,5 +1,6 @@
 // Crafting (DESIGN §6.7, §7.2): pay on confirm, queue limited to one slot per factory-mill, items crafted one at a
 // time, craft time reduced by the player's factory-mills and the rivers they stand on. Integer math only.
+import { playtestCost, playtestTicks } from '../playtest';
 import { type SimContext, idx } from '../context';
 import { structures } from '../state';
 import type { GameState, ItemKind, Structure } from '../types';
@@ -49,14 +50,14 @@ export function craftReductionBp(state: GameState, ctx: SimContext, player: numb
 
 /** Ticks to craft `item` right now: base time × (1 − reduction), at least 1 tick. */
 export function craftTicks(state: GameState, ctx: SimContext, player: number, item: ItemKind): number {
-  const base = ctx.config.items[item].craftTimeS * ctx.config.tickRate;
+  const base = playtestTicks(state, ctx, ctx.config.items[item].craftTimeS * ctx.config.tickRate);
   return Math.max(1, Math.ceil((base * (10_000 - craftReductionBp(state, ctx, player))) / 10_000));
 }
 
 /** Wood (milli) to craft `item`, after the Factory-mill Efficiency upgrade (DESIGN §10.3). */
 export function craftCost(state: GameState, ctx: SimContext, player: number, item: ItemKind): number {
   const off = upgradeValue(state, ctx, player, 'factory', 'efficiency', 'costReductionPct', 0);
-  return Math.floor((ctx.config.items[item].cost * 1000 * (100 - off)) / 100);
+  return playtestCost(state, ctx, Math.floor((ctx.config.items[item].cost * 1000 * (100 - off)) / 100));
 }
 
 /** Why the player can't craft `item` now, or null. */

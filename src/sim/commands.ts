@@ -20,6 +20,10 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
   }
   if (player.bot) return; // the bot has this slot
   if (player.defeated || state.phase === 'over') return; // out of the game, or the match has ended (DESIGN §11)
+  if (cmd.type === 'setPlaytest') {
+    state.playtest = cmd.on === true; // any player, any time (DESIGN §7.5)
+    return;
+  }
   if (state.phase === 'start' && cmd.type !== 'placeOutpost') return; // only first outposts during starting turns
 
   switch (cmd.type) {

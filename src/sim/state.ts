@@ -29,6 +29,7 @@ export function createInitialState(ctx: SimContext, playerCount: number, seed: n
     rng,
     phase: 'start',
     winner: null,
+    playtest: false,
     startTurns: { order, current: 0, ticksLeft: config.startTurns.firstTurnS * config.tickRate, firstUsed: false },
     players: [...Array(playerCount).keys()].map((id) => ({
       id,

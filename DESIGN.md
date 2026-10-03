@@ -261,6 +261,12 @@ One icon that grows in 3 stages with the amount of wood:
 - **Future items** were to be unlocked through the factory's New Technologies path, which is now replaced by
   **Efficiency** (§10.3). How future items unlock is an open question (§14).
 
+### 7.5 Playtest mode (decided, playtest 3)
+- A **Playtest mode** switch at the top of the screen, for the whole match: any player can turn it on or off at
+  any time.
+- While it's on, **crafting costs and upgrade costs are 50%**, and **crafting times and research times are 50%**
+  (placeholders, in `config.json`). An item already crafting or researching keeps the time it started with.
+
 ## 8. Structures and machines
 
 ### 8.1 Base stats *(placeholder costs, times and HP)*
