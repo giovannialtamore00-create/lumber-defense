@@ -80,6 +80,11 @@ function riverColorForStrength(level: number): number {
   return Phaser.Display.Color.GetColor(c.r, c.g, c.b);
 }
 
+/** Buildings and units are drawn 50% bigger than the pack's size (terrain and log stacks stay as drawn). */
+const ITEM_SIZE = 1.5;
+/** The woodchopper walks a loop around its forest hex: one lap in this many ms. */
+const CHOPPER_LAP_MS = 9000;
+
 /** How long a health bar stays up after an HP change, and how long impacts and damage numbers last (ms). */
 const BAR_MS = 3000;
 const IMPACT_MS = 350;
@@ -107,6 +112,8 @@ export class GameScene extends Phaser.Scene {
   private tiles: (Phaser.GameObjects.Image | undefined)[] = [];
   private dugWater = new Map<number, Phaser.GameObjects.Sprite>();
   private sprites!: SpritePool;
+  /** Last direction each carrier drove (1 east, -1 west), so it keeps facing that way while it waits. */
+  private carrierDir = new Map<number, number>();
   /** Graphics drawn above the sprites (placeholders, progress icons, units without sprites, shots, bars). */
   private top!: Phaser.GameObjects.Graphics;
   private dugLayer!: Phaser.GameObjects.Graphics;
@@ -324,7 +331,7 @@ export class GameScene extends Phaser.Scene {
     for (const e of entities) {
       if (e.type !== 'structure') continue;
       const i = ctx.indexOf.get(hexKey(e))!;
-      if (this.art && this.putStructure(e, i)) continue;
+      if (this.art && this.putStructure(e, i, time)) continue;
       drawStructure(g, e, time, {
         mills: e.kind === 'factory' ? this.millPositions(e) : undefined,
         working: e.kind === 'bridge' ? isWorkingBridge(state, ctx, i) : undefined,
@@ -384,9 +391,13 @@ export class GameScene extends Phaser.Scene {
     for (const e of entities) {
       if (e.type !== 'carrier') continue;
       const at = carrierPosition(e, this.runner.prevCarrierQ.get(e.id), alpha);
-      // Bigger carts with the Capacity upgrade (DESIGN §6.4).
-      const size = Math.min(3, 1 + upgradeLevel(state, ctx, e.owner, 'carrier', 'capacity'));
-      if (!(this.art && this.sprites.put(`carrier.size${size}`, at.x, at.y, { owner: e.owner }))) drawCarrier(g, e, at);
+      // Bigger carts with the Capacity upgrade (DESIGN §6.4). The cart faces the way it drives along its row.
+      const level = Math.min(3, 1 + upgradeLevel(state, ctx, e.owner, 'carrier', 'capacity'));
+      const target = (e.phase === 'toA' ? e.pickupQ : e.bQ) * 1000;
+      if (target !== e.posQ) this.carrierDir.set(e.id, target > e.posQ ? 1 : -1);
+      const dir = this.carrierDir.get(e.id) ?? 1;
+      const cart = { owner: e.owner, size: ITEM_SIZE, flipX: dir < 0 };
+      if (!(this.art && this.sprites.put(`carrier.size${level}`, at.x, at.y, cart))) drawCarrier(g, e, at);
     }
     for (const e of entities) if (e.type === 'guard') drawGuard(g, e, guardPosition(e, ctx, alpha), time);
     // Stone cutters, grouped by the rock they work on, with the rock's progress.
@@ -413,7 +424,7 @@ export class GameScene extends Phaser.Scene {
       if (e.type !== 'catapult') continue;
       const at = catapultPosition(e, ctx, alpha);
       const flipX = hexToScreen({ q: e.aimQ, r: e.aimR }).x < at.x - 1; // the sprite faces east
-      if (!(this.art && this.sprites.put('catapult.base', at.x, at.y, { owner: e.owner, flipX }))) drawCatapult(g, e, at, this.swing(e));
+      if (!(this.art && this.sprites.put('catapult.base', at.x, at.y, { owner: e.owner, flipX, size: ITEM_SIZE }))) drawCatapult(g, e, at, this.swing(e));
     }
     this.sprites.end();
     for (const e of entities) if (e.type === 'shot') drawShot(g, e, alpha);
@@ -427,35 +438,46 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** A structure as a pack sprite (grey when neutral). False (draw the placeholder) if the sprite is missing. */
-  private putStructure(e: Structure, i: number): boolean {
+  private putStructure(e: Structure, i: number, time: number): boolean {
     const { state, ctx } = this.runner;
     const c = hexToScreen(e);
     const owner = e.owner;
+    const size = ITEM_SIZE;
     const flow = this.flowAt(i);
     switch (e.kind) {
       case 'outpost':
-        return this.sprites.put(upgradeLevel(state, ctx, owner, 'outpost', 'archer') > 0 ? 'outpost.archer' : 'outpost.base', c.x, c.y, { owner });
+        return this.sprites.put(upgradeLevel(state, ctx, owner, 'outpost', 'archer') > 0 ? 'outpost.archer' : 'outpost.base', c.x, c.y, { owner, size });
       case 'factory': {
-        // The wheel is drawn on the south-west side: mirror it when the river is east.
+        // The wheel is drawn on the south-west side: mirror it when the river is east. The building stands at the
+        // edge of its hex, with the wheel in the water.
         const mill = this.millPositions(e)[0];
-        return this.sprites.put(this.upgraded(owner, 'factory') ? 'mill.upgraded' : 'mill.base', c.x, c.y, { owner, flipX: !!mill && mill.x > c.x });
+        const at = mill ? { x: c.x + (mill.x - c.x) * 0.45, y: c.y + (mill.y + 4 - c.y) * 0.45 } : c;
+        return this.sprites.put(this.upgraded(owner, 'factory') ? 'mill.upgraded' : 'mill.base', at.x, at.y, { owner, size, flipX: !!mill && mill.x > c.x });
       }
       case 'dock': {
         const w = this.towardsWater(i);
-        return this.sprites.put(this.upgraded(owner, 'dock') ? 'dock.upgraded' : 'dock.base', c.x, c.y, { owner, flipX: !!w && w.x > 0 });
+        return this.sprites.put(this.upgraded(owner, 'dock') ? 'dock.upgraded' : 'dock.base', c.x, c.y, { owner, size, flipX: !!w && w.x > 0 });
       }
       case 'bridge':
-        return this.sprites.put(`bridge.flow${flow}`, c.x, c.y, { owner, alpha: isWorkingBridge(state, ctx, i) ? 1 : 0.55 });
+        return this.sprites.put(`bridge.flow${flow}`, c.x, c.y, { owner, size, alpha: isWorkingBridge(state, ctx, i) ? 1 : 0.55 });
       case 'dam': {
         const damaged = e.hp * 2 < maxHp(state, ctx, e);
-        return this.sprites.put(damaged ? `dam.damaged_flow${flow}` : `dam.flow${flow}`, c.x, c.y, { owner });
+        return this.sprites.put(damaged ? `dam.damaged_flow${flow}` : `dam.flow${flow}`, c.x, c.y, { owner, size });
       }
       case 'workshop':
-        return this.sprites.put(this.upgraded(owner, 'workshop') ? 'workshop.upgraded' : 'workshop.base', c.x, c.y, { owner });
+        return this.sprites.put(this.upgraded(owner, 'workshop') ? 'workshop.upgraded' : 'workshop.base', c.x, c.y, { owner, size });
       case 'excavator':
-        return this.sprites.put((e.workTicks ?? 0) > 0 ? 'excavator.digging' : 'excavator.base', c.x, c.y, { owner });
-      case 'woodchopper':
-        return this.sprites.put(this.upgraded(owner, 'woodchopper') ? 'woodchopper.upgraded' : 'woodchopper.base', c.x, c.y, { owner });
+        return this.sprites.put((e.workTicks ?? 0) > 0 ? 'excavator.digging' : 'excavator.base', c.x, c.y, { owner, size });
+      case 'woodchopper': {
+        // Walks a loop around its trees (DESIGN §6.2: animation only), facing the way it walks.
+        const a = ((time / CHOPPER_LAP_MS + e.id * 0.37) % 1) * Math.PI * 2;
+        const rx = HEX_SIZE * 0.42;
+        const ry = HEX_SIZE * 0.42 * ISO_SQUASH;
+        const x = c.x + Math.cos(a) * rx;
+        const y = c.y + Math.sin(a) * ry + 2;
+        const name = this.upgraded(owner, 'woodchopper') ? 'woodchopper.upgraded' : 'woodchopper.base';
+        return this.sprites.put(name, x, y, { owner, size, flipX: Math.sin(a) > 0 }); // dx/da = -sin(a): walking west when sin > 0
+      }
     }
   }
 

@@ -183,7 +183,12 @@ export class SpritePool {
    * Shows `name` at (x, y): in the owner's colour (0-based), grey for neutral items (owner < 0), or as is for
    * sprites without owners. False if the pack has no such sprite.
    */
-  put(name: string, x: number, y: number, opts: { owner?: number; flipX?: boolean; alpha?: number } = {}): boolean {
+  put(
+    name: string,
+    x: number,
+    y: number,
+    opts: { owner?: number; flipX?: boolean; alpha?: number; /** × the pool's scale */ size?: number; /** radians */ rotation?: number } = {},
+  ): boolean {
     const neutral = opts.owner !== undefined && opts.owner < 0;
     const key = spriteName(name, opts.owner === undefined ? undefined : neutral ? 1 : opts.owner + 1);
     const info = manifest(this.scene)?.sprites[key];
@@ -198,7 +203,8 @@ export class SpritePool {
     img
       .setTexture(texture, key)
       .setOrigin(info.ax / info.w, info.ay / info.h)
-      .setScale(this.scale)
+      .setScale(this.scale * (opts.size ?? 1))
+      .setRotation(opts.rotation ?? 0)
       .setPosition(x, y)
       .setFlipX(!!opts.flipX)
       .setAlpha(opts.alpha ?? 1)
