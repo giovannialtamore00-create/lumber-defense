@@ -467,7 +467,9 @@ export class UIScene extends Phaser.Scene {
     const thing = this.runner.state.entities.find((e) => e.id === id);
     if (!thing || thing.type === 'pile' || thing.type === 'shot' || !canDismantle(thing, this.local)) return;
     this.ask(
-      `Are you sure you want to dismantle this ${ITEM_NAMES[kindOf(thing)]}?\nYou get ${refundOf(this.runner, thing)} wood back, left where it stands.`,
+      `Are you sure you want to dismantle this ${ITEM_NAMES[kindOf(thing)]}?\n` +
+        (thing.fire ? 'It is burning: no wood will be left.' : `You get ${refundOf(this.runner, thing)} wood back, left where it stands.`) +
+        `\nTaking it apart takes ${Math.ceil(craftTicks(this.runner.state, this.runner.ctx, this.local, kindOf(thing)) / this.runner.ctx.config.tickRate)} s.`,
       'Dismantle',
       () => this.runner.submit({ type: 'dismantle', player: this.local, id }),
     );

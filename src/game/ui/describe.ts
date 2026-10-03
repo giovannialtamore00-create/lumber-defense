@@ -5,6 +5,8 @@ import type { Hex } from '../../sim/hex';
 import { hexOf, kindOf } from '../../sim/state';
 import { isCoveredBy } from '../../sim/systems/territory';
 import { maxHp } from '../../sim/systems/combat';
+import { fireStrength } from '../../sim/systems/fire';
+import { MILLI } from '../../sim/fixed';
 import { craftReductionBp, watermills } from '../../sim/systems/crafting';
 import { carrierCapacity } from '../../sim/systems/carriers';
 import { dockCapacity } from '../../sim/systems/docks';
@@ -34,7 +36,7 @@ export function thingAt(runner: SimRunner, hex: Hex): Thing | null {
 
 /** Can `player` dismantle this (their own, and not an outpost)? */
 export function canDismantle(e: Thing, player: number): boolean {
-  return e.owner === player && !(e.type === 'structure' && e.kind === 'outpost');
+  return e.owner === player && !(e.type === 'structure' && e.kind === 'outpost') && e.dismantleTicks === undefined;
 }
 
 export function refundOf(runner: SimRunner, e: Thing): number {
@@ -123,5 +125,9 @@ export function describe(runner: SimRunner, e: Thing): { title: string; action: 
       action = `regrows spent forests around it · ${fmt(up('growth', 'refreshGrowthS', ctx.config.forestGuard.refreshGrowthS))} s growth per visit`;
       break;
   }
-  return { title, action };
+  // Burning and dismantling come first: they're what matters most about the item right now.
+  const extra: string[] = [];
+  if (e.fire) extra.push(`on fire: ${fireStrength(ctx, e.fire, maxHp(state, ctx, e) * MILLI)}%`);
+  if (e.dismantleTicks !== undefined) extra.push(`dismantling: ${Math.ceil(e.dismantleTicks / ctx.config.tickRate)} s left`);
+  return { title, action: [...extra, action].filter(Boolean).join(' · ') };
 }

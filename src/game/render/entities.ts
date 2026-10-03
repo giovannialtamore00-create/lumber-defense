@@ -356,22 +356,30 @@ export function drawShot(g: G, s: Shot, alpha: number): void {
   const p = pos(t);
   if (s.kind === 'stone') {
     g.fillStyle(0x000000, 0.25).fillEllipse(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, 8, 3);
+    if (s.fire) {
+      // Fireball: a glowing ball with a short trail.
+      const q = pos(Math.max(0, t - 0.06));
+      g.fillStyle(0xe0533d, 0.5).fillCircle(q.x, q.y, 4);
+      g.fillStyle(0xf2a33a, 1).fillCircle(p.x, p.y, 5);
+      g.fillStyle(0xffe08a, 1).fillCircle(p.x - 1, p.y - 1, 2.5);
+      return;
+    }
     g.fillStyle(0x6f6f6f, 1).fillCircle(p.x, p.y, 4);
     g.fillStyle(0xa0a0a0, 1).fillCircle(p.x - 1, p.y - 1, 1.5);
   } else {
     const q = pos(Math.max(0, t - 0.08));
     g.lineStyle(2, 0x3a2a1a, 1).lineBetween(q.x, q.y, p.x, p.y);
-    g.fillStyle(0xdddddd, 1).fillCircle(p.x, p.y, 1.5);
+    g.fillStyle(s.fire ? 0xf2a33a : 0xdddddd, 1).fillCircle(p.x, p.y, s.fire ? 2.5 : 1.5); // a fire arrow glows
   }
 }
 
-/** Debris of a destroyed structure: broken planks and rubble (DESIGN §9). */
-export function drawDebris(g: G, c: Point): void {
-  g.fillStyle(0x5d4a33, 0.5).fillEllipse(c.x, c.y + 2, 34, 12);
-  g.lineStyle(3, PLANK, 1);
+/** Debris of a destroyed structure: broken planks and rubble (DESIGN §9); charred black when burnt (DESIGN §9b). */
+export function drawDebris(g: G, c: Point, burnt = false): void {
+  g.fillStyle(burnt ? 0x1e1a17 : 0x5d4a33, burnt ? 0.7 : 0.5).fillEllipse(c.x, c.y + 2, 34, 12);
+  g.lineStyle(3, burnt ? 0x2b2522 : PLANK, 1);
   g.lineBetween(c.x - 12, c.y + 2, c.x - 2, c.y - 4);
   g.lineBetween(c.x + 2, c.y + 4, c.x + 13, c.y - 1);
-  g.lineStyle(3, 0x6b4a2b, 1).lineBetween(c.x - 6, c.y - 6, c.x + 6, c.y - 8);
+  g.lineStyle(3, burnt ? 0x3a302a : 0x6b4a2b, 1).lineBetween(c.x - 6, c.y - 6, c.x + 6, c.y - 8);
   g.fillStyle(0x8a8d91, 1);
   g.fillCircle(c.x - 4, c.y + 3, 2.5);
   g.fillCircle(c.x + 7, c.y - 4, 2);
@@ -393,4 +401,31 @@ export function drawImpact(g: G, at: Point, t: number): void {
     const ang = (k / 5) * Math.PI * 2;
     g.fillCircle(at.x + Math.cos(ang) * 10 * t, at.y + Math.sin(ang) * 4 * t - 4, 3 + 3 * t);
   }
+}
+
+/**
+ * Flames on something burning (DESIGN §9b): more and taller tongues as the fire's strength (10–50%) grows, flickering
+ * with time. `seed` keeps neighbouring fires out of step.
+ */
+export function drawFlames(g: G, at: Point, strengthPct: number, timeMs: number, seed: number): void {
+  const k = Math.max(0.2, Math.min(1, strengthPct / 50));
+  const tongues = 2 + Math.round(k * 4);
+  for (let n = 0; n < tongues; n++) {
+    const phase = timeMs / 110 + seed * 1.7 + n * 2.3;
+    const x = at.x + (n - (tongues - 1) / 2) * 5 + Math.sin(phase * 0.7) * 1.5;
+    const h = (10 + 16 * k) * (0.75 + 0.25 * Math.sin(phase));
+    const base = at.y - 4;
+    g.fillStyle(0xe0533d, 0.85).fillTriangle(x - 4, base, x + 4, base, x, base - h);
+    g.fillStyle(0xf2a33a, 0.9).fillTriangle(x - 2.5, base, x + 2.5, base, x, base - h * 0.7);
+    g.fillStyle(0xffe08a, 0.9).fillTriangle(x - 1.2, base, x + 1.2, base, x, base - h * 0.4);
+  }
+  // Smoke above a strong fire.
+  if (k > 0.5) g.fillStyle(0x3a3a3a, 0.25 * k).fillCircle(at.x + Math.sin(timeMs / 400 + seed) * 4, at.y - 30 - 10 * k, 6 + 4 * k);
+}
+
+/** Dismantling with the hammer: a thin bar that fills as the item comes apart. */
+export function drawDismantleBar(g: G, at: Point, fraction: number): void {
+  const f = Math.max(0, Math.min(1, fraction));
+  g.fillStyle(0x000000, 0.7).fillRect(at.x - 15, at.y - 1, 30, 5);
+  g.fillStyle(0xd9c7a3, 1).fillRect(at.x - 14, at.y, 28 * f, 3);
 }

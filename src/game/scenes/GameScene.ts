@@ -11,6 +11,8 @@ import {
   catapultPosition,
   drawCatapult,
   drawDebris,
+  drawDismantleBar,
+  drawFlames,
   drawHealthBar,
   drawImpact,
   drawShot,
@@ -31,6 +33,10 @@ import { isWorkingBridge } from '../../sim/systems/placement';
 import type { Catapult, ItemKind, Ownable, StoneCutter, Structure } from '../../sim/types';
 import { isOwnable } from '../../sim/state';
 import { maxHp } from '../../sim/systems/combat';
+import { craftTicks } from '../../sim/systems/crafting';
+import { fireStrength } from '../../sim/systems/fire';
+import { kindOf } from '../../sim/state';
+import { MILLI } from '../../sim/fixed';
 import { stackStage } from '../../sim/stack';
 import { typeIndex, upgradeLevel } from '../../sim/upgrades';
 import { type WaterFlow, SpritePool, addPackSprite, addWaterSprite, createGreyPack, packLoaded, packScale, usePixelFiltering } from '../render/sprites';
@@ -373,7 +379,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
     MAP.hexes.forEach((h, i) => {
-      if (state.debris[i]! > 0) drawDebris(g, hexToScreen(h));
+      if (state.debris[i]! > 0) drawDebris(g, hexToScreen(h), state.debrisBurnt[i]);
     });
     MAP.hexes.forEach((h, i) => {
       if (state.stacks[i]! <= 0) return;
@@ -428,6 +434,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.sprites.end();
     for (const e of entities) if (e.type === 'shot') drawShot(g, e, alpha);
+    this.drawFires(g, time, alpha);
     this.drawCombatFeedback(g, time, alpha);
   }
 
@@ -541,6 +548,26 @@ export class GameScene extends Phaser.Scene {
     return c.fireTicks > 0 && since < 4 ? 1 - since / 4 : 0;
   }
 
+  /** Flames on burning items, forests and debris (DESIGN §9b), and the hammer's progress on items being dismantled. */
+  private drawFires(g: Phaser.GameObjects.Graphics, time: number, alpha: number): void {
+    const { state, ctx } = this.runner;
+    for (const e of state.entities) {
+      if (!isOwnable(e)) continue;
+      const at = this.screenPos(e, alpha);
+      if (e.fire) drawFlames(g, at, fireStrength(ctx, e.fire, maxHp(state, ctx, e) * MILLI), time, e.id);
+      if (e.dismantleTicks !== undefined) {
+        const total = craftTicks(state, ctx, e.owner, kindOf(e));
+        drawDismantleBar(g, { x: at.x, y: at.y + 8 }, 1 - e.dismantleTicks / Math.max(1, total));
+      }
+    }
+    MAP.hexes.forEach((h, i) => {
+      const forest = state.forestFire[i];
+      if (forest) drawFlames(g, hexToScreen(h), fireStrength(ctx, forest, ctx.config.forest.woodPool * MILLI), time, i);
+      const debris = state.debrisFire[i];
+      if (debris) drawFlames(g, hexToScreen(h), fireStrength(ctx, debris, state.debris[i]! * MILLI), time, i + 7);
+    });
+  }
+
   /** Where an item is drawn right now. */
   private screenPos(e: Ownable, alpha: number): Point {
     const { ctx } = this.runner;
@@ -562,7 +589,10 @@ export class GameScene extends Phaser.Scene {
       if (shots.has(id)) continue;
       this.impacts.push({ at: shot.at, t0: time });
       // A killing blow: the target is gone, so its HP change can't be seen below.
-      if (this.hpSeen.has(shot.targetId) && !state.entities.some((e) => e.id === shot.targetId)) this.floatNumber(shot.at, shot.damage, time);
+      const target = state.entities.find((e) => e.id === shot.targetId);
+      if (this.hpSeen.has(shot.targetId) && !target) this.floatNumber(shot.at, shot.damage, time);
+      // A hit on a burning target: its HP change is mixed with fire damage, so show the hit itself.
+      else if (target && isOwnable(target) && target.fire && this.hpSeen.get(target.id) !== target.hp) this.floatNumber(shot.at, shot.damage, time);
     }
     this.shotsSeen = shots;
 
@@ -572,7 +602,8 @@ export class GameScene extends Phaser.Scene {
       const before = this.hpSeen.get(e.id);
       if (before !== undefined && before !== e.hp) {
         this.barUntil.set(e.id, time + BAR_MS);
-        if (e.hp < before) this.floatNumber(this.screenPos(e, alpha), before - e.hp, time);
+        // Hits get a number; fire damage only shows on the bar (it ticks every moment, numbers would pile up).
+        if (e.hp < before && !e.fire) this.floatNumber(this.screenPos(e, alpha), before - e.hp, time);
       }
       seen.set(e.id, e.hp);
       const until = this.barUntil.get(e.id) ?? 0;

@@ -35,8 +35,10 @@ export function forestSystem(state: GameState, ctx: SimContext): void {
 function clearDebris(state: GameState, ctx: SimContext, s: Structure, i: number): void {
   s.clearTicks = (s.clearTicks ?? 0) + 1;
   if (s.clearTicks < Math.round(ctx.config.debris.clearS * ctx.config.tickRate)) return;
-  state.stacks[i]! += Math.floor((state.debris[i]! * MILLI * ctx.config.debris.woodPct) / 100);
+  if (!state.debrisBurnt[i]) state.stacks[i]! += Math.floor((state.debris[i]! * MILLI * ctx.config.debris.woodPct) / 100);
   state.debris[i] = 0;
+  state.debrisBurnt[i] = false;
+  state.debrisFire[i] = null;
   delete s.clearTicks;
   if (state.forestPool[i] === 0) relocate(state, ctx, s, i);
 }

@@ -96,6 +96,13 @@
     "hitsPerSecond": 0.5,
     "speedHexPerSecond": 0.5
   },
+  "fire": {
+    "startStrengthPct": 10,
+    "stepPct": 10,
+    "maxStrengthPct": 50,
+    "maxDamagePctPerS": 10,
+    "spreadEveryS": 20
+  },
   "debris": {
     "clearS": 30,
     "woodPct": 25

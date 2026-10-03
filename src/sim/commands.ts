@@ -6,7 +6,7 @@ import { idx } from './context';
 import { addEntity, isOwnable, structureAt } from './state';
 import { startResearch, upgradeError } from './upgrades';
 import { craftCost, craftError } from './systems/crafting';
-import { dismantle, maxHp, surrender } from './systems/combat';
+import { maxHp, startDismantle, surrender } from './systems/combat';
 import { carrierRouteError, dropOffs, isForest, placementError, territoryIndices } from './systems/placement';
 import { territoryChanged } from './systems/territory';
 import type { Carrier, Catapult, Command, ForestGuard, GameState, StoneCutter, Structure, StructureKind } from './types';
@@ -137,7 +137,7 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
       const e = state.entities.find((x) => x.id === cmd.id);
       if (!e || !isOwnable(e) || e.owner !== cmd.player) return;
       if (e.type === 'structure' && e.kind === 'outpost') return;
-      dismantle(state, ctx, e);
+      startDismantle(state, ctx, e); // takes as long as crafting it (DESIGN §7.3c)
       return;
     }
     case 'buyUpgrade': {

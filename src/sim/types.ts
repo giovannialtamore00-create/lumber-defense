@@ -14,6 +14,20 @@ export type ItemKind = StructureKind | 'carrier' | 'forestGuard' | 'stoneCutter'
 /** Owner of neutral items (DESIGN §9): nobody. */
 export const NEUTRAL = -1;
 
+/** A fire on an item, a forest or debris (DESIGN §9b). Damage in milli-HP (forests: milli-wood). */
+export interface Fire {
+  /** Fire damage dealt so far: sets the fire's strength. */
+  dealt: number;
+  /** Fire damage not yet taken off whole HP. */
+  acc: number;
+  /** The player who started it (credited with its damage), or -1. */
+  by: number;
+  /** Ticks until it spreads again, once at maximum strength. */
+  spreadTicks: number;
+  /** Reached maximum strength (it spreads then). */
+  maxed: boolean;
+}
+
 /** Per-player match statistics for the end screen (DESIGN §11). Wood in milli-wood. */
 export interface PlayerStats {
   woodChopped: number;
@@ -94,6 +108,10 @@ export interface Structure {
   q: number;
   r: number;
   hp: number;
+  /** Burning (DESIGN §9b). */
+  fire?: Fire;
+  /** Hammer: ticks left until it's taken apart (DESIGN §7.3c). */
+  dismantleTicks?: number;
   /** Outposts only: territory radius in hexes (the first outpost's is smaller, DESIGN §5). */
   radius?: number;
   /** Woodchoppers with Log Slide: wood (milli) slid towards the river so far (DESIGN §10.3). */
@@ -127,6 +145,10 @@ export interface Carrier {
   /** Carried wood, milli-wood. */
   load: number;
   hp: number;
+  /** Burning (DESIGN §9b). */
+  fire?: Fire;
+  /** Hammer: ticks left until it's taken apart (DESIGN §7.3c). */
+  dismantleTicks?: number;
   /** Ticks of Causeway speed boost left (DESIGN §10.3). */
   boostTicks: number;
 }
@@ -166,6 +188,10 @@ export interface ForestGuard {
   /** Empty land hexes it has turned into forest (Afforest upgrade). */
   afforested: number;
   hp: number;
+  /** Burning (DESIGN §9b). */
+  fire?: Fire;
+  /** Hammer: ticks left until it's taken apart (DESIGN §7.3c). */
+  dismantleTicks?: number;
 }
 
 /** A stone cutter stands on a rock and slowly breaks it (DESIGN §8.4d). Several can share one rock. */
@@ -176,6 +202,10 @@ export interface StoneCutter {
   q: number;
   r: number;
   hp: number;
+  /** Burning (DESIGN §9b). */
+  fire?: Fire;
+  /** Hammer: ticks left until it's taken apart (DESIGN §7.3c). */
+  dismantleTicks?: number;
 }
 
 /**
@@ -201,6 +231,10 @@ export interface Catapult {
   aimQ: number;
   aimR: number;
   hp: number;
+  /** Burning (DESIGN §9b). */
+  fire?: Fire;
+  /** Hammer: ticks left until it's taken apart (DESIGN §7.3c). */
+  dismantleTicks?: number;
 }
 
 /** A shot in the air (catapult stone or arrow). It lands where the target was when fired (DESIGN §8.6). */
@@ -215,6 +249,9 @@ export interface Shot {
   toR: number;
   targetId: number;
   damage: number;
+  /** Fire weapon: sets the target on fire (Fire arrows, Fireball). Firestorm also sets the forest it lands on alight. */
+  fire: boolean;
+  firestorm: boolean;
   flightTicks: number;
   ticksLeft: number;
 }
@@ -264,6 +301,11 @@ export interface GameState {
   dugRiver: number[];
   /** Debris left by a destroyed structure: its wood cost (whole wood), 0 = none (DESIGN §9). */
   debris: number[];
+  /** Debris left by something that burned down: gives no wood, can't catch fire (DESIGN §9b). */
+  debrisBurnt: boolean[];
+  /** Fires on forests and on debris, per hex (DESIGN §9b). */
+  forestFire: (Fire | null)[];
+  debrisFire: (Fire | null)[];
 }
 
 export type Command =

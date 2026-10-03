@@ -94,7 +94,7 @@ export function upgradeError(state: GameState, ctx: SimContext, player: number, 
   if (p.research.length >= slots) return slots === 1 ? 'one workshop: one upgrade at a time' : `research queue full (${slots} slots)`;
   const price = upgradePrice(state, ctx, player, typeIdx, path);
   if (!price) return 'fully upgraded';
-  if (levelData(ctx, typeIdx, path, price.level)?.locked === 'burning') return 'needs burning (not designed yet)';
+  if (levelData(ctx, typeIdx, path, price.level)?.locked) return 'locked';
   if (p.wood < price.cost * 1000) return 'not enough wood';
   return null;
 }

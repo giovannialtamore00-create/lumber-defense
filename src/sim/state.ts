@@ -61,6 +61,9 @@ export function createInitialState(ctx: SimContext, playerCount: number, seed: n
     dugStrength: map.hexes.map(() => 0),
     dugRiver: map.hexes.map(() => -1),
     debris: map.hexes.map(() => 0),
+    debrisBurnt: map.hexes.map(() => false),
+    forestFire: map.hexes.map(() => null),
+    debrisFire: map.hexes.map(() => null),
   };
 }
 

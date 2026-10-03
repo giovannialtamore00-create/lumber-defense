@@ -251,6 +251,9 @@ One icon that grows in 3 stages with the amount of wood:
 - **How to use it (decided):** either click the **hammer icon** in an item's hover pop-up (§12), or pick up the
   **hammer** tool and hover the map: your dismantlable items are highlighted. Either way a confirmation asks
   **"Are you sure you want to dismantle?"** before anything is destroyed.
+- **Dismantling takes time (decided, M6):** as long as crafting that item would take right now. The item keeps
+  working until it's gone. Dismantling a **burning** item leaves **no wood** (it burns). Surrender and defeat still
+  dismantle at once.
 
 ### 7.3d Trading (decided)
 - A **Trade** panel: pick another player, type an amount (up to your wood), press **Send**. The wood moves
@@ -416,10 +419,33 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
   - A **structure leaves debris** on its hex (on water a bridge or dam leaves none; the hex is water again).
     Debris **blocks building like a forest**; units can move over it. To clear it, place a **woodchopper** on the
     debris: it clears it in **30 s** (placeholder) and leaves **25% of the destroyed structure's wood cost** as a
-    log stack there, then carries on like a woodchopper whose forest ran out (§6.2). Debris can also be **burned**
-    later (burning is not designed yet).
+    log stack there (burnt debris gives none, §9b), then carries on like a woodchopper whose forest ran out (§6.2). Debris can also be **burned** (§9b).
 - **Health bars (decided, M5):** an item shows its health bar for a short while when it **takes damage, heals, or
   gets an HP upgrade**, and while you **hover** it. The hover pop-up shows HP too. Otherwise no bars, to avoid clutter.
+
+### 9b. Burning (decided, M6)
+Everything is made of wood, so a fire feeds itself until the item is gone.
+- **What burns:** structures, units, forests and debris, whoever owns them (including your own).
+- **Fire strength** depends on how much of the item's max HP fire has already destroyed, in steps of 10%: under
+  20% → strength 10% (also the strength right after catching fire), 20% → 20%, … up to **50% = maximum**.
+- **Burn rate** is proportional to strength: at maximum, **10% of max HP per second**, so strength 10% = 2%/s,
+  20% = 4%/s, 30% = 6%/s, 40% = 8%/s. The rate is recalculated at each 10% step. A fire nobody adds to reaches
+  maximum in about 15 s and destroys the item about 5 s later, whatever its HP.
+- **Fire hits add up:** a hit from a fire weapon on a burning item counts as fire damage, so it raises the strength
+  faster. A hit on an item that isn't burning sets it on fire.
+- **Spreading:** when a fire reaches maximum it spreads to **one random adjacent hex with something on it** that
+  isn't burning yet, then again **every 20 s** while the item still stands (placeholder). On that hex it catches
+  **one item**: the structure first, else a unit, else the forest, else debris.
+- **A burning unit** carries its fire with it.
+- **Forests** burn their wood (max HP = their wood pool, 100); when the wood is gone the hex is a cut forest.
+- **Debris** burns too (max HP = its wood value) and is gone when it has burned; the hex is cleared.
+- **Burnt out:** a structure destroyed while burning leaves **burnt debris**: it blocks building like debris, can't
+  catch fire again, and gives **no wood** when a woodchopper clears it. Units burn away with whatever they carried.
+- **No way to put a fire out** for now. The hammer can still take a burning item apart, but its wood burns.
+- **Fire weapons:** Fire arrows (Archer L3), Fireball (Catapult Firepower L2: 20 damage, sets the target on fire),
+  Firestorm (Firepower L3: Fireball, and the forest on the hex where it lands catches fire if that hex is a conflict
+  zone inside the shooter's territory).
+- Numbers live in `config.json` under `fire`.
 
 ## 10. Dev tree (bought at the Workshop)
 
@@ -436,7 +462,7 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
   on top of Fast Research. Every workshop shows the **research progress icon**, like factory-mills do for crafting.
 - **Combat paths (decided):** paths whose effect needs combat (Outpost Archer, Factory Improved Frames, Catapult
   Range/Firepower, Bridge Drawbridge) are **shown but locked until M5**. **M5:** they open, except the levels that
-  need **burning** (Fire arrows, Fireball, Firestorm), which stay 🔒 until burning is designed.
+  need **burning** (Fire arrows, Fireball, Firestorm), which open in **M6** with burning (§9b).
 - **Archers** (Outpost Archer, Gatehouse archer) follow the catapult's target rules (§8.6): other players' items on
   a conflict zone inside the owner's territory, closest first, re-checked every 1 s.
 - **HP upgrades (decided):** when max HP goes up, the extra is **added as healing**, so the damage taken stays the

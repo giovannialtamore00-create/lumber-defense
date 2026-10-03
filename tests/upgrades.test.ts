@@ -64,11 +64,12 @@ describe('buying upgrades (§10.1–10.2)', () => {
     expect(upgradePrice(state, ctx, 0, dock, 0)).toMatchObject({ cost: 36, ticks: 160 });
   });
 
-  it('combat paths are open; the levels that need burning stay locked', () => {
+  it('every path is open, burning levels included (M6)', () => {
     const { ctx, state } = world();
     expect(upgradeError(state, ctx, 0, typeIndex(ctx, 'catapult'), 0)).toBeNull();
     research(state, ctx, 'catapult', 1); // Firepower L1
-    expect(upgradeError(state, ctx, 0, typeIndex(ctx, 'catapult'), 1)).toBe('needs burning (not designed yet)');
+    expect(upgradeError(state, ctx, 0, typeIndex(ctx, 'catapult'), 1)).toBeNull(); // Fireball
+    expect(upgrades.types.every((t) => t.paths.every((p) => p.levels.every((l) => !('locked' in l))))).toBe(true);
   });
 
   it('a path has 3 levels', () => {

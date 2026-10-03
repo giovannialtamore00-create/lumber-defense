@@ -20,7 +20,7 @@
         { "id": "archer", "name": "Archer", "levels": [
           { "desc": "An archer on top: range 2, 5 dmg, 1 hit/s", "range": 2, "damage": 5, "hitsPerSecond": 1 },
           { "desc": "Range 3, 8 dmg", "range": 3, "damage": 8, "hitsPerSecond": 1 },
-          { "desc": "Fire arrows: burning damage", "locked": "burning" }
+          { "desc": "Fire arrows: range 3, 8 dmg, set targets on fire", "range": 3, "damage": 8, "hitsPerSecond": 1, "fire": 1 }
         ] }
       ]
     },
@@ -131,8 +131,8 @@
         ] },
         { "id": "firepower", "name": "Firepower", "levels": [
           { "desc": "10 → 15 dmg", "damage": 15 },
-          { "desc": "Fireball: 20 dmg + burning", "locked": "burning" },
-          { "desc": "Firestorm: burns forests in conflict zones", "locked": "burning" }
+          { "desc": "Fireball: 20 dmg, sets the target on fire", "damage": 20, "fire": 1 },
+          { "desc": "Firestorm: Fireball, and sets forests in conflict zones on fire", "damage": 20, "fire": 1, "firestorm": 1 }
         ] }
       ]
     },

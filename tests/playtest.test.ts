@@ -97,6 +97,9 @@ describe('carrier with an empty pickup (§6.4)', () => {
   });
 });
 
+/** Ticks to dismantle (= base craft time, with no factory-mill): the hammer takes time (DESIGN §7.3c). */
+const takeApart = (kind: keyof typeof config.items) => config.items[kind].craftTimeS * config.tickRate;
+
 describe('dismantling structures (§7.3c)', () => {
   it('destroys your own structure and leaves half its cost as wood; not outposts, not others’', () => {
     const { ctx, state } = setup(RIVER, undefined, 2);
@@ -108,6 +111,8 @@ describe('dismantling structures (§7.3c)', () => {
       { type: 'dismantle', player: 0, id: theirs.id },
       { type: 'dismantle', player: 0, id: outpost.id },
     ]);
+    expect(state.entities.includes(mine)).toBe(true); // still being taken apart
+    run(state, ctx, takeApart('dock'));
     const kinds = state.entities.filter((e) => e.type === 'structure').map((e) => (e.type === 'structure' ? e.kind : ''));
     expect(kinds).toEqual(['outpost', 'dock']);
     expect(stackOf(state, ctx, cell(2, 1))).toBe(config.items.dock.cost / 2);
@@ -118,6 +123,7 @@ describe('dismantling structures (§7.3c)', () => {
     put(state, ctx, 'outpost', 0, cell(1, 1));
     const bridge = put(state, ctx, 'bridge', 0, cell(3, 1));
     step(state, ctx, [{ type: 'dismantle', player: 0, id: bridge.id }]);
+    run(state, ctx, takeApart('bridge'));
     expect(piles(state).map((p) => p.amount)).toEqual([(config.items.bridge.cost / 2) * 1000]);
   });
 });
@@ -131,9 +137,29 @@ describe('dismantling units (§7.3c)', () => {
     step(state, ctx, [{ type: 'placeCarrier', player: 0, aQ: cell(0, 0).q, bQ: cell(2, 0).q, r: 0 }]);
     const c = state.entities.find((e): e is Carrier => e.type === 'carrier')!;
     c.load = 3000;
+    // No more wood to fetch: it waits at A while it's taken apart.
+    state.entities = state.entities.filter((e) => !(e.type === 'structure' && e.kind === 'woodchopper'));
+    state.stacks.fill(0);
     step(state, ctx, [{ type: 'dismantle', player: 0, id: c.id }]);
+    run(state, ctx, takeApart('carrier'));
     expect(state.entities.some((e) => e.type === 'carrier')).toBe(false);
     expect(stackOf(state, ctx, cell(0, 0))).toBeGreaterThanOrEqual(config.items.carrier.cost / 2 + 3);
+  });
+});
+
+describe('dismantling takes time (§7.3c)', () => {
+  it('as long as crafting it; a burning item leaves no wood', () => {
+    const { ctx, state } = setup(RIVER);
+    put(state, ctx, 'outpost', 0, cell(1, 1));
+    const dock = put(state, ctx, 'dock', 0, cell(2, 1));
+    dock.hp = 80;
+    dock.fire = { dealt: 0, acc: 0, by: 0, spreadTicks: 0, maxed: false };
+    step(state, ctx, [{ type: 'dismantle', player: 0, id: dock.id }]);
+    run(state, ctx, takeApart('dock') - 2);
+    expect(state.entities.includes(dock)).toBe(true);
+    run(state, ctx, 2);
+    expect(state.entities.includes(dock)).toBe(false);
+    expect(stackOf(state, ctx, cell(2, 1))).toBe(0);
   });
 });
 

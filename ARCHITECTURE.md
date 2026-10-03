@@ -216,6 +216,6 @@ Stop after each milestone for designer playtest and approval.
 | **M3** | Crafting and building | Build dropdown, craft confirm, queue, pooled productivity, progress icon on every factory, hand placement with green/red, all DESIGN §7.3 rules, mills with the curve table, bridges, gardener regrowth. |
 | **M4** | Multiplayer | PeerJS lobby with room code, 2–4 players, random regions, lockstep bundles, hash check, determinism test. Playable over the internet with friends. |
 | **M5** | Conflict | Conflict zones, catapult automatic behaviour, damage, HP, destruction, neutral structures, capture, defeat, surrender, victory. |
-| **M6** | Dev tree | Workshop panel, 2-path rules and pricing from `upgrades.json`, effects applied to existing and future items. |
+| **M6** | Dev tree and burning | Workshop panel, 2-path rules and pricing from `upgrades.json`, effects applied to existing and future items. Burning (DESIGN §9b) and the fire upgrades; timed hammer. |
 | **M7** | Bots | Host-side bots that fill empty slots and play by the same rules. The bot strategy is designed with the designer first. |
 | **M8** | Playtest build | itch.io upload, basic in-game feedback (desync warning, connection status), balance values easy to edit. |

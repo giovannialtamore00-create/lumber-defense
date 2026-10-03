@@ -8,7 +8,9 @@ import { addEntity, hexOf, isOwnable, kindOf, removeEntity, structures } from '.
 import { upgradeValue } from '../upgrades';
 import { isRock, isWater } from '../water';
 import { type Catapult, type Entity, type GameState, NEUTRAL, type Ownable, type Shot } from '../types';
+import { craftTicks } from './crafting';
 import { dropWood } from './economy';
+import { fireSystem, newFire } from './fire';
 import { crossable } from './placement';
 import { isCoveredBy, territoryChanged } from './territory';
 
@@ -53,7 +55,16 @@ function closestTarget(state: GameState, ctx: SimContext, attacker: number, from
 
 const byId = (state: GameState, id: number | null | undefined) => (id == null ? undefined : state.entities.find((e) => e.id === id));
 
-function fire(state: GameState, ctx: SimContext, kind: Shot['kind'], owner: number, from: Hex, target: Ownable, damage: number): void {
+function fire(
+  state: GameState,
+  ctx: SimContext,
+  kind: Shot['kind'],
+  owner: number,
+  from: Hex,
+  target: Ownable,
+  damage: number,
+  flags: { fire: boolean; firestorm: boolean } = { fire: false, firestorm: false },
+): void {
   const to = hexOf(target);
   const flightTicks = ticks(ctx, kind === 'stone' ? ctx.config.combat.shotFlightS : ctx.config.combat.arrowFlightS);
   addEntity<Shot>(state, {
@@ -66,6 +77,8 @@ function fire(state: GameState, ctx: SimContext, kind: Shot['kind'], owner: numb
     toR: to.r,
     targetId: target.id,
     damage,
+    fire: flags.fire,
+    firestorm: flags.firestorm,
     flightTicks,
     ticksLeft: flightTicks,
   });
@@ -80,16 +93,20 @@ export function damage(state: GameState, ctx: SimContext, e: Ownable, amount: nu
 }
 
 /**
- * Destroyed by an attack (DESIGN §9): a unit is gone (a carrier's load drops where it was); a structure leaves debris
- * on land. A lost outpost changes territory.
+ * Destroyed by an attack (DESIGN §9): a unit is gone (a carrier's load drops where it was, unless it burned); a
+ * structure leaves debris on land, burnt debris if it burned down (DESIGN §9b). A lost outpost changes territory.
  */
-export function destroy(state: GameState, ctx: SimContext, e: Ownable, by: number): void {
+export function destroy(state: GameState, ctx: SimContext, e: Ownable, by: number, burnt = false): void {
   removeEntity(state, e.id);
   const h = hexOf(e);
   const i = idx(ctx, h)!;
-  if (e.type === 'carrier') dropWood(state, ctx, h.q, h.r, e.load);
+  if (e.type === 'carrier' && !burnt) dropWood(state, ctx, h.q, h.r, e.load);
   if (e.type !== 'structure') return;
-  if (!isWater(state, ctx, i)) state.debris[i] = ctx.config.items[e.kind].cost;
+  if (!isWater(state, ctx, i)) {
+    state.debris[i] = ctx.config.items[e.kind].cost;
+    state.debrisBurnt[i] = burnt;
+    state.debrisFire[i] = null;
+  }
   if (e.kind === 'outpost') {
     const p = state.players[by];
     if (p) p.stats.outpostsDestroyed++;
@@ -157,7 +174,8 @@ function archersSystem(state: GameState, ctx: SimContext): void {
     if ((s.fireTicks ?? 0) > 0) s.fireTicks!--;
     const target = byId(state, s.targetId);
     if (!target || !isLegalTarget(state, ctx, s.owner, target) || distance(s, hexOf(target)) > range || (s.fireTicks ?? 0) > 0) continue;
-    fire(state, ctx, 'arrow', s.owner, s, target, upgradeValue(state, ctx, s.owner, type, path, 'damage', 0));
+    const burning = upgradeValue(state, ctx, s.owner, type, path, 'fire', 0) > 0; // Fire arrows
+    fire(state, ctx, 'arrow', s.owner, s, target, upgradeValue(state, ctx, s.owner, type, path, 'damage', 0), { fire: burning, firestorm: false });
     s.fireTicks = ticks(ctx, 1 / upgradeValue(state, ctx, s.owner, type, path, 'hitsPerSecond', 1));
   }
 }
@@ -258,7 +276,10 @@ function catapultSystem(state: GameState, ctx: SimContext): void {
     const range = upgradeValue(state, ctx, c.owner, 'catapult', 'range', 'range', cfg.range);
     if (distance(c, th) <= range) {
       if (c.fireTicks > 0) continue;
-      fire(state, ctx, 'stone', c.owner, c, target, upgradeValue(state, ctx, c.owner, 'catapult', 'firepower', 'damage', cfg.damage));
+      fire(state, ctx, 'stone', c.owner, c, target, upgradeValue(state, ctx, c.owner, 'catapult', 'firepower', 'damage', cfg.damage), {
+        fire: upgradeValue(state, ctx, c.owner, 'catapult', 'firepower', 'fire', 0) > 0, // Fireball
+        firestorm: upgradeValue(state, ctx, c.owner, 'catapult', 'firepower', 'firestorm', 0) > 0,
+      });
       c.fireTicks = ticks(ctx, 1 / cfg.hitsPerSecond);
       continue;
     }
@@ -276,16 +297,46 @@ function shotsSystem(state: GameState, ctx: SimContext): void {
   for (const s of state.entities.filter((e): e is Shot => e.type === 'shot')) {
     if (--s.ticksLeft > 0) continue;
     removeEntity(state, s.id);
+    // Firestorm: the forest where it lands catches fire, if that hex is a conflict zone inside the shooter's land.
+    const land = idx(ctx, { q: s.toQ, r: s.toR });
+    if (s.firestorm && land !== undefined && state.forestPool[land]! > 0 && !state.forestFire[land] && isConflictFor(state, land, s.owner))
+      state.forestFire[land] = newFire(s.owner);
     const target = byId(state, s.targetId);
     if (!target || !isOwnable(target) || target.owner === s.owner) continue;
     const h = hexOf(target);
-    if (h.q === s.toQ && h.r === s.toR) damage(state, ctx, target, s.damage, s.owner);
+    if (h.q !== s.toQ || h.r !== s.toR) continue; // dodged
+    if (s.fire) {
+      // A fire hit sets the target alight; on a burning target it counts as fire damage, so the fire grows faster.
+      target.fire ??= newFire(s.owner);
+      target.fire.dealt += s.damage * MILLI;
+    }
+    damage(state, ctx, target, s.damage, s.owner);
   }
+}
+
+/**
+ * The hammer takes as long as crafting the item would (DESIGN §7.3c); the item works until then. A burning item
+ * leaves no wood: it burns.
+ */
+function dismantleSystem(state: GameState, ctx: SimContext): void {
+  for (const e of state.entities.filter((x): x is Ownable => isOwnable(x) && x.dismantleTicks !== undefined)) {
+    if (--e.dismantleTicks! > 0) continue;
+    if (e.fire) removeEntity(state, e.id);
+    else dismantle(state, ctx, e);
+  }
+}
+
+/** Starts taking one of your items apart with the hammer. */
+export function startDismantle(state: GameState, ctx: SimContext, e: Ownable): void {
+  if (e.dismantleTicks !== undefined) return;
+  e.dismantleTicks = craftTicks(state, ctx, e.owner, kindOf(e));
 }
 
 export function combatSystem(state: GameState, ctx: SimContext): void {
   catapultSystem(state, ctx);
   archersSystem(state, ctx);
   shotsSystem(state, ctx);
+  fireSystem(state, ctx);
+  dismantleSystem(state, ctx);
   checkVictory(state);
 }
