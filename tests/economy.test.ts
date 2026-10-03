@@ -155,7 +155,7 @@ describe('carrier (DESIGN §6.4)', () => {
 
     run(state, ctx, 1000 / ctx.rates.woodchopper - 1); // 1 wood in the stack, picked up
     expect(carrier.load).toBe(1000);
-    run(state, ctx, 20); // 2 hexes at 1 hex/s
+    run(state, ctx, 40); // 2 hexes at 0.5 hex/s
     expect(carrier.load).toBe(0);
     expect(carrier.phase).toBe('toA');
     expect(piles(state).map((p) => p.amount)).toEqual([1000]);
@@ -168,7 +168,7 @@ describe('carrier (DESIGN §6.4)', () => {
     setStack(state, ctx, cell(0, 0), 7);
     state.players[0]!.hand.push('carrier');
     step(state, ctx, [{ type: 'placeCarrier', player: 0, aQ: cell(0, 0).q, bQ: cell(2, 0).q, r: 0 }]);
-    run(state, ctx, 20);
+    run(state, ctx, 40);
     expect(wood(state)).toBe(55); // capacity 5
     expect(stackOf(state, ctx, cell(0, 0))).toBe(2);
   });

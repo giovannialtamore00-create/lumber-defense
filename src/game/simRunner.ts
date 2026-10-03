@@ -10,6 +10,7 @@ import { step } from '../sim/tick';
 import type { Command, Config, GameState } from '../sim/types';
 
 const MAX_STEPS_PER_UPDATE = 10;
+const LOG_SNAPSHOT_TICKS = 100;
 
 export class SimRunner {
   readonly ctx: SimContext;
@@ -20,26 +21,52 @@ export class SimRunner {
   private lastNow: number | null = null;
   private sinceStep = 0;
   private readonly tickMs: number;
+  /** Match record for analysis (DESIGN §11): every command bundle, and the players' numbers every 10 s. */
+  readonly log: {
+    seed: number;
+    slots: { name: string | null }[];
+    commands: { tick: number; commands: Command[] }[];
+    snapshots: { tick: number; players: Record<string, number | boolean>[] }[];
+  };
 
   constructor(
     map: MapData,
     config: Config,
     readonly session: LockstepSession,
+    /** A match already in progress (rejoining): the host's state, instead of a new match. */
+    initial?: GameState,
   ) {
     this.ctx = createContext(map, config);
     const { slots, seed } = session.info;
-    this.state = createInitialState(
-      this.ctx,
-      slots.length,
-      seed,
-      slots.map((s) => s.name === null),
-    );
+    this.state =
+      initial ??
+      createInitialState(
+        this.ctx,
+        slots.length,
+        seed,
+        slots.map((s) => s.name === null),
+      );
     this.tickMs = 1000 / config.tickRate;
+    this.log = { seed, slots, commands: [], snapshots: [] };
   }
 
   /** Our player slot. */
   get localPlayer(): number {
     return this.session.info.you;
+  }
+
+  /**
+   * Host only: a player knocking on the door mid-match. If they had a slot (same name, or the only slot whose player
+   * dropped), they get it back with the match as it is now.
+   */
+  rejoin(peer: string, name: string): boolean {
+    const { slots } = this.session.info;
+    const left = [...this.session.left];
+    let slot = slots.findIndex((s, i) => i !== this.localPlayer && s.name !== null && s.name === name.slice(0, 16));
+    if (slot < 0 && left.length === 1) slot = left[0]!;
+    if (slot < 0) return false;
+    this.session.rejoin(peer, slot, this.state);
+    return true;
   }
 
   submit(command: Command): void {
@@ -82,10 +109,40 @@ export class SimRunner {
       if (!commands) break;
       this.prevCarrierQ.clear();
       for (const e of this.state.entities) if (e.type === 'carrier') this.prevCarrierQ.set(e.id, e.posQ);
+      if (commands.length) this.log.commands.push({ tick: this.state.tick, commands });
       step(this.state, this.ctx, commands);
+      if (this.state.tick % LOG_SNAPSHOT_TICKS === 0 || this.state.phase === 'over') this.snapshot();
       this.sinceStep = 0;
       if (this.state.tick % HASH_EVERY_TICKS === 0) this.session.reportHash(this.state.tick, hashState(this.state));
     }
+  }
+
+  private snapshot(): void {
+    const { state } = this;
+    if (this.log.snapshots.at(-1)?.tick === state.tick) return;
+    this.log.snapshots.push({
+      tick: state.tick,
+      players: state.players.map((p) => ({
+        id: p.id,
+        wood: p.wood,
+        stone: p.stone,
+        defeated: p.defeated,
+        territory: state.coverage.filter((c) => c & (1 << p.id)).length,
+        ...p.stats,
+      })),
+    });
+  }
+
+  /** The match record as a JSON file (DESIGN §11): kept in memory only, so it's gone when the tab closes. */
+  downloadLog(): void {
+    const { state } = this;
+    const data = { ...this.log, endTick: state.tick, phase: state.phase, winner: state.winner };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `match-${this.session.info.seed}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   /** How far we are between the last tick and the next one, 0..1. */

@@ -55,5 +55,10 @@ if (import.meta.env.DEV && params.has('demo')) {
         autostart: params.has('autostart') ? Number(params.get('autostart')) : undefined,
       }
     : {};
-  void runLobby(gameVersion(), auto).then((session) => startGame(new SimRunner(MAP, config as Config, session)));
+  void runLobby(gameVersion(), auto).then(({ session, hostLobby, state }) => {
+    const runner = new SimRunner(MAP, config as Config, session, state);
+    // A player who drops can join again with the same name (the host lets them back in).
+    if (hostLobby) hostLobby.onLateHello = (peer, name) => runner.rejoin(peer, name);
+    startGame(runner);
+  });
 }

@@ -25,7 +25,10 @@ export function isPlantable(state: GameState, ctx: SimContext, i: number): boole
 function isAfforestable(state: GameState, ctx: SimContext, g: ForestGuard, i: number): boolean {
   const h = ctx.map.hexes[i]!;
   if (h.terrain !== 'land' || state.grownForest[i] || state.forestPool[i]! > 0 || state.saplingGrowth[i]! >= 0) return false;
-  if (structureAt(state, h.q, h.r)) return false;
+  if (structureAt(state, h.q, h.r) || state.debris[i]! > 0) return false;
+  // Conflict zones only with Afforest's last level (DESIGN §10.3).
+  const c = state.coverage[i]!;
+  if ((c & (c - 1)) !== 0 && upgradeValue(state, ctx, g.owner, 'forestGuard', 'afforest', 'inConflict', 0) === 0) return false;
   return g.afforested < upgradeValue(state, ctx, g.owner, 'forestGuard', 'afforest', 'newForests', 0);
 }
 

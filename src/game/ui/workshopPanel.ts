@@ -120,7 +120,7 @@ export class WorkshopPanel {
           const d = levelData(ctx, t, k, L)!;
           const mark = L <= lvl ? '✓' : d.locked ? '🔒' : L === lvl + 1 ? '→' : '·';
           const color = L <= lvl ? '#9fd8a8' : d.locked ? '#8a7d68' : L === lvl + 1 ? '#f3e3c3' : '#a89a80';
-          const text = add(this.scene.add.text(x, py, `${mark} L${L}  ${d.desc}${d.locked ? ' (comes with combat)' : ''}`, { ...SMALL, color }));
+          const text = add(this.scene.add.text(x, py, `${mark} L${L}  ${d.desc}${d.locked ? ' (needs burning, not designed yet)' : ''}`, { ...SMALL, color }));
           py += text.height + 4;
         }
         // Buy button for the next level.

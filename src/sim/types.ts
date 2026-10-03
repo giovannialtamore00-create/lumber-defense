@@ -6,13 +6,23 @@ import type { Rng } from './rng';
 export type Config = typeof config;
 export type UpgradesData = typeof upgrades;
 
-/**
- * The factory is the unified factory-mill (DESIGN §6.7): built on the riverside. The catapult is placed and stands
- * idle until its behaviour arrives in M5.
- */
-export type StructureKind = 'outpost' | 'factory' | 'dock' | 'woodchopper' | 'bridge' | 'dam' | 'workshop' | 'catapult' | 'excavator';
-/** Moving units (don't occupy a hex): the carrier and the forest guard (DESIGN §6.4, §8.7). */
-export type ItemKind = StructureKind | 'carrier' | 'forestGuard' | 'stoneCutter';
+/** The factory is the unified factory-mill (DESIGN §6.7): built on the riverside. */
+export type StructureKind = 'outpost' | 'factory' | 'dock' | 'woodchopper' | 'bridge' | 'dam' | 'workshop' | 'excavator';
+/** Moving units (don't occupy a hex): carrier, forest guard, stone cutter, catapult (DESIGN §6.4, §8.6, §8.7). */
+export type ItemKind = StructureKind | 'carrier' | 'forestGuard' | 'stoneCutter' | 'catapult';
+
+/** Owner of neutral items (DESIGN §9): nobody. */
+export const NEUTRAL = -1;
+
+/** Per-player match statistics for the end screen (DESIGN §11). Wood in milli-wood. */
+export interface PlayerStats {
+  woodChopped: number;
+  woodCollected: number;
+  damageDealt: number;
+  unitsCrafted: number;
+  structuresCrafted: number;
+  outpostsDestroyed: number;
+}
 
 /** An item in the craft queue. `totalTicks` is fixed when the item starts crafting (0 = still waiting). */
 export interface CraftJob {
@@ -42,6 +52,9 @@ export interface Player {
   upgrades: UpgradeProgress[];
   /** Upgrades bought and waiting at the workshop, researched one at a time, first in line first (DESIGN §8.5). */
   research: Research[];
+  /** Out of the game: lost every outpost, or surrendered (DESIGN §11). */
+  defeated: boolean;
+  stats: PlayerStats;
 }
 
 export interface UpgradeProgress {
@@ -89,6 +102,12 @@ export interface Structure {
   workTicks?: number;
   /** Dams: river pressure damage not yet taken off HP, in milli-HP (DESIGN §8.4b). */
   damageAcc?: number;
+  /** Archers (outpost, gatehouse): current target, ticks until the next look and until the next shot (DESIGN §10.1). */
+  targetId?: number | null;
+  thinkTicks?: number;
+  fireTicks?: number;
+  /** Woodchoppers on debris: ticks spent clearing it (DESIGN §9). */
+  clearTicks?: number;
 }
 
 /** A carrier loops A → B along one row (DESIGN §6.4). Positions are milli-hex along the row's q axis. */
@@ -159,13 +178,59 @@ export interface StoneCutter {
   hp: number;
 }
 
-export type Entity = Structure | Carrier | Pile | ForestGuard | StoneCutter;
+/**
+ * A catapult drives hex to hex inside its owner's territory towards the closest legal target and fires at it
+ * (DESIGN §8.6). It keeps its owner wherever it is; off its owner's territory it drives back.
+ */
+export interface Catapult {
+  id: number;
+  type: 'catapult';
+  owner: number;
+  /** The hex it stands on (or is leaving). */
+  q: number;
+  r: number;
+  toQ: number | null;
+  toR: number | null;
+  moveTicks: number;
+  targetId: number | null;
+  /** Ticks until it looks for a target again (1 s "thinking"). */
+  thinkTicks: number;
+  /** Ticks until it can fire again. */
+  fireTicks: number;
+  /** Hex it faces (its target, or where it's trying to drive to), for drawing. */
+  aimQ: number;
+  aimR: number;
+  hp: number;
+}
+
+/** A shot in the air (catapult stone or arrow). It lands where the target was when fired (DESIGN §8.6). */
+export interface Shot {
+  id: number;
+  type: 'shot';
+  kind: 'stone' | 'arrow';
+  owner: number;
+  fromQ: number;
+  fromR: number;
+  toQ: number;
+  toR: number;
+  targetId: number;
+  damage: number;
+  flightTicks: number;
+  ticksLeft: number;
+}
+
+/** Items a player can own (everything except floating piles and shots). */
+export type Ownable = Structure | Carrier | ForestGuard | StoneCutter | Catapult;
+
+export type Entity = Structure | Carrier | Pile | ForestGuard | StoneCutter | Catapult | Shot;
 
 export interface GameState {
   tick: number;
   rng: Rng;
-  /** 'start' while players take their starting turns (nothing else runs), then 'running'. */
-  phase: 'start' | 'running';
+  /** 'start' while players take their starting turns (nothing else runs), then 'running', then 'over' (DESIGN §11). */
+  phase: 'start' | 'running' | 'over';
+  /** The winner once the match is over; null for nobody (everyone lost at once). */
+  winner: number | null;
   startTurns: StartTurns;
   players: Player[];
   /** Always sorted by id: new entities are appended with increasing ids, removal keeps order. */
@@ -195,6 +260,8 @@ export interface GameState {
   dugStrength: number[];
   /** Which river a filled dug hex belongs to (the one it branches from); -1 otherwise. */
   dugRiver: number[];
+  /** Debris left by a destroyed structure: its wood cost (whole wood), 0 = none (DESIGN §9). */
+  debris: number[];
 }
 
 export type Command =
@@ -218,4 +285,8 @@ export type Command =
   /** Place a stone cutter from the hand on a rock (DESIGN §8.4d). */
   | { type: 'placeCutter'; player: number; q: number; r: number }
   /** Give `amount` whole wood to another player (DESIGN §7.3d). */
-  | { type: 'give'; player: number; to: number; amount: number };
+  | { type: 'give'; player: number; to: number; amount: number }
+  /** Place a catapult from the hand on a land hex (DESIGN §8.6). */
+  | { type: 'placeCatapult'; player: number; q: number; r: number }
+  /** Give up: outposts and catapults dismantled, the rest turns neutral (DESIGN §11). */
+  | { type: 'surrender'; player: number };

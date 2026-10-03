@@ -1,6 +1,6 @@
 // Woodchoppers cut their forest hex into a log stack on the same hex (DESIGN §6.2). A pool at 0 means the forest is
 // gone from that hex; the woodchopper then moves to the adjacent free forest hex (in its owner's territory) with the
-// most wood left, or waits until one is free.
+// most wood left, or waits until one is free. A woodchopper on debris clears it first (DESIGN §9).
 import { type SimContext, idx } from '../context';
 import { MILLI, perTick } from '../fixed';
 import { hexesInRadius } from '../hex';
@@ -15,14 +15,30 @@ export function forestSystem(state: GameState, ctx: SimContext): void {
   for (const s of structures(state)) {
     if (s.kind !== 'woodchopper') continue;
     const i = idx(ctx, s)!;
+    if (state.debris[i]! > 0) {
+      clearDebris(state, ctx, s, i);
+      continue;
+    }
     // Output upgrade raises the cutting rate (DESIGN §10.3).
     const rate = perTick(upgradeValue(state, ctx, s.owner, 'woodchopper', 'output', 'woodPerS', ctx.config.woodchopper.woodPerSecond), ctx.config.tickRate);
     const cut = Math.min(rate, state.forestPool[i]!);
     state.forestPool[i]! -= cut;
     state.stacks[i]! += cut;
+    const owner = state.players[s.owner];
+    if (owner) owner.stats.woodChopped += cut;
     logSlide(state, ctx, s, i);
     if (state.forestPool[i] === 0) relocate(state, ctx, s, i);
   }
+}
+
+/** Clearing debris takes a while and leaves part of the destroyed structure's cost as a log stack (DESIGN §9). */
+function clearDebris(state: GameState, ctx: SimContext, s: Structure, i: number): void {
+  s.clearTicks = (s.clearTicks ?? 0) + 1;
+  if (s.clearTicks < Math.round(ctx.config.debris.clearS * ctx.config.tickRate)) return;
+  state.stacks[i]! += Math.floor((state.debris[i]! * MILLI * ctx.config.debris.woodPct) / 100);
+  state.debris[i] = 0;
+  delete s.clearTicks;
+  if (state.forestPool[i] === 0) relocate(state, ctx, s, i);
 }
 
 /**

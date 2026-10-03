@@ -25,7 +25,7 @@ export const ITEM_DESCRIPTIONS: Record<ItemKind, string> = {
   bridge: 'On water. Works once it connects two lands',
   dam: 'On a river. Stops floating wood; on a fork, sends it down the other branch',
   workshop: 'Researches upgrades (Workshop tab); more workshops research faster',
-  catapult: 'Offensive machine (its behaviour comes in M5)',
+  catapult: 'Drives to the closest enemy in a conflict zone and fires at it',
   forestGuard: 'Walks the hexes around it, replanting spent forests',
   stoneCutter: 'On a rock. Breaks it in 5 min for 1 stone (several add up)',
   excavator: 'On empty land. Digs it in 3 min so water can flow there',

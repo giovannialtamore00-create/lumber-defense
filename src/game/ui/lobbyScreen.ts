@@ -5,6 +5,7 @@ import { LocalNetwork } from '../../net/localTransport';
 import { LockstepSession } from '../../net/lockstep';
 import { PeerTransport, hostPeerId } from '../../net/peerTransport';
 import type { SlotInfo } from '../../net/protocol';
+import type { GameState } from '../../sim/types';
 import { PLAYER_COLORS } from '../render/entities';
 
 const CSS = `
@@ -70,7 +71,14 @@ interface AutoLobby {
   autostart?: number;
 }
 
-export function runLobby(version: string, auto: AutoLobby = {}): Promise<LockstepSession> {
+/** What the lobby hands over: the session, plus the host's lobby (for rejoins) or a rejoined match's state. */
+export interface LobbyResult {
+  session: LockstepSession;
+  hostLobby?: HostLobby;
+  state?: GameState;
+}
+
+export function runLobby(version: string, auto: AutoLobby = {}): Promise<LobbyResult> {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
@@ -79,10 +87,10 @@ export function runLobby(version: string, auto: AutoLobby = {}): Promise<Lockste
   document.body.appendChild(root);
 
   return new Promise((resolve) => {
-    const done = (session: LockstepSession) => {
+    const done = (result: LobbyResult) => {
       root.remove();
       style.remove();
-      resolve(session);
+      resolve(result);
     };
 
     const menu = (error = '') => {
@@ -122,7 +130,7 @@ export function runLobby(version: string, auto: AutoLobby = {}): Promise<Lockste
         const net = new LocalNetwork();
         const t = net.join('host');
         const slots: SlotInfo[] = [{ name: name() }, ...Array.from({ length: MAX_PLAYERS - 1 }, () => ({ name: null }))];
-        done(new LockstepSession(t, { seed: newSeed(), slots, you: 0, hostId: 'host' }, true));
+        done({ session: new LockstepSession(t, { seed: newSeed(), slots, you: 0, hostId: 'host' }, true) });
       };
       if (invited) $('name').focus();
     };
@@ -156,7 +164,7 @@ export function runLobby(version: string, auto: AutoLobby = {}): Promise<Lockste
         };
         root.querySelector<HTMLButtonElement>('#start')!.onclick = () => {
           const info = lobby.start();
-          done(new LockstepSession(transport!, info, true, lobby.peerSlots));
+          done({ session: new LockstepSession(transport!, info, true, lobby.peerSlots), hostLobby: lobby });
         };
       };
       lobby.onChange = () => {
@@ -188,7 +196,12 @@ export function runLobby(version: string, auto: AutoLobby = {}): Promise<Lockste
         transport.close();
         menu(`Can't join: ${reason}`);
       };
-      lobby.onStart = (info) => done(new LockstepSession(transport, info, false));
+      lobby.onStart = (info) => done({ session: new LockstepSession(transport, info, false) });
+      lobby.onRejoin = (msg) => {
+        const session = new LockstepSession(transport, { seed: msg.seed, slots: msg.slots, you: msg.you, hostId }, false);
+        session.resume(msg);
+        done({ session, state: msg.state });
+      };
       render();
     };
 

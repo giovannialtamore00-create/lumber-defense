@@ -72,6 +72,9 @@ export function craftError(state: GameState, ctx: SimContext, player: number, it
   return null;
 }
 
+/** Moving units; everything else crafted is a structure (DESIGN §8). */
+const UNITS: readonly ItemKind[] = ['carrier', 'forestGuard', 'stoneCutter', 'catapult'];
+
 /** Advances the first item in each player's queue; a finished item goes into the hand. */
 export function craftingSystem(state: GameState, ctx: SimContext): void {
   for (const p of state.players) {
@@ -81,6 +84,8 @@ export function craftingSystem(state: GameState, ctx: SimContext): void {
     job.doneTicks++;
     if (job.doneTicks >= job.totalTicks) {
       p.queue.shift();
+      if (UNITS.includes(job.item)) p.stats.unitsCrafted++;
+      else p.stats.structuresCrafted++;
       // Into the hand, or the warehouse if it can't be placed anywhere right now (DESIGN §7.3b).
       (canPlaceAnywhere(state, ctx, p.id, job.item) ? p.hand : p.warehouse).push(job.item);
     }

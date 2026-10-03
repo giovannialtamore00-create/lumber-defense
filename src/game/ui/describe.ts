@@ -1,27 +1,22 @@
 // What the hover pop-up says about an item (DESIGN §12): its name, its upgrade levels and a very short description of
 // what it does right now, with live numbers (upgrades included). Read-only: everything comes from the sim.
-import { MILLI, wholeUnits } from '../../sim/fixed';
+import { wholeUnits } from '../../sim/fixed';
 import type { Hex } from '../../sim/hex';
+import { hexOf, kindOf } from '../../sim/state';
+import { isCoveredBy } from '../../sim/systems/territory';
+import { maxHp } from '../../sim/systems/combat';
 import { craftReductionBp, watermills } from '../../sim/systems/crafting';
 import { carrierCapacity } from '../../sim/systems/carriers';
 import { dockCapacity } from '../../sim/systems/docks';
 import { isWorkingBridge } from '../../sim/systems/placement';
-import type { Entity, ItemKind } from '../../sim/types';
+import { type ItemKind, NEUTRAL, type Ownable } from '../../sim/types';
 import { damReliefBp } from '../../sim/water';
 import { typeIndex, upgradeValue } from '../../sim/upgrades';
 import type { SimRunner } from '../simRunner';
 import { ITEM_NAMES } from './items';
 
-export type Thing = Exclude<Entity, { type: 'pile' }>;
-
-export function kindOf(e: Thing): ItemKind {
-  return e.type === 'structure' ? e.kind : e.type === 'carrier' ? 'carrier' : e.type === 'cutter' ? 'stoneCutter' : 'forestGuard';
-}
-
-/** The hex an item is drawn on. */
-export function hexOf(e: Thing): Hex {
-  return e.type === 'carrier' ? { q: Math.round(e.posQ / MILLI), r: e.r } : { q: e.q, r: e.r };
-}
+export type Thing = Ownable;
+export { hexOf, kindOf };
 
 /**
  * The item on a hex: the structure if there is one, else a unit. Carriers often wait on their pickup's structure, so
@@ -31,8 +26,10 @@ export function thingAt(runner: SimRunner, hex: Hex): Thing | null {
   const all = runner.state.entities;
   const s = all.find((e) => e.type === 'structure' && e.q === hex.q && e.r === hex.r);
   if (s && s.type === 'structure') return s;
-  const unit = all.find((e) => (e.type === 'carrier' || e.type === 'guard' || e.type === 'cutter') && hexOf(e).q === hex.q && hexOf(e).r === hex.r);
-  return unit && unit.type !== 'pile' ? unit : null;
+  const unit = all.find(
+    (e): e is Ownable => (e.type === 'carrier' || e.type === 'guard' || e.type === 'cutter' || e.type === 'catapult') && hexOf(e).q === hex.q && hexOf(e).r === hex.r,
+  );
+  return unit ?? null;
 }
 
 /** Can `player` dismantle this (their own, and not an outpost)? */
@@ -63,7 +60,7 @@ export function describe(runner: SimRunner, e: Thing): { title: string; action: 
   const { ctx, state } = runner;
   const kind = kindOf(e);
   const up = (path: string, key: string, base: number) => upgradeValue(state, ctx, e.owner, kind, path, key, base);
-  const title = `${ITEM_NAMES[kind]} · ${levels(runner, e.owner, kind)}`;
+  const title = `${ITEM_NAMES[kind]} · ${e.owner === NEUTRAL ? 'neutral' : levels(runner, e.owner, kind)} · HP ${Math.max(0, e.hp)}/${maxHp(state, ctx, e)}`;
   const i = ctx.indexOf.get(`${hexOf(e).q},${hexOf(e).r}`)!;
   let action = '';
   switch (kind) {
@@ -88,7 +85,7 @@ export function describe(runner: SimRunner, e: Thing): { title: string; action: 
       break;
     case 'dam': {
       const relief = damReliefBp(state, ctx, i);
-      action = `stops floating wood · HP ${e.hp}/${ctx.config.items.dam.hp}${relief > 0 ? ` · pressure −${Math.round(relief / 100)}%` : ''}`;
+      action = `stops floating wood${relief > 0 ? ` · pressure −${Math.round(relief / 100)}%` : ''}`;
       break;
     }
     case 'workshop': {
@@ -108,9 +105,17 @@ export function describe(runner: SimRunner, e: Thing): { title: string; action: 
       action = `cutting this rock · ${crew} cutter${crew === 1 ? '' : 's'} · about ${Math.ceil(left / crew)} s to 1 stone`;
       break;
     }
-    case 'catapult':
-      action = 'idle until combat arrives (M5)';
+    case 'catapult': {
+      if (e.type !== 'catapult') break;
+      const target = state.entities.find((x) => x.id === e.targetId);
+      const range = up('range', 'range', ctx.config.catapult.range);
+      action = !isCoveredBy(state, i, e.owner)
+        ? 'outside your territory: driving back'
+        : target && target.type !== 'pile' && target.type !== 'shot'
+          ? `attacking a ${ITEM_NAMES[kindOf(target)].toLowerCase()} · range ${range}`
+          : `no target in sight · range ${range}`;
       break;
+    }
     case 'carrier':
       action = e.type === 'carrier' ? `carries ${wholeUnits(e.load)}/${wholeUnits(carrierCapacity(state, ctx, e.owner))} wood along its row` : '';
       break;

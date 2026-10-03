@@ -64,10 +64,11 @@ describe('buying upgrades (§10.1–10.2)', () => {
     expect(upgradePrice(state, ctx, 0, dock, 0)).toMatchObject({ cost: 36, ticks: 160 });
   });
 
-  it('combat paths are locked until M5', () => {
+  it('combat paths are open; the levels that need burning stay locked', () => {
     const { ctx, state } = world();
-    expect(upgradeError(state, ctx, 0, typeIndex(ctx, 'catapult'), 0)).toBe('comes with combat (M5)');
-    expect(upgradeError(state, ctx, 0, typeIndex(ctx, 'outpost'), 1)).toBe('comes with combat (M5)');
+    expect(upgradeError(state, ctx, 0, typeIndex(ctx, 'catapult'), 0)).toBeNull();
+    research(state, ctx, 'catapult', 1); // Firepower L1
+    expect(upgradeError(state, ctx, 0, typeIndex(ctx, 'catapult'), 1)).toBe('needs burning (not designed yet)');
   });
 
   it('a path has 3 levels', () => {

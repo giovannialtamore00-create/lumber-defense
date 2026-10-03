@@ -86,8 +86,8 @@ export function carriersSystem(state: GameState, ctx: SimContext): void {
         spawnPile(state, ctx, c.riverQ, c.r, c.load);
       } else {
         const factory = structureAt(state, c.bQ, c.r);
-        if (factory?.kind !== 'factory') continue; // factory gone: wait with the load (M5 decides more)
-        deliverToFactory(state, factory, c.load);
+        if (factory?.kind !== 'factory') continue; // factory gone: wait with the load
+        deliverToFactory(state, ctx, factory, c.load);
       }
       c.load = 0;
       c.phase = 'toA';

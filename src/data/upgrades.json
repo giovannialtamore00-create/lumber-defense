@@ -18,9 +18,9 @@
           { "desc": "Radius +3", "radiusBonus": 3 }
         ] },
         { "id": "archer", "name": "Archer", "levels": [
-          { "desc": "An archer on top: range 2, 5 dmg, 1 hit/s", "locked": "combat" },
-          { "desc": "Range 3, 8 dmg", "locked": "combat" },
-          { "desc": "Fire arrows: burning damage", "locked": "combat" }
+          { "desc": "An archer on top: range 2, 5 dmg, 1 hit/s", "range": 2, "damage": 5, "hitsPerSecond": 1 },
+          { "desc": "Range 3, 8 dmg", "range": 3, "damage": 8, "hitsPerSecond": 1 },
+          { "desc": "Fire arrows: burning damage", "locked": "burning" }
         ] }
       ]
     },
@@ -34,9 +34,9 @@
           { "desc": "Crafting costs −30%", "costReductionPct": 30 }
         ] },
         { "id": "improvedFrames", "name": "Improved Frames", "levels": [
-          { "desc": "All your structures +15% HP", "locked": "combat" },
-          { "desc": "+30% HP", "locked": "combat" },
-          { "desc": "+50% HP", "locked": "combat" }
+          { "desc": "All your structures +15% HP", "hpPct": 15 },
+          { "desc": "+30% HP", "hpPct": 30 },
+          { "desc": "+50% HP", "hpPct": 50 }
         ] }
       ]
     },
@@ -95,7 +95,7 @@
         { "id": "drawbridge", "name": "Drawbridge", "levels": [
           { "desc": "Other players' wheeled units can't cross", "blockOthers": 1 },
           { "desc": "Grate: floating wood stops here for your carriers", "blockOthers": 1, "grate": 1 },
-          { "desc": "Gatehouse archer (like the outpost archer)", "locked": "combat" }
+          { "desc": "Gatehouse archer (like the outpost archer)", "blockOthers": 1, "grate": 1, "range": 2, "damage": 5, "hitsPerSecond": 1 }
         ] },
         { "id": "causeway", "name": "Causeway", "levels": [
           { "desc": "Your wheeled units +50% speed for 10 s after crossing", "boostPct": 50, "boostS": 10, "span": 1 },
@@ -125,14 +125,14 @@
       "name": "Catapult",
       "paths": [
         { "id": "range", "name": "Range", "levels": [
-          { "desc": "Range 4 → 5", "locked": "combat" },
-          { "desc": "Range 6", "locked": "combat" },
-          { "desc": "Range 7", "locked": "combat" }
+          { "desc": "Range 4 → 5", "range": 5 },
+          { "desc": "Range 6", "range": 6 },
+          { "desc": "Range 7", "range": 7 }
         ] },
         { "id": "firepower", "name": "Firepower", "levels": [
-          { "desc": "10 → 15 dmg", "locked": "combat" },
-          { "desc": "Fireball: 20 dmg + burning", "locked": "combat" },
-          { "desc": "Firestorm: burns forests in conflict zones", "locked": "combat" }
+          { "desc": "10 → 15 dmg", "damage": 15 },
+          { "desc": "Fireball: 20 dmg + burning", "locked": "burning" },
+          { "desc": "Firestorm: burns forests in conflict zones", "locked": "burning" }
         ] }
       ]
     },
@@ -148,7 +148,7 @@
         { "id": "afforest", "name": "Afforest", "levels": [
           { "desc": "Also turns 1 empty land hex in its area into forest", "newForests": 1 },
           { "desc": "Up to 2 new forest hexes", "newForests": 2 },
-          { "desc": "Also in conflict zones", "locked": "combat" }
+          { "desc": "Up to 2, also in conflict zones", "newForests": 2, "inConflict": 1 }
         ] }
       ]
     }

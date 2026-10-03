@@ -58,7 +58,7 @@ export class PlacementHand {
     if (this.hammer) {
       // Everything we can dismantle is highlighted; the hovered one in red.
       const target = onMap ? this.hammerTarget(onMap) : null;
-      const all = state.entities.filter((e): e is Thing => e.type !== 'pile' && canDismantle(e, this.player));
+      const all = state.entities.filter((e): e is Thing => e.type !== 'pile' && e.type !== 'shot' && canDismantle(e, this.player));
       return {
         cells: [...all.map((e) => ({ hex: hexOf(e), ok: true })), ...(target ? [{ hex: hexOf(target), ok: false }] : [])],
         message: target
@@ -134,6 +134,7 @@ export class PlacementHand {
     if (placementError(state, ctx, this.player, item, hex.q, hex.r)) return;
     if (item === 'forestGuard') this.runner.submit({ type: 'placeGuard', player: this.player, q: hex.q, r: hex.r });
     else if (item === 'stoneCutter') this.runner.submit({ type: 'placeCutter', player: this.player, q: hex.q, r: hex.r });
+    else if (item === 'catapult') this.runner.submit({ type: 'placeCatapult', player: this.player, q: hex.q, r: hex.r });
     else this.runner.submit({ type: 'place', player: this.player, item, q: hex.q, r: hex.r });
   }
 }

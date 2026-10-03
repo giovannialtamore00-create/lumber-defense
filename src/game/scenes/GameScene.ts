@@ -8,6 +8,13 @@ import { HEX_SIZE, ISO_SQUASH, TILE_DEPTH, type Point, edgeCorners, hexCorners, 
 import {
   PLAYER_COLORS,
   carrierPosition,
+  catapultPosition,
+  drawCatapult,
+  drawDebris,
+  drawHealthBar,
+  drawImpact,
+  drawShot,
+  ownerColor,
   drawCarrier,
   drawCutters,
   drawGuard,
@@ -21,7 +28,9 @@ import {
 } from '../render/entities';
 import { ownFactories, watermills } from '../../sim/systems/crafting';
 import { isWorkingBridge } from '../../sim/systems/placement';
-import type { ItemKind, StoneCutter, Structure } from '../../sim/types';
+import type { Catapult, ItemKind, Ownable, StoneCutter, Structure } from '../../sim/types';
+import { isOwnable } from '../../sim/state';
+import { maxHp } from '../../sim/systems/combat';
 import { drawItemIcon } from '../render/icons';
 import { hexOf, thingAt } from '../ui/describe';
 import { bonusRow, downstream, isRock, isWater, riverIdAt } from '../../sim/water';
@@ -68,6 +77,11 @@ function riverColorForStrength(level: number): number {
   return Phaser.Display.Color.GetColor(c.r, c.g, c.b);
 }
 
+/** How long a health bar stays up after an HP change, and how long impacts and damage numbers last (ms). */
+const BAR_MS = 3000;
+const IMPACT_MS = 350;
+const NUMBER_MS = 900;
+
 const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 3;
 
@@ -78,6 +92,12 @@ export class GameScene extends Phaser.Scene {
   private decor!: Phaser.GameObjects.Graphics;
   private dyn!: Phaser.GameObjects.Graphics;
   private pileLabels: Phaser.GameObjects.Text[] = [];
+  /** Combat feedback, render-only: last HP seen per item, health bar timers, shots in the air, effects. */
+  private hpSeen = new Map<number, number>();
+  private barUntil = new Map<number, number>();
+  private shotsSeen = new Map<number, { at: Point; targetId: number; damage: number }>();
+  private impacts: { at: Point; t0: number }[] = [];
+  private numbers: { text: Phaser.GameObjects.Text; at: Point; t0: number }[] = [];
   private decorKey = '';
   private dugLayer!: Phaser.GameObjects.Graphics;
   private dugKey = '';
@@ -206,8 +226,8 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // Territory: each player's area gets a light tint and a border in their colour. Where territories overlap the
-    // tints mix (conflict zones get their own look in M5).
+    // Territory: each player's area gets a light tint and a border in their colour. Conflict zones (covered by more
+    // than one player) get a red wash on top (DESIGN §9).
     MAP.hexes.forEach((h, i) => {
       const mask = state.coverage[i]!;
       if (!mask) return;
@@ -226,6 +246,7 @@ export class GameScene extends Phaser.Scene {
           g.lineBetween(corners[a]!.x, corners[a]!.y, corners[b]!.x, corners[b]!.y);
         });
       }
+      if (mask & (mask - 1)) g.fillStyle(0xff3b30, 0.18).fillPoints(corners, true);
     });
 
     // Placement preview.
@@ -252,13 +273,13 @@ export class GameScene extends Phaser.Scene {
     // its name and what it does. Not while placing something, so the placement preview stays clear.
     const placing = me.started && this.hand.current() !== null && !this.hand.hammer;
     const found = this.hoverId === null ? undefined : state.entities.find((e) => e.id === this.hoverId);
-    const kept = found && found.type !== 'pile' ? found : null;
+    const kept = found && isOwnable(found) ? found : null;
     const stays = kept && (this.overUi || (this.hover && hexOf(kept).q === this.hover.q && hexOf(kept).r === this.hover.r));
     const thing = placing ? null : stays ? kept : this.hover ? thingAt(this.runner, this.hover) : null;
     this.hoverId = thing?.id ?? null;
     if (thing) {
       const c = hexToScreen(hexOf(thing));
-      g.lineStyle(4, PLAYER_COLORS[thing.owner] ?? 0xffffff, 1);
+      g.lineStyle(4, ownerColor(thing.owner), 1);
       g.strokePoints(hexCorners(c), true);
       const cam = this.cameras.main;
       this.registry.set('hoverThing', { id: thing.id, x: (c.x - cam.worldView.x) * cam.zoom, y: (c.y - cam.worldView.y) * cam.zoom });
@@ -312,6 +333,9 @@ export class GameScene extends Phaser.Scene {
       }
     }
     MAP.hexes.forEach((h, i) => {
+      if (state.debris[i]! > 0) drawDebris(g, hexToScreen(h));
+    });
+    MAP.hexes.forEach((h, i) => {
       if (state.stacks[i]! <= 0) return;
       const onDock = entities.some((e) => e.type === 'structure' && e.kind === 'dock' && e.q === h.q && e.r === h.r);
       drawStack(g, stackPosition(hexToScreen(h), onDock), state.stacks[i]!, ctx);
@@ -341,6 +365,82 @@ export class GameScene extends Phaser.Scene {
       drawPile(g, at);
       t.setPosition(at.x + 9, at.y - 2).setText(String(wholeUnits(p.amount))).setVisible(true);
     });
+
+    // Catapults and shots in the air (DESIGN §8.6), then health bars, impacts and damage numbers.
+    for (const e of entities) if (e.type === 'catapult') drawCatapult(g, e, catapultPosition(e, ctx, alpha), this.swing(e));
+    for (const e of entities) if (e.type === 'shot') drawShot(g, e, alpha);
+    this.drawCombatFeedback(g, time, alpha);
+  }
+
+  /** The throwing arm swings forward for a moment after a shot: 1 just fired → 0 cocked. */
+  private swing(c: Catapult): number {
+    const { ctx } = this.runner;
+    const full = Math.round(ctx.config.tickRate / ctx.config.catapult.hitsPerSecond);
+    const since = full - c.fireTicks;
+    return c.fireTicks > 0 && since < 4 ? 1 - since / 4 : 0;
+  }
+
+  /** Where an item is drawn right now. */
+  private screenPos(e: Ownable, alpha: number): Point {
+    const { ctx } = this.runner;
+    if (e.type === 'carrier') return carrierPosition(e, this.runner.prevCarrierQ.get(e.id), alpha);
+    if (e.type === 'guard') return guardPosition(e, ctx, alpha);
+    if (e.type === 'catapult') return catapultPosition(e, ctx, alpha);
+    return hexToScreen(e);
+  }
+
+  /**
+   * Health bars only for a while after an HP change (damage, healing, HP upgrade) and while hovered (DESIGN §9). A
+   * landed shot leaves a dust puff; damage shows as a red number rising above the item.
+   */
+  private drawCombatFeedback(g: Phaser.GameObjects.Graphics, time: number, alpha: number): void {
+    const { state, ctx } = this.runner;
+    const shots = new Map<number, { at: Point; targetId: number; damage: number }>();
+    for (const e of state.entities) if (e.type === 'shot') shots.set(e.id, { at: hexToScreen({ q: e.toQ, r: e.toR }), targetId: e.targetId, damage: e.damage });
+    for (const [id, shot] of this.shotsSeen) {
+      if (shots.has(id)) continue;
+      this.impacts.push({ at: shot.at, t0: time });
+      // A killing blow: the target is gone, so its HP change can't be seen below.
+      if (this.hpSeen.has(shot.targetId) && !state.entities.some((e) => e.id === shot.targetId)) this.floatNumber(shot.at, shot.damage, time);
+    }
+    this.shotsSeen = shots;
+
+    const seen = new Map<number, number>();
+    for (const e of state.entities) {
+      if (!isOwnable(e)) continue;
+      const before = this.hpSeen.get(e.id);
+      if (before !== undefined && before !== e.hp) {
+        this.barUntil.set(e.id, time + BAR_MS);
+        if (e.hp < before) this.floatNumber(this.screenPos(e, alpha), before - e.hp, time);
+      }
+      seen.set(e.id, e.hp);
+      const until = this.barUntil.get(e.id) ?? 0;
+      if (until <= time && e.id !== this.hoverId) continue;
+      const p = this.screenPos(e, alpha);
+      const fade = e.id === this.hoverId ? 1 : Math.min(1, (until - time) / 500);
+      drawHealthBar(g, { x: p.x, y: p.y - (e.type === 'structure' ? 50 : 30) }, e.hp / maxHp(state, ctx, e), fade);
+    }
+    this.hpSeen = seen;
+
+    this.impacts = this.impacts.filter((f) => time - f.t0 < IMPACT_MS);
+    for (const f of this.impacts) drawImpact(g, f.at, (time - f.t0) / IMPACT_MS);
+    this.numbers = this.numbers.filter((n) => {
+      const t = (time - n.t0) / NUMBER_MS;
+      if (t >= 1) {
+        n.text.destroy();
+        return false;
+      }
+      n.text.setPosition(n.at.x, n.at.y - 56 - 22 * t).setAlpha(1 - t * t);
+      return true;
+    });
+  }
+
+  private floatNumber(at: Point, amount: number, time: number): void {
+    const text = this.add
+      .text(at.x, at.y - 56, `-${amount}`, { fontFamily: 'sans-serif', fontSize: '15px', fontStyle: 'bold', color: '#ff4d3d', stroke: '#000000', strokeThickness: 3 })
+      .setOrigin(0.5, 1)
+      .setDepth(1000);
+    this.numbers.push({ text, at, t0: time });
   }
 
   /** One water wheel per distinct river, on the factory-mill's side facing that river's strongest touching hex. */

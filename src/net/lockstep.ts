@@ -3,8 +3,8 @@
 // - The host schedules every command for `current tick + INPUT_DELAY_TICKS` and broadcasts one bundle per tick, even
 //   when empty. Everyone (host included) steps a tick only once they hold its bundle.
 // - Every HASH_EVERY_TICKS ticks clients send their state hash; the host compares and flags a desync.
-import type { Command } from '../sim/types';
-import type { SlotInfo } from './protocol';
+import type { Command, GameState } from '../sim/types';
+import type { NetMessage, SlotInfo } from './protocol';
 import { type Transport, broadcast } from './transport';
 
 export const INPUT_DELAY_TICKS = 3;
@@ -80,6 +80,9 @@ export class LockstepSession {
             this.pausedBy = msg.slot;
           }
           break;
+        case 'back':
+          this.left.delete(msg.slot);
+          break;
       }
     });
     transport.onPeerLeft((peer) => {
@@ -97,6 +100,38 @@ export class LockstepSession {
   submit(command: Command): void {
     if (this.isHost) this.queue.push(command);
     else this.transport.send(this.info.hostId, { t: 'cmd', command });
+  }
+
+  /**
+   * Host only: a player who dropped joins again as `peer` into `slot`. They get the match state and every bundle
+   * already closed for the ticks still to come; from then on the normal broadcasts reach them too.
+   */
+  rejoin(peer: string, slot: number, state: GameState): void {
+    if (!this.isHost) return;
+    for (const [p, s] of [...this.peerSlots]) if (s === slot) this.peerSlots.delete(p); // forget the old connection
+    this.peerSlots.set(peer, slot);
+    this.left.delete(slot);
+    const bundles = [...this.bundles].filter(([tick]) => tick >= state.tick).sort((a, b) => a[0] - b[0]);
+    this.transport.send(peer, {
+      t: 'rejoin',
+      seed: this.info.seed,
+      slots: this.info.slots,
+      you: slot,
+      state,
+      bundles,
+      paused: this.paused,
+      pausedBy: this.pausedBy,
+      left: [...this.left],
+    });
+    broadcast(this.transport, { t: 'back', slot });
+  }
+
+  /** Client only: pick up a match from the host's rejoin message. */
+  resume(msg: Extract<NetMessage, { t: 'rejoin' }>): void {
+    for (const [tick, commands] of msg.bundles) this.bundles.set(tick, commands);
+    this.paused = msg.paused;
+    this.pausedBy = msg.pausedBy;
+    for (const s of msg.left) this.left.add(s);
   }
 
   /** Pause or resume the match for everyone. Any player can press it. */

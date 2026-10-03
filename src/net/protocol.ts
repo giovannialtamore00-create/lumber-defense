@@ -1,5 +1,5 @@
 // Messages between host and clients (ARCHITECTURE.md §7).
-import type { Command } from '../sim/types';
+import type { Command, GameState } from '../sim/types';
 
 export interface SlotInfo {
   /** Player name, or null for an empty slot (a bot fills it). */
@@ -20,4 +20,18 @@ export type NetMessage =
   | { t: 'left'; slot: number }
   // Pause: a client asks the host; the host decides and tells everyone (slot = who pressed it).
   | { t: 'pause'; paused: boolean }
-  | { t: 'paused'; paused: boolean; slot: number };
+  | { t: 'paused'; paused: boolean; slot: number }
+  // Rejoin: a player who dropped joins again mid-match; the host sends them the match as it is now.
+  | {
+      t: 'rejoin';
+      seed: number;
+      slots: SlotInfo[];
+      you: number;
+      state: GameState;
+      /** Bundles the host has already closed for the ticks not stepped yet. */
+      bundles: [number, Command[]][];
+      paused: boolean;
+      pausedBy: number | null;
+      left: number[];
+    }
+  | { t: 'back'; slot: number };

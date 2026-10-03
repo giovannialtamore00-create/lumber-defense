@@ -138,7 +138,7 @@ One icon that grows in 3 stages with the amount of wood:
   only".)
 - **Bridges (decided):** if a bridge is on the row a carrier moves along, the carrier **drops its logs from the
   bridge into the river below**, instead of from the riverside hex.
-- Base stats: **capacity 5**, **speed 1 hex/second**.
+- Base stats: **capacity 5**, **speed 0.5 hex/second** (halved from 1 in playtest 3).
 - Capacity upgrades make carriers bigger and slower: **each capacity level is −10% speed.** "Many small fast
   carriers" is meant to be a valid strategy.
 - The carrier icon changes slightly and gets **bigger** with each capacity level.
@@ -271,7 +271,7 @@ Craft times are base times, before the factory-mill reduction (§6.7).
 | Outpost | 50 | 30 s | 150 | Territory radius 3 |
 | Factory-mill | 60 | 45 s | 200 | Riverside; reduces craft time (§6.7); one queue slot (§7.2) |
 | Dock | 20 | 20 s | 80 | Capacity 20, dispenses 1 wood/s to an adjacent factory |
-| Carrier | 10 | 10 s | 30 | Capacity 5, speed 1 hex/s, max A-to-B distance 5 hexes |
+| Carrier | 10 | 10 s | 30 | Capacity 5, speed 0.5 hex/s, max A-to-B distance 5 hexes |
 | Woodchopper | 15 | 15 s | 40 | 0.25 wood/s |
 | Bridge | 30 | 20 s | 120 | Lets wheeled units cross a river |
 | Dam | 30 | 20 s | 240 | Stops floating wood (§8.4b); HP doubled in playtest 2 |
@@ -347,6 +347,27 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
   2. It moves to the **furthest distance from which the target is still in range**.
   3. If the target **isn't in a conflict zone**, it stays **idle** once it reaches that distance.
 - **No ammo resource.** An upgrade can change the projectile type (for example fireballs), still at no cost per shot.
+- **Decided (M5):**
+  - **A moving unit**, like carriers and forest guards: it doesn't occupy a hex, and it passes through units,
+    forests and structures, but not rocks or water (it crosses water on bridges). Placed on land in your territory.
+  - **Legal targets:** **other players'** items, **structures and units alike**, standing on a hex that is a
+    **conflict zone inside your own territory** (covered by your outposts and by another player's). Neutral items
+    and your own are never targets. Anything outside your outposts' sight can't be targeted.
+  - **Movement:** it only moves **inside your own territory** (conflict zones included). It picks the closest legal
+    target, drives to a hex from which the target is in range, stops and fires. If no hex in range can be reached,
+    it gets as close as it can.
+  - **Thinking:** every **1 s** it looks again and switches to the **closest legal target**. A target that leaves
+    the legal zone (e.g. a carrier driving out) is dropped then. If the next closest target is far away, the
+    catapult heads there and turns back as soon as a closer one is legal again; this can stall it. It's the owner's
+    job to fix that, by extending their sight with a new outpost or by dismantling the catapult and placing a new one.
+  - **Out of territory:** a catapult is **not tied to any hex** and keeps its owner. If the ground under it stops
+    being yours (your outpost was destroyed), it **drives back to the closest hex of your territory** (conflict zone
+    or not) and doesn't fire on the way. If rocks or water block every path it **waits, facing where it wants to
+    go**, and can still be attacked. It drives back as soon as a path opens; if a new outpost reclaims the ground
+    under it, it behaves normally again.
+  - **Shots fly in an arc** (about 1 s, placeholder) and land **where the target was when the shot was fired**.
+    Moving targets can **dodge** them. On landing: a very small impact effect and a **red damage number** that rises
+    above the target and fades.
 
 ### 8.7 Forest guard (decided; replaces the gardener)
 - A **moving unit**, crafted and placed like a carrier (it doesn't occupy a hex). Placed on a land hex in your
@@ -375,6 +396,24 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
     hexes are then kept, but probably still sit in a conflict zone and stay exposed to attack.
   - Structures in hexes that are actually lost become **neutral but keep working**. A neutral factory piles incoming wood as a stack outside it.
   - If a new outpost's area covers neutral or lost structures, they **pass to that outpost's owner** (capture).
+- **Ownership rule (decided, M5):** what counts is only **who covers the hex right now**, not the order of events:
+  - An item **keeps its owner** as long as one of the owner's outposts covers its hex (even if other players
+    cover it too).
+  - If the owner no longer covers it: covered by **exactly one** other player → it **passes to that player**;
+    covered by **nobody**, or by **two or more** other players → it becomes **neutral**.
+  - A neutral item covered by exactly one player passes to them; covered by several, it stays neutral.
+  - Units count by a fixed hex: a **carrier** by its pickup hex A, a **forest guard** by its home hex, a **stone
+    cutter** by its rock. **Catapults are the exception** (they keep their owner, §8.6).
+  - **Capture is only ever through this rule:** an enemy item whose owner still covers its hex can't be captured.
+- **Destroyed by an attack (decided, M5):**
+  - A unit is simply gone (wood a carrier was carrying drops on its hex).
+  - A **structure leaves debris** on its hex (on water a bridge or dam leaves none; the hex is water again).
+    Debris **blocks building like a forest**; units can move over it. To clear it, place a **woodchopper** on the
+    debris: it clears it in **30 s** (placeholder) and leaves **25% of the destroyed structure's wood cost** as a
+    log stack there, then carries on like a woodchopper whose forest ran out (§6.2). Debris can also be **burned**
+    later (burning is not designed yet).
+- **Health bars (decided, M5):** an item shows its health bar for a short while when it **takes damage, heals, or
+  gets an HP upgrade**, and while you **hover** it. The hover pop-up shows HP too. Otherwise no bars, to avoid clutter.
 
 ## 10. Dev tree (bought at the Workshop)
 
@@ -390,7 +429,12 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
   workshop you own, still researching one at a time. Each extra workshop **cuts research time by 6%** (placeholder),
   on top of Fast Research. Every workshop shows the **research progress icon**, like factory-mills do for crafting.
 - **Combat paths (decided):** paths whose effect needs combat (Outpost Archer, Factory Improved Frames, Catapult
-  Range/Firepower, Bridge Drawbridge) are **shown but locked until M5**.
+  Range/Firepower, Bridge Drawbridge) are **shown but locked until M5**. **M5:** they open, except the levels that
+  need **burning** (Fire arrows, Fireball, Firestorm), which stay 🔒 until burning is designed.
+- **Archers** (Outpost Archer, Gatehouse archer) follow the catapult's target rules (§8.6): other players' items on
+  a conflict zone inside the owner's territory, closest first, re-checked every 1 s.
+- **HP upgrades (decided):** when max HP goes up, the extra is **added as healing**, so the damage taken stays the
+  same (30/50 → max 80 gives 60/80).
 - **Workshop menu (decided):** a **Workshop** tab next to **Build**, available once you own a workshop: a dropdown
   per structure type with **both paths side by side**, each with its **name, short description and cost** per level.
 
@@ -440,7 +484,14 @@ Interpretations used to build the ★ ideas (decided by Claude, easy to change):
 - **Surrender (decided):** a **Surrender** button with a **white flag icon and text**, with a confirmation. On
   surrendering, **all the player's outposts and all military items (catapults) are dismantled**, and **everything
   else they own becomes neutral** (§9).
-  - Dismantled here works like the hammer (§7.3c): half the cost is left as wood on the hex (interpretation, to confirm).
+  - Dismantled here works like the hammer (§7.3c): half the cost is left as wood on the hex (confirmed).
+- **Defeat (decided, M5):** when a player loses their last outpost, their **catapults are dismantled** the same way,
+  and everything else follows the ownership rule (§9).
+- **End of match (decided, M5):** a **victory / defeat banner**, the match stops, and a **Back to lobby** button. A
+  defeated player keeps watching until the match ends. The end screen shows **statistics per player**: wood
+  chopped, wood collected, damage dealt, units crafted, structures crafted, territory owned, outposts destroyed.
+- **Match record (decided, M5):** the match is recorded **in memory only** while the session runs, for analysis;
+  the end screen has a **Download match log** (JSON) button. Nothing is kept after the tab closes.
 - **Neutral items keep working (decided):** a neutral dock keeps catching wood, a neutral carrier keeps moving wood,
   a neutral woodchopper keeps cutting, and so on. A neutral factory-mill piles the wood it receives outside (§6.7).
   **HP stays the same** when an item turns neutral.
@@ -482,6 +533,9 @@ Interpretations used to build the ★ ideas (decided by Claude, easy to change):
    ~~Catapults~~: decided, they **pass through units** (like carriers), not through rocks or water.
 5. **Bot strategy:** bots use the same rules as humans, but how they decide what to do is not designed yet.
    Until then (decided for M4), bot slots stay **idle**: they skip their starting turn and do nothing.
+   **Context for bot strategy (designer note, M5):** catapults can stall when the closest legal target is far away
+   or blocked (§8.6). A good player (and bot) handles that by **extending sight with a new outpost** or by
+   **dismantling and relocating** the catapult.
    **Disconnects (decided):** a player who disconnects mid-match sends no more commands, but everything they own
    keeps working. If the host disconnects, the match ends.
 6. **Factory-mill (unified structure):**

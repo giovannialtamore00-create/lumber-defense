@@ -52,6 +52,6 @@ export function docksSystem(state: GameState, ctx: SimContext): void {
     const rate = perTick(upgradeValue(state, ctx, dock.owner, 'dock', 'dispense', 'dispensePerS', ctx.config.dock.dispensePerSecond), ctx.config.tickRate);
     const amount = Math.min(rate, state.stacks[d]!);
     state.stacks[d]! -= amount;
-    deliverToFactory(state, factory, amount);
+    deliverToFactory(state, ctx, factory, amount);
   }
 }

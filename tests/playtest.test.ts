@@ -88,10 +88,10 @@ describe('carrier with an empty pickup (§6.4)', () => {
     state.players[0]!.hand.push('carrier');
     step(state, ctx, [{ type: 'placeCarrier', player: 0, aQ: cell(1, 0).q, bQ: cell(4, 0).q, r: 0 }]);
     const c = state.entities.find((e): e is Carrier => e.type === 'carrier')!;
-    run(state, ctx, 15);
+    run(state, ctx, 30);
     expect(stackOf(state, ctx, cell(0, 0))).toBe(0);
     expect(c.load).toBe(3000);
-    run(state, ctx, 45);
+    run(state, ctx, 90);
     expect(piles(state).length + (c.load === 0 ? 1 : 0)).toBeGreaterThan(0);
     expect(c.pickupQ).toBe(cell(1, 0).q);
   });

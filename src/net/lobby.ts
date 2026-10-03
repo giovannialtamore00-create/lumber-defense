@@ -1,7 +1,7 @@
 // Lobby (ARCHITECTURE.md §7): the host opens a room with a short code; friends join by code. The host sees the slots
 // fill (empty ones become bots) and presses Start, which sends everyone the seed and their slot.
 import type { MatchInfo } from './lockstep';
-import type { SlotInfo } from './protocol';
+import type { NetMessage, SlotInfo } from './protocol';
 import type { Transport } from './transport';
 
 export const MAX_PLAYERS = 4;
@@ -22,6 +22,8 @@ export class HostLobby {
   readonly peerSlots = new Map<string, number>();
   private started = false;
   onChange: () => void = () => {};
+  /** Set once the match runs: lets a dropped player back in. True if they were let in. */
+  onLateHello: (peer: string, name: string) => boolean = () => false;
 
   constructor(
     private readonly transport: Transport,
@@ -31,8 +33,12 @@ export class HostLobby {
     this.slots[0] = { name: hostName };
     transport.onMessage((from, msg) => {
       if (msg.t !== 'hello') return;
-      if (this.started) return transport.send(from, { t: 'refused', reason: 'the match has already started' });
       if (msg.version !== version) return transport.send(from, { t: 'refused', reason: 'different game version: reload the page' });
+      if (this.started) {
+        // Mid-match: only a player who dropped can come back into their slot.
+        if (this.onLateHello(from, msg.name)) return;
+        return transport.send(from, { t: 'refused', reason: 'the match has already started (to rejoin, use the same name as before)' });
+      }
       const free = this.slots.findIndex((s) => s.name === null);
       if (free < 0) return transport.send(from, { t: 'refused', reason: 'the room is full' });
       this.slots[free] = { name: msg.name.slice(0, 16) || `Player ${free + 1}` };
@@ -68,10 +74,14 @@ export class ClientLobby {
   onChange: () => void = () => {};
   onRefused: (reason: string) => void = () => {};
   onStart: (info: MatchInfo) => void = () => {};
+  /** The match was already running and we're back in our slot. */
+  onRejoin: (msg: Extract<NetMessage, { t: 'rejoin' }>) => void = () => {};
 
   constructor(transport: Transport, hostId: string, name: string, version: string) {
     transport.onMessage((_from, msg) => {
-      if (msg.t === 'lobby') {
+      if (msg.t === 'rejoin') {
+        this.onRejoin(msg);
+      } else if (msg.t === 'lobby') {
         this.slots = msg.slots;
         this.you = msg.you;
         this.onChange();

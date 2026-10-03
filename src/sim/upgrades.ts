@@ -4,7 +4,8 @@
 // read them through `upgradeValue` each time, so nothing has to be patched on purchase.
 import type { SimContext } from './context';
 import { structures } from './state';
-import { recomputeCoverage } from './systems/territory';
+import { maxHp } from './systems/combat';
+import { territoryChanged } from './systems/territory';
 import type { GameState } from './types';
 
 export const MAX_LEVEL = 3;
@@ -92,7 +93,7 @@ export function upgradeError(state: GameState, ctx: SimContext, player: number, 
   if (p.research.length >= slots) return slots === 1 ? 'one workshop: one upgrade at a time' : `research queue full (${slots} slots)`;
   const price = upgradePrice(state, ctx, player, typeIdx, path);
   if (!price) return 'fully upgraded';
-  if (levelData(ctx, typeIdx, path, price.level)?.locked === 'combat') return 'comes with combat (M5)';
+  if (levelData(ctx, typeIdx, path, price.level)?.locked === 'burning') return 'needs burning (not designed yet)';
   if (p.wood < price.cost * 1000) return 'not enough wood';
   return null;
 }
@@ -117,8 +118,12 @@ export function researchSystem(state: GameState, ctx: SimContext): void {
     if (!r || !ownsWorkshop(state, p.id)) continue;
     if (r.totalTicks === 0) r.totalTicks = researchTicks(state, ctx, p.id, r.level);
     if (++r.doneTicks < r.totalTicks) continue;
+    // Improved Frames: the extra max HP is added as healing, so damage taken stays the same (DESIGN §10.1).
+    const own = structures(state).filter((s) => s.owner === p.id);
+    const before = own.map((s) => maxHp(state, ctx, s));
     p.upgrades[r.type]!.levels[r.path as 0 | 1] = r.level;
+    own.forEach((s, k) => (s.hp += maxHp(state, ctx, s) - before[k]!));
     p.research.shift();
-    if (ctx.upgrades.types[r.type]!.type === 'outpost') recomputeCoverage(state, ctx); // Reach
+    if (ctx.upgrades.types[r.type]!.type === 'outpost') territoryChanged(state, ctx); // Reach
   }
 }

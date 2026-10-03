@@ -34,8 +34,8 @@ export function placementError(state: GameState, ctx: SimContext, player: number
     // A unit that stands on a rock; several can share one (DESIGN §8.4d).
     return isRock(state, ctx, i) ? null : 'stone cutters go on a rock';
   }
-  if (item === 'forestGuard') {
-    // A moving unit: it doesn't take the hex, it just needs land to stand on (DESIGN §8.7).
+  if (item === 'forestGuard' || item === 'catapult') {
+    // Moving units: they don't take the hex, they just need land to stand on (DESIGN §8.6, §8.7).
     if (isWater(state, ctx, i)) return 'water';
     return isRock(state, ctx, i) ? 'rock' : null;
   }
@@ -47,6 +47,8 @@ export function placementError(state: GameState, ctx: SimContext, player: number
   if (isRock(state, ctx, i)) return 'rock';
   if (state.saplingGrowth[i]! >= 0) return 'young forest growing';
   if (isDryDitch(state, i)) return 'dry ditch: waiting for water';
+  // Debris blocks building like a forest; a woodchopper placed on it clears it (DESIGN §9).
+  if (state.debris[i]! > 0) return item === 'woodchopper' ? null : 'debris: clear it with a woodchopper';
 
   switch (item) {
     case 'woodchopper':
@@ -59,7 +61,6 @@ export function placementError(state: GameState, ctx: SimContext, player: number
       return isRiverside(state, ctx, i) ? null : 'docks must be next to a river';
     case 'outpost':
     case 'workshop':
-    case 'catapult':
     case 'excavator':
       return isForest(state, i) ? 'trees' : null;
   }

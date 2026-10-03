@@ -59,7 +59,11 @@ export class UIScene extends Phaser.Scene {
   private tipKey = '';
   private confirm!: Phaser.GameObjects.Container;
   private confirmText!: Phaser.GameObjects.Text;
-  private confirmId: number | null = null;
+  private confirmYes!: Phaser.GameObjects.Text;
+  /** What the confirmation's yes button does (dismantle or surrender). */
+  private onConfirm: (() => void) | null = null;
+  private defeatText!: Phaser.GameObjects.Text;
+  private endShown = false;
 
   constructor() {
     super('UIScene');
@@ -112,6 +116,35 @@ export class UIScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.runner.setPaused(!this.runner.paused));
+    // Surrender (DESIGN §11): a white flag and text, with a confirmation.
+    const surrender = this.add
+      .text(this.pauseButton.getBounds().left - 8, 12, 'Surrender', {
+        ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', color: '#ffffff', backgroundColor: '#5a5048', padding: { left: 30, right: 6, top: 4, bottom: 4 },
+      })
+      .setOrigin(1, 0);
+    const fb = surrender.getBounds();
+    this.add
+      .graphics()
+      .fillStyle(0xd9c7a3, 1)
+      .fillRect(fb.left + 9, fb.top + 5, 2, fb.height - 10)
+      .fillStyle(0xffffff, 1)
+      .fillTriangle(fb.left + 11, fb.top + 6, fb.left + 25, fb.top + 11, fb.left + 11, fb.top + 16);
+    surrender
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        const { state } = this.runner;
+        if (state.phase !== 'running' || state.players[this.local]!.defeated) return;
+        this.ask(
+          'Surrender?\nYour outposts and catapults are dismantled (half their cost left as wood) and everything else you own turns neutral. You are out of the match.',
+          'Surrender',
+          () => this.runner.submit({ type: 'surrender', player: this.local }),
+        );
+      });
+    this.defeatText = this.add
+      .text((width - PANEL_W) / 2, 142, 'You are out of the match: watching until it ends.', { ...TEXT_STYLE, fontSize: '16px', fontStyle: 'bold', backgroundColor: '#8a2a1ecc' })
+      .setOrigin(0.5, 0)
+      .setVisible(false);
+    this.endShown = false;
     this.pausedBanner = this.add
       .text((width - PANEL_W) / 2, height / 2, '', { ...BIG, fontSize: '40px', align: 'center', backgroundColor: '#000000cc' })
       .setOrigin(0.5)
@@ -252,6 +285,8 @@ export class UIScene extends Phaser.Scene {
     const mm = String(Math.floor(secs / 60) % 60).padStart(2, '0');
     const ss = String(secs % 60).padStart(2, '0');
     this.clockText.setText(secs >= 3600 ? `${Math.floor(secs / 3600)}:${mm}:${ss}` : `${mm}:${ss}`);
+    this.defeatText.setVisible(me.defeated && state.phase !== 'over');
+    if (state.phase === 'over' && !this.endShown) this.showEndScreen();
     const paused = this.runner.paused;
     this.pauseButton.setText(paused ? '▶ Resume' : '⏸ Pause').setBackgroundColor(paused ? '#2f6b34' : '#000000aa');
     const by = this.runner.session.pausedBy;
@@ -354,7 +389,7 @@ export class UIScene extends Phaser.Scene {
   private updateTooltip(): void {
     const hover = this.registry.get('hoverThing') as { id: number; x: number; y: number } | null;
     const thing = hover ? this.runner.state.entities.find((e) => e.id === hover.id) : undefined;
-    if (!hover || !thing || thing.type === 'pile') {
+    if (!hover || !thing || thing.type === 'pile' || thing.type === 'shot') {
       this.tip.setVisible(false);
       this.tipKey = '';
       return;
@@ -400,14 +435,14 @@ export class UIScene extends Phaser.Scene {
     this.confirmText = this.add
       .text(width / 2, height / 2 - 40, '', { fontFamily: 'sans-serif', fontSize: '15px', color: '#f3e3c3', align: 'center', wordWrap: { width: 300 } })
       .setOrigin(0.5, 0);
-    const yes = this.add
+    const yes = (this.confirmYes = this.add
       .text(width / 2 - 70, height / 2 + 30, 'Dismantle', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold', backgroundColor: '#b0473a' })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => {
-        if (this.confirmId !== null) this.runner.submit({ type: 'dismantle', player: this.local, id: this.confirmId });
+        this.onConfirm?.();
         this.closeConfirm();
-      });
+      }));
     const no = this.add
       .text(width / 2 + 70, height / 2 + 30, 'Cancel', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold', backgroundColor: '#4a4038' })
       .setOrigin(0.5)
@@ -418,15 +453,76 @@ export class UIScene extends Phaser.Scene {
 
   private askDismantle(id: number): void {
     const thing = this.runner.state.entities.find((e) => e.id === id);
-    if (!thing || thing.type === 'pile' || !canDismantle(thing, this.local)) return;
-    this.confirmId = id;
-    this.confirmText.setText(`Are you sure you want to dismantle this ${ITEM_NAMES[kindOf(thing)]}?\nYou get ${refundOf(this.runner, thing)} wood back, left where it stands.`);
+    if (!thing || thing.type === 'pile' || thing.type === 'shot' || !canDismantle(thing, this.local)) return;
+    this.ask(
+      `Are you sure you want to dismantle this ${ITEM_NAMES[kindOf(thing)]}?\nYou get ${refundOf(this.runner, thing)} wood back, left where it stands.`,
+      'Dismantle',
+      () => this.runner.submit({ type: 'dismantle', player: this.local, id }),
+    );
+  }
+
+  private ask(question: string, yes: string, onYes: () => void): void {
+    this.onConfirm = onYes;
+    this.confirmText.setText(question);
+    this.confirmYes.setText(yes);
     this.confirm.setVisible(true);
   }
 
   private closeConfirm(): void {
-    this.confirmId = null;
+    this.onConfirm = null;
     this.confirm.setVisible(false);
+  }
+
+  /** Match over (DESIGN §11): who won, statistics per player, the match log, and back to the lobby. */
+  private showEndScreen(): void {
+    this.endShown = true;
+    const { state } = this.runner;
+    const { width, height } = this.scale;
+    const me = state.players[this.local]!;
+    const title = state.winner === this.local ? 'Victory!' : state.winner === null ? 'Nobody won' : me.started ? 'Defeat' : 'Match over';
+    const sub = state.winner === null ? '' : `${this.slotName(state.winner)} wins by domination`;
+    const rows = [['', 'Wood chopped', 'Wood collected', 'Damage dealt', 'Units crafted', 'Structures crafted', 'Territory', 'Outposts destroyed']];
+    for (const p of state.players) {
+      const s = p.stats;
+      rows.push([
+        this.slotName(p.id) + (p.id === this.local ? ' (you)' : ''),
+        String(wholeUnits(s.woodChopped)),
+        String(wholeUnits(s.woodCollected)),
+        String(s.damageDealt),
+        String(s.unitsCrafted),
+        String(s.structuresCrafted),
+        `${state.coverage.filter((c) => c & (1 << p.id)).length} hexes`,
+        String(s.outpostsDestroyed),
+      ]);
+    }
+    const w = Math.min(width - 40, 900);
+    const h = 120 + rows.length * 34 + 70;
+    const x = (width - w) / 2;
+    const y = Math.max(20, (height - h) / 2);
+    const shade = this.add.rectangle(0, 0, width, height, 0x000000, 0.55).setOrigin(0, 0).setInteractive();
+    const box = this.add.graphics();
+    box.fillStyle(0x1b1712, 0.97).fillRoundedRect(x, y, w, h, 12);
+    box.lineStyle(3, PLAYER_COLORS[state.winner ?? -1] ?? 0x8a7d68, 1).strokeRoundedRect(x, y, w, h, 12);
+    const parts: Phaser.GameObjects.GameObject[] = [shade, box];
+    parts.push(this.add.text(width / 2, y + 18, title, { ...BIG, fontSize: '40px' }).setOrigin(0.5, 0));
+    if (sub) parts.push(this.add.text(width / 2, y + 76, sub, { fontFamily: 'sans-serif', fontSize: '16px', color: '#cdbd9c' }).setOrigin(0.5, 0));
+    const colW = (w - 40) / rows[0]!.length;
+    rows.forEach((row, ri) =>
+      row.forEach((cell, ci) => {
+        const color = ri === 0 ? '#b8a98c' : `#${(PLAYER_COLORS[ri - 1] ?? 0xffffff).toString(16).padStart(6, '0')}`;
+        const style = { fontFamily: 'sans-serif', fontSize: ri === 0 ? '12px' : '15px', fontStyle: ri === 0 ? 'normal' : 'bold', color, align: 'center', wordWrap: { width: colW - 6 } };
+        parts.push(this.add.text(x + 20 + ci * colW + (ci === 0 ? 0 : colW / 2), y + 110 + ri * 34, cell, style).setOrigin(ci === 0 ? 0 : 0.5, 0));
+      }),
+    );
+    const button = (bx: number, label: string, bg: string, onClick: () => void) =>
+      this.add
+        .text(bx, y + h - 56, label, { ...BIG, fontSize: '20px', backgroundColor: bg })
+        .setOrigin(0.5, 0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', onClick);
+    parts.push(button(width / 2 - 140, 'Download match log', '#3a4a6b', () => this.runner.downloadLog()));
+    parts.push(button(width / 2 + 140, 'Back to lobby', '#2f6b34', () => (window.location.href = window.location.pathname)));
+    this.add.container(0, 0, parts).setDepth(2000);
   }
 
   /** The warehouse: one clickable chip per item; clicking one puts it back in hand, to place next. */

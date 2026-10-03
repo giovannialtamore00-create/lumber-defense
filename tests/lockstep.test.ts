@@ -39,7 +39,7 @@ function makeMatch(maxLatency: number) {
   const hostRunner = new SimRunner(MAP, CFG, new LockstepSession(hostT, lobby.start(), true, lobby.peerSlots));
   for (let i = 0; i < 20; i++) net.pump();
   const runners = [hostRunner, ...clients.map((c) => new SimRunner(MAP, CFG, new LockstepSession(c.t, c.info!, false)))];
-  return { net, runners };
+  return { net, runners, lobby };
 }
 
 describe('lockstep over the network (ARCHITECTURE §7)', () => {
@@ -115,5 +115,60 @@ describe('lockstep over the network (ARCHITECTURE §7)', () => {
     (host.session as unknown as { transport: { close(): void } }).transport.close();
     net.pump();
     expect(c1.session.hostGone).toBe(true);
+  });
+
+  it('a player who dropped joins again with the same name and carries on in sync', () => {
+    const { net, runners, lobby } = makeMatch(0);
+    const [host, c1, c2] = runners as [SimRunner, SimRunner, SimRunner];
+    lobby.onLateHello = (peer, name) => host.rejoin(peer, name);
+    const frame = (rs: SimRunner[]) => {
+      net.pump();
+      for (const r of rs) {
+        for (const c of demoCommands(r, r.localPlayer)) r.submit(c);
+        r.update(TICK_MS);
+      }
+    };
+    for (let i = 0; i < 600; i++) frame(runners);
+    const slot = c2.localPlayer;
+    (c2.session as unknown as { transport: { close(): void } }).transport.close();
+    for (let i = 0; i < 100; i++) frame([host, c1]);
+    expect(host.session.left.has(slot)).toBe(true);
+
+    // Back with the same name, from a new connection.
+    const t = net.join('c2-again');
+    const cl = new ClientLobby(t, 'host', host.session.info.slots[slot]!.name!, 'v1');
+    let back: SimRunner | null = null;
+    cl.onRejoin = (msg) => {
+      const session = new LockstepSession(t, { seed: msg.seed, slots: msg.slots, you: msg.you, hostId: 'host' }, false);
+      session.resume(msg);
+      back = new SimRunner(MAP, CFG, session, msg.state);
+    };
+    for (let i = 0; i < 10 && !back; i++) frame([host, c1]);
+    expect(back).not.toBeNull();
+    const again = back as unknown as SimRunner;
+    expect(again.localPlayer).toBe(slot);
+    expect(host.session.left.has(slot)).toBe(false);
+
+    for (let i = 0; i < 600; i++) frame([host, c1, again]);
+    for (let i = 0; i < 20; i++) {
+      net.pump();
+      for (const r of [c1, again]) r.update(TICK_MS);
+    }
+    expect(again.state.tick).toBe(host.state.tick);
+    expect(hashState(again.state)).toBe(hashState(host.state));
+    expect(c1.session.left.has(slot)).toBe(false);
+    expect(host.session.desync).toBeNull();
+  });
+
+  it("a stranger can't join a running match", () => {
+    const { net, runners, lobby } = makeMatch(0);
+    const host = runners[0]!;
+    lobby.onLateHello = (peer, name) => host.rejoin(peer, name);
+    const t = net.join('stranger');
+    const cl = new ClientLobby(t, 'host', 'Someone', 'v1');
+    let refused = '';
+    cl.onRefused = (r) => (refused = r);
+    for (let i = 0; i < 5; i++) net.pump();
+    expect(refused).toContain('already started');
   });
 });

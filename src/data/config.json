@@ -48,7 +48,7 @@
   },
   "carrier": {
     "capacity": 5,
-    "speedHexPerSecond": 1,
+    "speedHexPerSecond": 0.5,
     "maxRouteDistance": 5
   },
   "river": {
@@ -80,6 +80,21 @@
     "refreshGrowthS": 10,
     "growS": 60,
     "secondsPerHex": 2.5
+  },
+  "combat": {
+    "retargetS": 1,
+    "shotFlightS": 1,
+    "arrowFlightS": 0.5
+  },
+  "catapult": {
+    "range": 4,
+    "damage": 10,
+    "hitsPerSecond": 0.5,
+    "speedHexPerSecond": 0.5
+  },
+  "debris": {
+    "clearS": 30,
+    "woodPct": 25
   },
   "mapRules": {
     "totalHexes": { "target": 300, "tolerancePct": 5 },
