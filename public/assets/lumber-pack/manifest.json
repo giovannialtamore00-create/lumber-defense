@@ -1,0 +1,1046 @@
+{
+ "version": 1,
+ "geometry": "pointy",
+ "atlas": "atlas.png",
+ "tile": {
+  "size": 64,
+  "sq": 0.62,
+  "orientation": "pointy-top",
+  "topOffsetPx": 6,
+  "anchor": {
+   "x": 70,
+   "y": 76
+  },
+  "note": "Draw every sprite with its anchor on the hex centre.",
+  "w": 110.85,
+  "h": 79.36,
+  "stepX": 110.85,
+  "stepY": 59.519999999999996
+ },
+ "players": [
+  {
+   "id": 1,
+   "name": "red",
+   "color": "#d9443a"
+  },
+  {
+   "id": 2,
+   "name": "blue",
+   "color": "#3a78d8"
+  },
+  {
+   "id": 3,
+   "name": "green",
+   "color": "#3fae5a"
+  },
+  {
+   "id": 4,
+   "name": "purple",
+   "color": "#8e5ad0"
+  }
+ ],
+ "water": {
+  "sheet": "water.png",
+  "frames": 8,
+  "strengthSteps": 6,
+  "flows": [
+   "SE",
+   "SW"
+  ],
+  "frameW": 140,
+  "frameH": 112,
+  "note": "Per flow: 6 rows of river strength (light to dark). Last row is the waterfall."
+ },
+ "sprites": {
+  "outpost.base.p1": {
+   "x": 0,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "outpost.base.p2": {
+   "x": 140,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "outpost.base.p3": {
+   "x": 280,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "outpost.base.p4": {
+   "x": 420,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "outpost.archer.p1": {
+   "x": 560,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "outpost.archer.p2": {
+   "x": 700,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "outpost.archer.p3": {
+   "x": 840,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "outpost.archer.p4": {
+   "x": 980,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.base.p1": {
+   "x": 1120,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.base.p2": {
+   "x": 1260,
+   "y": 0,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.base.p3": {
+   "x": 0,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.base.p4": {
+   "x": 140,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.upgraded.p1": {
+   "x": 280,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.upgraded.p2": {
+   "x": 420,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.upgraded.p3": {
+   "x": 560,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "mill.upgraded.p4": {
+   "x": 700,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.base.p1": {
+   "x": 840,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.base.p2": {
+   "x": 980,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.base.p3": {
+   "x": 1120,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.base.p4": {
+   "x": 1260,
+   "y": 112,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.upgraded.p1": {
+   "x": 0,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.upgraded.p2": {
+   "x": 140,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.upgraded.p3": {
+   "x": 280,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dock.upgraded.p4": {
+   "x": 420,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSE.p1": {
+   "x": 560,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSE.p2": {
+   "x": 700,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSE.p3": {
+   "x": 840,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSE.p4": {
+   "x": 980,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSW.p1": {
+   "x": 1120,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSW.p2": {
+   "x": 1260,
+   "y": 224,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSW.p3": {
+   "x": 0,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "bridge.flowSW.p4": {
+   "x": 140,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.base.p1": {
+   "x": 280,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.base.p2": {
+   "x": 420,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.base.p3": {
+   "x": 560,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.base.p4": {
+   "x": 700,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.upgraded.p1": {
+   "x": 840,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.upgraded.p2": {
+   "x": 980,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.upgraded.p3": {
+   "x": 1120,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "workshop.upgraded.p4": {
+   "x": 1260,
+   "y": 336,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSE.p1": {
+   "x": 0,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSE.p2": {
+   "x": 140,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSE.p3": {
+   "x": 280,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSE.p4": {
+   "x": 420,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSE.p1": {
+   "x": 560,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSE.p2": {
+   "x": 700,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSE.p3": {
+   "x": 840,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSE.p4": {
+   "x": 980,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSW.p1": {
+   "x": 1120,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSW.p2": {
+   "x": 1260,
+   "y": 448,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSW.p3": {
+   "x": 0,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.flowSW.p4": {
+   "x": 140,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSW.p1": {
+   "x": 280,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSW.p2": {
+   "x": 420,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSW.p3": {
+   "x": 560,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "dam.damaged_flowSW.p4": {
+   "x": 700,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.base.p1": {
+   "x": 840,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.base.p2": {
+   "x": 980,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.base.p3": {
+   "x": 1120,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.base.p4": {
+   "x": 1260,
+   "y": 560,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.digging.p1": {
+   "x": 0,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.digging.p2": {
+   "x": 140,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.digging.p3": {
+   "x": 280,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "excavator.digging.p4": {
+   "x": 420,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "structures"
+  },
+  "woodchopper.base.p1": {
+   "x": 560,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "woodchopper.base.p2": {
+   "x": 700,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "woodchopper.base.p3": {
+   "x": 840,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "woodchopper.base.p4": {
+   "x": 980,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "woodchopper.upgraded.p1": {
+   "x": 1120,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "woodchopper.upgraded.p2": {
+   "x": 1260,
+   "y": 672,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "woodchopper.upgraded.p3": {
+   "x": 0,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "woodchopper.upgraded.p4": {
+   "x": 140,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size1.p1": {
+   "x": 280,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size1.p2": {
+   "x": 420,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size1.p3": {
+   "x": 560,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size1.p4": {
+   "x": 700,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size2.p1": {
+   "x": 840,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size2.p2": {
+   "x": 980,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size2.p3": {
+   "x": 1120,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size2.p4": {
+   "x": 1260,
+   "y": 784,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size3.p1": {
+   "x": 0,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size3.p2": {
+   "x": 140,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size3.p3": {
+   "x": 280,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "carrier.size3.p4": {
+   "x": 420,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.base.p1": {
+   "x": 560,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.base.p2": {
+   "x": 700,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.base.p3": {
+   "x": 840,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.base.p4": {
+   "x": 980,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.fireball.p1": {
+   "x": 1120,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.fireball.p2": {
+   "x": 1260,
+   "y": 896,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.fireball.p3": {
+   "x": 0,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "catapult.fireball.p4": {
+   "x": 140,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "units"
+  },
+  "hex_land": {
+   "x": 280,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "terrain"
+  },
+  "hex_dug": {
+   "x": 420,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "terrain"
+  },
+  "hex_forest": {
+   "x": 560,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "terrain"
+  },
+  "hex_forest_depleted": {
+   "x": 700,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "terrain"
+  },
+  "hex_forest_baby": {
+   "x": 840,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "terrain"
+  },
+  "hex_rock": {
+   "x": 980,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "terrain"
+  },
+  "tree_pine": {
+   "x": 1120,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "tree_round": {
+   "x": 1260,
+   "y": 1008,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "tree_baby": {
+   "x": 0,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "tree_stump": {
+   "x": 140,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "rock_s": {
+   "x": 280,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "rock_m": {
+   "x": 420,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "rock_l": {
+   "x": 560,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "stone": {
+   "x": 700,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "logstack_1": {
+   "x": 840,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "logstack_2": {
+   "x": 980,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "logstack_3": {
+   "x": 1120,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "nature"
+  },
+  "hex_outline": {
+   "x": 1260,
+   "y": 1120,
+   "w": 140,
+   "h": 112,
+   "ax": 70,
+   "ay": 76,
+   "group": "terrain"
+  }
+ }
+}

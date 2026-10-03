@@ -8,7 +8,7 @@ import type { Carrier, Catapult, ForestGuard, GameState, Pile, Shot, StoneCutter
 import { downstream } from '../../sim/water';
 import { HEX_SIZE, type Point, hexToScreen } from '../iso';
 
-export const PLAYER_COLORS = [0xe0533d, 0x3d7be0, 0xe8c547, 0x9b5de5];
+export const PLAYER_COLORS = [0xd9443a, 0x3a78d8, 0x3fae5a, 0x8e5ad0]; // same as the sprite pack
 /** Neutral items (DESIGN §9) are grey. */
 export const NEUTRAL_COLOR = 0x9a9a9a;
 export const ownerColor = (owner: number) => PLAYER_COLORS[owner] ?? NEUTRAL_COLOR;

@@ -31,6 +31,9 @@ import { isWorkingBridge } from '../../sim/systems/placement';
 import type { Catapult, ItemKind, Ownable, StoneCutter, Structure } from '../../sim/types';
 import { isOwnable } from '../../sim/state';
 import { maxHp } from '../../sim/systems/combat';
+import { stackStage } from '../../sim/stack';
+import { typeIndex, upgradeLevel } from '../../sim/upgrades';
+import { type WaterFlow, SpritePool, addPackSprite, addWaterSprite, createGreyPack, packLoaded, packScale, usePixelFiltering } from '../render/sprites';
 import { drawItemIcon } from '../render/icons';
 import { hexOf, thingAt } from '../ui/describe';
 import { bonusRow, downstream, isRock, isWater, riverIdAt } from '../../sim/water';
@@ -99,6 +102,13 @@ export class GameScene extends Phaser.Scene {
   private impacts: { at: Point; t0: number }[] = [];
   private numbers: { text: Phaser.GameObjects.Text; at: Point; t0: number }[] = [];
   private decorKey = '';
+  /** Pixel-art pack (public/assets/lumber-pack): terrain tiles, river water, and pooled structure/unit sprites. */
+  private art = false;
+  private tiles: (Phaser.GameObjects.Image | undefined)[] = [];
+  private dugWater = new Map<number, Phaser.GameObjects.Sprite>();
+  private sprites!: SpritePool;
+  /** Graphics drawn above the sprites (placeholders, progress icons, units without sprites, shots, bars). */
+  private top!: Phaser.GameObjects.Graphics;
   private dugLayer!: Phaser.GameObjects.Graphics;
   private dugKey = '';
   private hover: Hex | null = null;
@@ -121,20 +131,32 @@ export class GameScene extends Phaser.Scene {
     this.registry.set('hand', this.hand); // the UI's hammer button toggles it
     this.hand.onAskDismantle = (id) => this.game.events.emit('ask-dismantle', id);
     const idx = indexHexes(MAP);
+    this.art = packLoaded(this);
+    if (this.art) {
+      createGreyPack(this);
+      usePixelFiltering(this);
+    }
     const g = this.add.graphics();
 
     // Painter's order: north to south, so things further south draw on top (ARCHITECTURE §4 depth sorting).
-    for (const h of ORDERED) this.drawTile(g, h);
+    for (const h of ORDERED) {
+      if (this.art) this.addTileSprite(h);
+      else this.drawTile(g, h);
+    }
 
     const overlay = this.add.graphics();
-    this.drawRiverFlow(overlay);
+    if (!this.art) this.drawRiverFlow(overlay); // the animated water shows the flow
     this.drawRegionBorders(overlay, idx);
     this.drawWaterfalls(overlay);
     this.dugLayer = this.add.graphics(); // dug hexes: dry ditches and dug water (DESIGN §8.4c)
     this.decor = this.add.graphics();
     this.dyn = this.add.graphics();
+    this.sprites = new SpritePool(this, 1, packScale(HEX_SIZE));
+    this.top = this.add.graphics().setDepth(2);
     this.drawRegionLabels();
     this.createCoordLabels();
+    // Labels stay readable above the sprites.
+    for (const o of this.children.list) if (o instanceof Phaser.GameObjects.Text) o.setDepth(3);
 
     this.setupCamera();
     this.setupInput();
@@ -144,15 +166,21 @@ export class GameScene extends Phaser.Scene {
     this.runner.update();
     const { state } = this.runner;
     // Trees and rocks change rarely (a forest runs out or regrows, a rock breaks): redraw only then.
-    const decorKey = `${state.forestPool.filter((p) => p > 0).length}|${state.rockGone.filter(Boolean).length}`;
-    if (decorKey !== this.decorKey) {
-      this.decorKey = decorKey;
-      this.drawDecor();
-    }
+    const decorKey = `${state.forestPool.filter((p) => p > 0).length}|${state.rockGone.filter(Boolean).length}|${state.saplingGrowth.filter((x) => x >= 0).length}`;
     const dugKey = state.dug.map((d, i) => (d ? (state.dugWater[i] ? 'w' : 'd') : '')).join(',');
-    if (dugKey !== this.dugKey) {
+    if (this.art) {
+      if (decorKey !== this.decorKey || dugKey !== this.dugKey) this.refreshTiles();
+      this.decorKey = decorKey;
       this.dugKey = dugKey;
-      this.drawDug();
+    } else {
+      if (decorKey !== this.decorKey) {
+        this.decorKey = decorKey;
+        this.drawDecor();
+      }
+      if (dugKey !== this.dugKey) {
+        this.dugKey = dugKey;
+        this.drawDug();
+      }
     }
     this.drawDynamic(time);
   }
@@ -203,7 +231,7 @@ export class GameScene extends Phaser.Scene {
 
   /** Everything that changes: territory, previews, structures, stacks, carriers, piles. */
   private drawDynamic(time: number): void {
-    const g = this.dyn;
+    let g = this.dyn;
     g.clear();
     const { state, ctx, alpha } = this.runner;
     const me = state.players[this.local]!;
@@ -287,11 +315,16 @@ export class GameScene extends Phaser.Scene {
       this.registry.set('hoverThing', null);
     }
 
-    // Structures, then stacks, carriers and piles on top.
+    // Structures, then stacks, carriers and piles on top. Pack sprites where there is one (owned items); the rest,
+    // and everything from here on, is drawn on the Graphics layer above the sprites.
+    g = this.top;
+    g.clear();
+    this.sprites.begin();
     const entities = state.entities;
     for (const e of entities) {
       if (e.type !== 'structure') continue;
       const i = ctx.indexOf.get(hexKey(e))!;
+      if (this.art && this.putStructure(e, i)) continue;
       drawStructure(g, e, time, {
         mills: e.kind === 'factory' ? this.millPositions(e) : undefined,
         working: e.kind === 'bridge' ? isWorkingBridge(state, ctx, i) : undefined,
@@ -337,15 +370,24 @@ export class GameScene extends Phaser.Scene {
     });
     MAP.hexes.forEach((h, i) => {
       if (state.stacks[i]! <= 0) return;
+      const stage = stackStage(state.stacks[i]!, ctx.config);
+      const c = hexToScreen(h);
+      if (this.art && stage > 0 && this.sprites.put(`logstack_${stage}`, c.x, c.y)) return;
       const onDock = entities.some((e) => e.type === 'structure' && e.kind === 'dock' && e.q === h.q && e.r === h.r);
-      drawStack(g, stackPosition(hexToScreen(h), onDock), state.stacks[i]!, ctx);
+      drawStack(g, stackPosition(c, onDock), state.stacks[i]!, ctx);
     });
     // Baby forests (DESIGN §8.7), then carriers and forest guards.
     const growS = ctx.config.forestGuard.growS * ctx.config.tickRate;
     MAP.hexes.forEach((h, i) => {
       if (state.saplingGrowth[i]! >= 0) drawSapling(g, hexToScreen(h), state.saplingGrowth[i]! / growS);
     });
-    for (const e of entities) if (e.type === 'carrier') drawCarrier(g, e, carrierPosition(e, this.runner.prevCarrierQ.get(e.id), alpha));
+    for (const e of entities) {
+      if (e.type !== 'carrier') continue;
+      const at = carrierPosition(e, this.runner.prevCarrierQ.get(e.id), alpha);
+      // Bigger carts with the Capacity upgrade (DESIGN §6.4).
+      const size = Math.min(3, 1 + upgradeLevel(state, ctx, e.owner, 'carrier', 'capacity'));
+      if (!(this.art && this.sprites.put(`carrier.size${size}`, at.x, at.y, { owner: e.owner }))) drawCarrier(g, e, at);
+    }
     for (const e of entities) if (e.type === 'guard') drawGuard(g, e, guardPosition(e, ctx, alpha), time);
     // Stone cutters, grouped by the rock they work on, with the rock's progress.
     const rockTicks = ctx.config.stoneCutter.secondsPerRock * ctx.config.tickRate;
@@ -357,7 +399,7 @@ export class GameScene extends Phaser.Scene {
 
     const piles = entities.filter((e) => e.type === 'pile');
     while (this.pileLabels.length < piles.length)
-      this.pileLabels.push(this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '10px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 1));
+      this.pileLabels.push(this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '10px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 1).setDepth(3));
     this.pileLabels.forEach((t, k) => {
       const p = piles[k];
       if (!p || p.type !== 'pile') return t.setVisible(false);
@@ -367,9 +409,106 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Catapults and shots in the air (DESIGN §8.6), then health bars, impacts and damage numbers.
-    for (const e of entities) if (e.type === 'catapult') drawCatapult(g, e, catapultPosition(e, ctx, alpha), this.swing(e));
+    for (const e of entities) {
+      if (e.type !== 'catapult') continue;
+      const at = catapultPosition(e, ctx, alpha);
+      const flipX = hexToScreen({ q: e.aimQ, r: e.aimR }).x < at.x - 1; // the sprite faces east
+      if (!(this.art && this.sprites.put('catapult.base', at.x, at.y, { owner: e.owner, flipX }))) drawCatapult(g, e, at, this.swing(e));
+    }
+    this.sprites.end();
     for (const e of entities) if (e.type === 'shot') drawShot(g, e, alpha);
     this.drawCombatFeedback(g, time, alpha);
+  }
+
+  /** Has the owner bought any level of this type's upgrades? Picks the "upgraded" look of a sprite. */
+  private upgraded(owner: number, type: string): boolean {
+    const { state, ctx } = this.runner;
+    return (state.players[owner]?.upgrades[typeIndex(ctx, type)]?.levels ?? [0, 0]).some((l) => l > 0);
+  }
+
+  /** A structure as a pack sprite (grey when neutral). False (draw the placeholder) if the sprite is missing. */
+  private putStructure(e: Structure, i: number): boolean {
+    const { state, ctx } = this.runner;
+    const c = hexToScreen(e);
+    const owner = e.owner;
+    const flow = this.flowAt(i);
+    switch (e.kind) {
+      case 'outpost':
+        return this.sprites.put(upgradeLevel(state, ctx, owner, 'outpost', 'archer') > 0 ? 'outpost.archer' : 'outpost.base', c.x, c.y, { owner });
+      case 'factory': {
+        // The wheel is drawn on the south-west side: mirror it when the river is east.
+        const mill = this.millPositions(e)[0];
+        return this.sprites.put(this.upgraded(owner, 'factory') ? 'mill.upgraded' : 'mill.base', c.x, c.y, { owner, flipX: !!mill && mill.x > c.x });
+      }
+      case 'dock': {
+        const w = this.towardsWater(i);
+        return this.sprites.put(this.upgraded(owner, 'dock') ? 'dock.upgraded' : 'dock.base', c.x, c.y, { owner, flipX: !!w && w.x > 0 });
+      }
+      case 'bridge':
+        return this.sprites.put(`bridge.flow${flow}`, c.x, c.y, { owner, alpha: isWorkingBridge(state, ctx, i) ? 1 : 0.55 });
+      case 'dam': {
+        const damaged = e.hp * 2 < maxHp(state, ctx, e);
+        return this.sprites.put(damaged ? `dam.damaged_flow${flow}` : `dam.flow${flow}`, c.x, c.y, { owner });
+      }
+      case 'workshop':
+        return this.sprites.put(this.upgraded(owner, 'workshop') ? 'workshop.upgraded' : 'workshop.base', c.x, c.y, { owner });
+      case 'excavator':
+        return this.sprites.put((e.workTicks ?? 0) > 0 ? 'excavator.digging' : 'excavator.base', c.x, c.y, { owner });
+      case 'woodchopper':
+        return this.sprites.put(this.upgraded(owner, 'woodchopper') ? 'woodchopper.upgraded' : 'woodchopper.base', c.x, c.y, { owner });
+    }
+  }
+
+  /** Which way the water runs on a water hex: towards the south-west or the south-east hex below it. */
+  private flowAt(i: number): WaterFlow {
+    const { state, ctx } = this.runner;
+    const down = downstream(state, ctx, i);
+    const first = down === 'exit' ? undefined : down[0];
+    return first !== undefined && ctx.map.hexes[first]!.q < ctx.map.hexes[i]!.q ? 'SW' : 'SE';
+  }
+
+  /** Terrain tile or river water for one hex (pack art). */
+  private addTileSprite(h: MapHex): void {
+    const i = MAP.hexes.indexOf(h);
+    const c = hexToScreen(h);
+    const scale = packScale(HEX_SIZE);
+    if (h.terrain === 'river') {
+      const strength = (riverStrengthLevel(MAP, h.r) - 1) / Math.max(1, MAX_STRENGTH - 1);
+      addWaterSprite(this, c.x, c.y, this.flowAt(i), strength)?.setScale(scale);
+      return;
+    }
+    this.tiles[i] = addPackSprite(this, 'hex_land', c.x, c.y)?.setScale(scale);
+  }
+
+  /** Terrain tiles follow the state: forest, cut forest, baby forest, rock, dug land, dug water. */
+  private refreshTiles(): void {
+    const { state, ctx } = this.runner;
+    MAP.hexes.forEach((h, i) => {
+      const tile = this.tiles[i];
+      if (!tile) return;
+      if (state.dugWater[i]) {
+        tile.setVisible(false);
+        if (!this.dugWater.has(i)) {
+          const c = hexToScreen(h);
+          const strength = state.dugStrength[i]! / Math.max(1, MAX_STRENGTH - 1);
+          const w = addWaterSprite(this, c.x, c.y, this.flowAt(i), strength)?.setScale(packScale(HEX_SIZE));
+          if (w) this.dugWater.set(i, w);
+        }
+        return;
+      }
+      const frame = state.dug[i]
+        ? 'hex_dug'
+        : isRock(state, ctx, i)
+          ? 'hex_rock'
+          : state.forestPool[i]! > 0
+            ? 'hex_forest'
+            : state.saplingGrowth[i]! >= 0
+              ? 'hex_forest_baby'
+              : h.terrain === 'forest' || state.grownForest[i]
+                ? 'hex_forest_depleted'
+                : 'hex_land';
+      tile.setFrame(frame).setVisible(true);
+    });
   }
 
   /** The throwing arm swings forward for a moment after a shot: 1 just fired → 0 cocked. */
