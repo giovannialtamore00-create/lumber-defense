@@ -67,7 +67,11 @@ function buildGeometry(g,outDir,writeSprites){
   list.forEach(function(s,i){
     var cx=(i%COLS)*ISO.W,cy=Math.floor(i/COLS)*ISO.H,rgba=toRGBA(s.px),y;
     for(y=0;y<ISO.H;y++)atlas.set(rgba.subarray(y*ISO.W*4,(y+1)*ISO.W*4),((cy+y)*AW+cx)*4);
-    manifest.sprites[s.name]={x:cx,y:cy,w:ISO.W,h:ISO.H,ax:ISO.OX,ay:ISO.OY,group:s.group};
+    // Visible bounds (bx, bw: left edge and width of the drawn pixels), so the game can enlarge small sprites
+    // without letting them outgrow their hex.
+    var minX=ISO.W,maxX=-1,xx2,yy2;
+    for(yy2=0;yy2<ISO.H;yy2++)for(xx2=0;xx2<ISO.W;xx2++)if(s.px[yy2*ISO.W+xx2]){if(xx2<minX)minX=xx2;if(xx2>maxX)maxX=xx2;}
+    manifest.sprites[s.name]={x:cx,y:cy,w:ISO.W,h:ISO.H,ax:ISO.OX,ay:ISO.OY,group:s.group,bx:maxX<0?0:minX,bw:maxX<0?0:maxX-minX+1};
     if(writeSprites)fs.writeFileSync(path.join(SP,s.name+'.png'),pngRGBA(ISO.W,ISO.H,rgba));
   });
   var atlasPng=pngRGBA(AW,AH,atlas);

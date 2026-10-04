@@ -10,3 +10,6 @@ pack/*.png
 pack/legacy/
 pack/mapcheck*.js
 pack/patch*.js
+
+# Local simulation screenshots
+sim-results/

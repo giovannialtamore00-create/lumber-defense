@@ -22,9 +22,12 @@ interface SpriteInfo {
   ax: number;
   ay: number;
   group: string;
+  /** Left edge and width of the drawn pixels. */
+  bx?: number;
+  bw?: number;
 }
 interface PackManifest {
-  tile: { size: number; sq: number; orientation: string; topOffsetPx: number; anchor: { x: number; y: number } };
+  tile: { size: number; sq: number; orientation: string; topOffsetPx: number; anchor: { x: number; y: number }; w: number };
   players: { id: number; name: string; color: string }[];
   water: { frames: number; strengthSteps: number; flows: string[]; frameW: number; frameH: number };
   sprites: Record<string, SpriteInfo>;
@@ -120,6 +123,9 @@ export function addWaterSprite(
   return s;
 }
 
+/** Enlarged sprites stop growing at this share of their hex's width (DESIGN §12: never too big for their hex). */
+const HEX_FIT = 0.85;
+
 /** The pack is drawn for hexes of PACK_HEX_SIZE; the game's hexes are HEX_SIZE, so sprites are scaled to fit. */
 export function packScale(hexSize: number): number {
   return hexSize / PACK_HEX_SIZE;
@@ -203,7 +209,7 @@ export class SpritePool {
     img
       .setTexture(texture, key)
       .setOrigin(info.ax / info.w, info.ay / info.h)
-      .setScale(this.scale * (opts.size ?? 1))
+      .setScale(this.scale * this.fitted(opts.size ?? 1, info))
       .setRotation(opts.rotation ?? 0)
       .setPosition(x, y)
       .setFlipX(!!opts.flipX)
@@ -211,6 +217,13 @@ export class SpritePool {
       .setDepth(this.baseDepth + (y + 10_000) / 1_000_000)
       .setVisible(true);
     return true;
+  }
+
+  /** Enlarging (size > 1) stops once the sprite would be wider than HEX_FIT of a hex; it never shrinks below 1. */
+  private fitted(size: number, info: SpriteInfo): number {
+    const hexW = manifest(this.scene)?.tile.w;
+    if (size <= 1 || !info.bw || !hexW) return size;
+    return Math.min(size, Math.max(1, (HEX_FIT * hexW) / info.bw));
   }
 
   end(): void {

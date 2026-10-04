@@ -272,6 +272,10 @@ One icon that grows in 3 stages with the amount of wood:
 
 ## 8. Structures and machines
 
+> **Terms:** **structure** and **building** mean the same thing and are used interchangeably: anything that stands
+> on a hex and occupies it (outpost, factory-mill, dock, woodchopper, bridge, dam, workshop, excavator). **Units**
+> move and don't occupy a hex (carrier, catapult, forest guard, stone cutter).
+
 ### 8.1 Base stats *(placeholder costs, times and HP)*
 Craft times are base times, before the factory-mill reduction (§6.7).
 

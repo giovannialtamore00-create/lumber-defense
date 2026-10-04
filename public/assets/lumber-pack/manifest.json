@@ -59,7 +59,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 51,
+   "bw": 38
   },
   "outpost.s1.p2": {
    "x": 140,
@@ -68,7 +70,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 51,
+   "bw": 38
   },
   "outpost.s1.p3": {
    "x": 280,
@@ -77,7 +81,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 51,
+   "bw": 38
   },
   "outpost.s1.p4": {
    "x": 420,
@@ -86,7 +92,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 51,
+   "bw": 38
   },
   "outpost.s2.p1": {
    "x": 560,
@@ -95,7 +103,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 50
   },
   "outpost.s2.p2": {
    "x": 700,
@@ -104,7 +114,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 50
   },
   "outpost.s2.p3": {
    "x": 840,
@@ -113,7 +125,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 50
   },
   "outpost.s2.p4": {
    "x": 980,
@@ -122,7 +136,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 50
   },
   "outpost.s3.p1": {
    "x": 1120,
@@ -131,7 +147,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 64
   },
   "outpost.s3.p2": {
    "x": 1260,
@@ -140,7 +158,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 64
   },
   "outpost.s3.p3": {
    "x": 0,
@@ -149,7 +169,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 64
   },
   "outpost.s3.p4": {
    "x": 140,
@@ -158,7 +180,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 64
   },
   "mill.s1.p1": {
    "x": 280,
@@ -167,7 +191,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 53,
+   "bw": 42
   },
   "mill.s1.p2": {
    "x": 420,
@@ -176,7 +202,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 53,
+   "bw": 42
   },
   "mill.s1.p3": {
    "x": 560,
@@ -185,7 +213,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 53,
+   "bw": 42
   },
   "mill.s1.p4": {
    "x": 700,
@@ -194,7 +224,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 53,
+   "bw": 42
   },
   "mill.s2.p1": {
    "x": 840,
@@ -203,7 +235,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 49,
+   "bw": 54
   },
   "mill.s2.p2": {
    "x": 980,
@@ -212,7 +246,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 49,
+   "bw": 54
   },
   "mill.s2.p3": {
    "x": 1120,
@@ -221,7 +257,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 49,
+   "bw": 54
   },
   "mill.s2.p4": {
    "x": 1260,
@@ -230,7 +268,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 49,
+   "bw": 54
   },
   "mill.s3.p1": {
    "x": 0,
@@ -239,7 +279,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 42,
+   "bw": 71
   },
   "mill.s3.p2": {
    "x": 140,
@@ -248,7 +290,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 42,
+   "bw": 71
   },
   "mill.s3.p3": {
    "x": 280,
@@ -257,7 +301,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 42,
+   "bw": 71
   },
   "mill.s3.p4": {
    "x": 420,
@@ -266,7 +312,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 42,
+   "bw": 71
   },
   "dock.s1.p1": {
    "x": 560,
@@ -275,7 +323,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 25,
+   "bw": 68
   },
   "dock.s1.p2": {
    "x": 700,
@@ -284,7 +334,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 25,
+   "bw": 68
   },
   "dock.s1.p3": {
    "x": 840,
@@ -293,7 +345,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 25,
+   "bw": 68
   },
   "dock.s1.p4": {
    "x": 980,
@@ -302,7 +356,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 25,
+   "bw": 68
   },
   "dock.s2.p1": {
    "x": 1120,
@@ -311,7 +367,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 12,
+   "bw": 85
   },
   "dock.s2.p2": {
    "x": 1260,
@@ -320,7 +378,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 12,
+   "bw": 85
   },
   "dock.s2.p3": {
    "x": 0,
@@ -329,7 +389,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 12,
+   "bw": 85
   },
   "dock.s2.p4": {
    "x": 140,
@@ -338,7 +400,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 12,
+   "bw": 85
   },
   "dock.s3.p1": {
    "x": 280,
@@ -347,7 +411,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 3,
+   "bw": 98
   },
   "dock.s3.p2": {
    "x": 420,
@@ -356,7 +422,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 3,
+   "bw": 98
   },
   "dock.s3.p3": {
    "x": 560,
@@ -365,7 +433,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 3,
+   "bw": 98
   },
   "dock.s3.p4": {
    "x": 700,
@@ -374,7 +444,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 3,
+   "bw": 98
   },
   "workshop.s1.p1": {
    "x": 840,
@@ -383,7 +455,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 53
   },
   "workshop.s1.p2": {
    "x": 980,
@@ -392,7 +466,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 53
   },
   "workshop.s1.p3": {
    "x": 1120,
@@ -401,7 +477,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 53
   },
   "workshop.s1.p4": {
    "x": 1260,
@@ -410,7 +488,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 45,
+   "bw": 53
   },
   "workshop.s2.p1": {
    "x": 0,
@@ -419,7 +499,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 68
   },
   "workshop.s2.p2": {
    "x": 140,
@@ -428,7 +510,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 68
   },
   "workshop.s2.p3": {
    "x": 280,
@@ -437,7 +521,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 68
   },
   "workshop.s2.p4": {
    "x": 420,
@@ -446,7 +532,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 38,
+   "bw": 68
   },
   "workshop.s3.p1": {
    "x": 560,
@@ -455,7 +543,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 29,
+   "bw": 88
   },
   "workshop.s3.p2": {
    "x": 700,
@@ -464,7 +554,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 29,
+   "bw": 88
   },
   "workshop.s3.p3": {
    "x": 840,
@@ -473,7 +565,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 29,
+   "bw": 88
   },
   "workshop.s3.p4": {
    "x": 980,
@@ -482,7 +576,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 29,
+   "bw": 88
   },
   "bridge.s1.flowSE.p1": {
    "x": 1120,
@@ -491,7 +587,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s1.flowSE.p2": {
    "x": 1260,
@@ -500,7 +598,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s1.flowSE.p3": {
    "x": 0,
@@ -509,7 +609,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s1.flowSE.p4": {
    "x": 140,
@@ -518,7 +620,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSE.p1": {
    "x": 280,
@@ -527,7 +631,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSE.p2": {
    "x": 420,
@@ -536,7 +642,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSE.p3": {
    "x": 560,
@@ -545,7 +653,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSE.p4": {
    "x": 700,
@@ -554,7 +664,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSE.p1": {
    "x": 840,
@@ -563,7 +675,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSE.p2": {
    "x": 980,
@@ -572,7 +686,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSE.p3": {
    "x": 1120,
@@ -581,7 +697,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSE.p4": {
    "x": 1260,
@@ -590,7 +708,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s1.flowSW.p1": {
    "x": 0,
@@ -599,7 +719,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s1.flowSW.p2": {
    "x": 140,
@@ -608,7 +730,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s1.flowSW.p3": {
    "x": 280,
@@ -617,7 +741,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s1.flowSW.p4": {
    "x": 420,
@@ -626,7 +752,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSW.p1": {
    "x": 560,
@@ -635,7 +763,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSW.p2": {
    "x": 700,
@@ -644,7 +774,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSW.p3": {
    "x": 840,
@@ -653,7 +785,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s2.flowSW.p4": {
    "x": 980,
@@ -662,7 +796,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSW.p1": {
    "x": 1120,
@@ -671,7 +807,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSW.p2": {
    "x": 1260,
@@ -680,7 +818,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSW.p3": {
    "x": 0,
@@ -689,7 +829,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "bridge.s3.flowSW.p4": {
    "x": 140,
@@ -698,7 +840,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 16,
+   "bw": 108
   },
   "dam.flowSE.p1": {
    "x": 280,
@@ -707,7 +851,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.flowSE.p2": {
    "x": 420,
@@ -716,7 +862,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.flowSE.p3": {
    "x": 560,
@@ -725,7 +873,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.flowSE.p4": {
    "x": 700,
@@ -734,7 +884,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.damaged_flowSE.p1": {
    "x": 840,
@@ -743,7 +895,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.damaged_flowSE.p2": {
    "x": 980,
@@ -752,7 +906,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.damaged_flowSE.p3": {
    "x": 1120,
@@ -761,7 +917,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.damaged_flowSE.p4": {
    "x": 1260,
@@ -770,7 +928,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 7,
+   "bw": 120
   },
   "dam.flowSW.p1": {
    "x": 0,
@@ -779,7 +939,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "dam.flowSW.p2": {
    "x": 140,
@@ -788,7 +950,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "dam.flowSW.p3": {
    "x": 280,
@@ -797,7 +961,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "dam.flowSW.p4": {
    "x": 420,
@@ -806,7 +972,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "dam.damaged_flowSW.p1": {
    "x": 560,
@@ -815,7 +983,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "dam.damaged_flowSW.p2": {
    "x": 700,
@@ -824,7 +994,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "dam.damaged_flowSW.p3": {
    "x": 840,
@@ -833,7 +1005,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "dam.damaged_flowSW.p4": {
    "x": 980,
@@ -842,7 +1016,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 19,
+   "bw": 114
   },
   "excavator.base.p1": {
    "x": 1120,
@@ -851,7 +1027,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "excavator.base.p2": {
    "x": 1260,
@@ -860,7 +1038,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "excavator.base.p3": {
    "x": 0,
@@ -869,7 +1049,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "excavator.base.p4": {
    "x": 140,
@@ -878,7 +1060,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "excavator.digging.p1": {
    "x": 280,
@@ -887,7 +1071,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "excavator.digging.p2": {
    "x": 420,
@@ -896,7 +1082,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "excavator.digging.p3": {
    "x": 560,
@@ -905,7 +1093,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "excavator.digging.p4": {
    "x": 700,
@@ -914,7 +1104,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "structures"
+   "group": "structures",
+   "bx": 27,
+   "bw": 86
   },
   "woodchopper.s1.p1": {
    "x": 840,
@@ -923,7 +1115,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 50,
+   "bw": 29
   },
   "woodchopper.s1.p2": {
    "x": 980,
@@ -932,7 +1126,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 50,
+   "bw": 29
   },
   "woodchopper.s1.p3": {
    "x": 1120,
@@ -941,7 +1137,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 50,
+   "bw": 29
   },
   "woodchopper.s1.p4": {
    "x": 1260,
@@ -950,7 +1148,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 50,
+   "bw": 29
   },
   "woodchopper.s2.p1": {
    "x": 0,
@@ -959,7 +1159,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 53,
+   "bw": 33
   },
   "woodchopper.s2.p2": {
    "x": 140,
@@ -968,7 +1170,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 53,
+   "bw": 33
   },
   "woodchopper.s2.p3": {
    "x": 280,
@@ -977,7 +1181,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 53,
+   "bw": 33
   },
   "woodchopper.s2.p4": {
    "x": 420,
@@ -986,7 +1192,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 53,
+   "bw": 33
   },
   "woodchopper.s3.p1": {
    "x": 560,
@@ -995,7 +1203,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 48,
+   "bw": 42
   },
   "woodchopper.s3.p2": {
    "x": 700,
@@ -1004,7 +1214,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 48,
+   "bw": 42
   },
   "woodchopper.s3.p3": {
    "x": 840,
@@ -1013,7 +1225,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 48,
+   "bw": 42
   },
   "woodchopper.s3.p4": {
    "x": 980,
@@ -1022,7 +1236,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 48,
+   "bw": 42
   },
   "carrier.s1.p1": {
    "x": 1120,
@@ -1031,7 +1247,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 58,
+   "bw": 25
   },
   "carrier.s1.p2": {
    "x": 1260,
@@ -1040,7 +1258,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 58,
+   "bw": 25
   },
   "carrier.s1.p3": {
    "x": 0,
@@ -1049,7 +1269,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 58,
+   "bw": 25
   },
   "carrier.s1.p4": {
    "x": 140,
@@ -1058,7 +1280,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 58,
+   "bw": 25
   },
   "carrier.s2.p1": {
    "x": 280,
@@ -1067,7 +1291,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 55,
+   "bw": 31
   },
   "carrier.s2.p2": {
    "x": 420,
@@ -1076,7 +1302,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 55,
+   "bw": 31
   },
   "carrier.s2.p3": {
    "x": 560,
@@ -1085,7 +1313,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 55,
+   "bw": 31
   },
   "carrier.s2.p4": {
    "x": 700,
@@ -1094,7 +1324,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 55,
+   "bw": 31
   },
   "carrier.s3.p1": {
    "x": 840,
@@ -1103,7 +1335,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 39
   },
   "carrier.s3.p2": {
    "x": 980,
@@ -1112,7 +1346,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 39
   },
   "carrier.s3.p3": {
    "x": 1120,
@@ -1121,7 +1357,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 39
   },
   "carrier.s3.p4": {
    "x": 1260,
@@ -1130,7 +1368,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 39
   },
   "catapult.s1.p1": {
    "x": 0,
@@ -1139,7 +1379,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 44
   },
   "catapult.s1.p2": {
    "x": 140,
@@ -1148,7 +1390,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 44
   },
   "catapult.s1.p3": {
    "x": 280,
@@ -1157,7 +1401,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 44
   },
   "catapult.s1.p4": {
    "x": 420,
@@ -1166,7 +1412,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 51,
+   "bw": 44
   },
   "catapult.s2.p1": {
    "x": 560,
@@ -1175,7 +1423,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 45,
+   "bw": 57
   },
   "catapult.s2.p2": {
    "x": 700,
@@ -1184,7 +1434,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 45,
+   "bw": 57
   },
   "catapult.s2.p3": {
    "x": 840,
@@ -1193,7 +1445,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 45,
+   "bw": 57
   },
   "catapult.s2.p4": {
    "x": 980,
@@ -1202,7 +1456,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 45,
+   "bw": 57
   },
   "catapult.s3.p1": {
    "x": 1120,
@@ -1211,7 +1467,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 39,
+   "bw": 70
   },
   "catapult.s3.p2": {
    "x": 1260,
@@ -1220,7 +1478,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 39,
+   "bw": 70
   },
   "catapult.s3.p3": {
    "x": 0,
@@ -1229,7 +1489,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 39,
+   "bw": 70
   },
   "catapult.s3.p4": {
    "x": 140,
@@ -1238,7 +1500,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 39,
+   "bw": 70
   },
   "forestGuard.s1.p1": {
    "x": 280,
@@ -1247,7 +1511,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 61,
+   "bw": 17
   },
   "forestGuard.s1.p2": {
    "x": 420,
@@ -1256,7 +1522,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 61,
+   "bw": 17
   },
   "forestGuard.s1.p3": {
    "x": 560,
@@ -1265,7 +1533,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 61,
+   "bw": 17
   },
   "forestGuard.s1.p4": {
    "x": 700,
@@ -1274,7 +1544,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 61,
+   "bw": 17
   },
   "forestGuard.s2.p1": {
    "x": 840,
@@ -1283,7 +1555,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 59,
+   "bw": 24
   },
   "forestGuard.s2.p2": {
    "x": 980,
@@ -1292,7 +1566,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 59,
+   "bw": 24
   },
   "forestGuard.s2.p3": {
    "x": 1120,
@@ -1301,7 +1577,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 59,
+   "bw": 24
   },
   "forestGuard.s2.p4": {
    "x": 1260,
@@ -1310,7 +1588,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 59,
+   "bw": 24
   },
   "forestGuard.s3.p1": {
    "x": 0,
@@ -1319,7 +1599,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 32,
+   "bw": 54
   },
   "forestGuard.s3.p2": {
    "x": 140,
@@ -1328,7 +1610,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 32,
+   "bw": 54
   },
   "forestGuard.s3.p3": {
    "x": 280,
@@ -1337,7 +1621,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 32,
+   "bw": 54
   },
   "forestGuard.s3.p4": {
    "x": 420,
@@ -1346,7 +1632,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 32,
+   "bw": 54
   },
   "stoneCutter.base.p1": {
    "x": 560,
@@ -1355,7 +1643,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 63,
+   "bw": 18
   },
   "stoneCutter.base.p2": {
    "x": 700,
@@ -1364,7 +1654,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 63,
+   "bw": 18
   },
   "stoneCutter.base.p3": {
    "x": 840,
@@ -1373,7 +1665,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 63,
+   "bw": 18
   },
   "stoneCutter.base.p4": {
    "x": 980,
@@ -1382,7 +1676,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "units"
+   "group": "units",
+   "bx": 63,
+   "bw": 18
   },
   "hex_land": {
    "x": 1120,
@@ -1391,7 +1687,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "terrain"
+   "group": "terrain",
+   "bx": 14,
+   "bw": 112
   },
   "hex_dug": {
    "x": 1260,
@@ -1400,7 +1698,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "terrain"
+   "group": "terrain",
+   "bx": 14,
+   "bw": 112
   },
   "hex_forest": {
    "x": 0,
@@ -1409,7 +1709,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "terrain"
+   "group": "terrain",
+   "bx": 14,
+   "bw": 112
   },
   "hex_forest_depleted": {
    "x": 140,
@@ -1418,7 +1720,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "terrain"
+   "group": "terrain",
+   "bx": 14,
+   "bw": 112
   },
   "hex_forest_baby": {
    "x": 280,
@@ -1427,7 +1731,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "terrain"
+   "group": "terrain",
+   "bx": 14,
+   "bw": 112
   },
   "hex_rock": {
    "x": 420,
@@ -1436,7 +1742,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "terrain"
+   "group": "terrain",
+   "bx": 14,
+   "bw": 112
   },
   "tree_pine": {
    "x": 560,
@@ -1445,7 +1753,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 58,
+   "bw": 24
   },
   "tree_round": {
    "x": 700,
@@ -1454,7 +1764,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 57,
+   "bw": 26
   },
   "tree_baby": {
    "x": 840,
@@ -1463,7 +1775,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 66,
+   "bw": 8
   },
   "tree_stump": {
    "x": 980,
@@ -1472,7 +1786,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 65,
+   "bw": 10
   },
   "rock_s": {
    "x": 1120,
@@ -1481,7 +1797,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 63,
+   "bw": 14
   },
   "rock_m": {
    "x": 1260,
@@ -1490,7 +1808,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 59,
+   "bw": 22
   },
   "rock_l": {
    "x": 0,
@@ -1499,7 +1819,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 54,
+   "bw": 32
   },
   "stone": {
    "x": 140,
@@ -1508,7 +1830,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 64,
+   "bw": 12
   },
   "logstack_1": {
    "x": 280,
@@ -1517,7 +1841,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 60,
+   "bw": 23
   },
   "logstack_2": {
    "x": 420,
@@ -1526,7 +1852,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 59,
+   "bw": 28
   },
   "logstack_3": {
    "x": 560,
@@ -1535,7 +1863,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 59,
+   "bw": 28
   },
   "debris": {
    "x": 700,
@@ -1544,7 +1874,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 28,
+   "bw": 64
   },
   "debris_burnt": {
    "x": 840,
@@ -1553,7 +1885,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "nature"
+   "group": "nature",
+   "bx": 28,
+   "bw": 64
   },
   "hex_outline": {
    "x": 980,
@@ -1562,7 +1896,9 @@
    "h": 140,
    "ax": 70,
    "ay": 104,
-   "group": "terrain"
+   "group": "terrain",
+   "bx": 15,
+   "bw": 110
   }
  }
 }

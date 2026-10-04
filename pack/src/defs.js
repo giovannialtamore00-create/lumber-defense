@@ -55,10 +55,11 @@ function rock(x,y,s,z){s=s||1;z=z===undefined?TH:z;return [cy(x,y,z,1.3*s,.9*s,'
 function byDepth(list){return list.slice().sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});}
 function compose(items){return byDepth(items).reduce(function(acc,it){return acc.concat(it.ops);},[]);}
 var FOREST=[[-3.8,-1.2,'p',1.0],[-1.0,-3.8,'r',1.0],[1.8,-3.2,'p',1.1],[3.8,-0.6,'r',0.9],[-2.6,1.6,'r',1.0],[0.2,-0.3,'p',1.2],[2.6,1.9,'p',1.0],[-0.4,3.6,'r',1.0],[4.0,3.0,'p',0.8]];
-D['hex_forest']=function(){var it=FOREST.map(function(f){return {x:f[0],y:f[1],ops:f[2]==='p'?pine(f[0],f[1],f[3]):roundTree(f[0],f[1],f[3])};});return landTile().concat(compose(it));};
+var TREE_GROW=1.35,ROCK_GROW=1.3; // bigger, taller trees and rocks on the terrain tiles
+D['hex_forest']=function(){var it=FOREST.map(function(f){return {x:f[0],y:f[1],ops:f[2]==='p'?pine(f[0],f[1],f[3]*TREE_GROW):roundTree(f[0],f[1],f[3]*TREE_GROW)};});return landTile().concat(compose(it));};
 D['hex_forest_depleted']=function(){var it=FOREST.map(function(f){return {x:f[0],y:f[1],ops:stump(f[0],f[1])};});return landTile().concat(compose(it));};
 D['hex_forest_baby']=function(){var it=FOREST.map(function(f){return {x:f[0],y:f[1],ops:sapling(f[0],f[1])};});return landTile().concat(compose(it));};
-D['hex_rock']=function(){return landTile().concat(compose([{x:-2.8,y:-1.5,ops:rock(-2.8,-1.5,1.2)},{x:1.2,y:-2.8,ops:rock(1.2,-2.8,0.9)},{x:0.4,y:0.4,ops:rock(0.4,0.4,1.6)},{x:3.2,y:1.2,ops:rock(3.2,1.2,1.0)},{x:-1.6,y:3.0,ops:rock(-1.6,3.0,0.8)}]));};
+D['hex_rock']=function(){var g=ROCK_GROW;return landTile().concat(compose([{x:-2.8,y:-1.5,ops:rock(-2.8,-1.5,1.2*g)},{x:1.2,y:-2.8,ops:rock(1.2,-2.8,0.9*g)},{x:0.4,y:0.4,ops:rock(0.4,0.4,1.6*g)},{x:3.2,y:1.2,ops:rock(3.2,1.2,1.0*g)},{x:-1.6,y:3.0,ops:rock(-1.6,3.0,0.8*g)}]));};
 D['tree_pine']=function(){return pine(0,0,1.3);};
 D['tree_round']=function(){return roundTree(0,0,1.3);};
 D['tree_baby']=function(){return sapling(0,0);};
