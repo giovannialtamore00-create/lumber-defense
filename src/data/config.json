@@ -17,18 +17,18 @@
     "laterTurnS": 15
   },
   "items": {
-    "outpost": { "cost": 50, "craftTimeS": 30, "hp": 150 },
-    "factory": { "cost": 60, "craftTimeS": 45, "hp": 200 },
-    "dock": { "cost": 20, "craftTimeS": 20, "hp": 80 },
+    "outpost": { "cost": 48, "craftTimeS": 30, "hp": 150 },
+    "factory": { "cost": 57, "craftTimeS": 45, "hp": 200 },
+    "dock": { "cost": 19, "craftTimeS": 20, "hp": 80 },
     "carrier": { "cost": 10, "craftTimeS": 10, "hp": 30 },
-    "woodchopper": { "cost": 15, "craftTimeS": 15, "hp": 40 },
-    "bridge": { "cost": 30, "craftTimeS": 20, "hp": 120 },
-    "dam": { "cost": 30, "craftTimeS": 20, "hp": 240 },
-    "workshop": { "cost": 50, "craftTimeS": 30, "hp": 120 },
-    "catapult": { "cost": 60, "craftTimeS": 40, "hp": 80 },
-    "forestGuard": { "cost": 25, "craftTimeS": 20, "hp": 40 },
-    "stoneCutter": { "cost": 50, "craftTimeS": 30, "hp": 40 },
-    "excavator": { "cost": 40, "craftTimeS": 30, "hp": 100 }
+    "woodchopper": { "cost": 14, "craftTimeS": 15, "hp": 40 },
+    "bridge": { "cost": 29, "craftTimeS": 20, "hp": 120 },
+    "dam": { "cost": 29, "craftTimeS": 20, "hp": 240 },
+    "workshop": { "cost": 48, "craftTimeS": 30, "hp": 120 },
+    "catapult": { "cost": 57, "craftTimeS": 40, "hp": 80 },
+    "forestGuard": { "cost": 24, "craftTimeS": 20, "hp": 40 },
+    "stoneCutter": { "cost": 48, "craftTimeS": 30, "hp": 40 },
+    "excavator": { "cost": 38, "craftTimeS": 30, "hp": 100 }
   },
   "factoryMill": {
     "extraFactoryBp": 600,
@@ -37,7 +37,7 @@
     "maxSetup": { "factories": 5, "riverRow": 8 }
   },
   "forest": {
-    "woodPool": 100
+    "woodPool": 150
   },
   "stackStages": {
     "stage2From": 5,

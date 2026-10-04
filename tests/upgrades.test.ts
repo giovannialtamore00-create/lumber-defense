@@ -91,7 +91,7 @@ describe('upgrade effects apply to existing items (§10.3)', () => {
   it('Efficiency lowers crafting costs', () => {
     const { ctx, state } = world();
     research(state, ctx, 'factory', 0);
-    expect(craftCost(state, ctx, 0, 'dock')).toBe(18_000); // 20 − 10%
+    expect(craftCost(state, ctx, 0, 'dock')).toBe(Math.floor(ctx.config.items.dock.cost * 1000 * 0.9)); // −10%
   });
 
   it('Dock Capacity raises an existing dock’s capacity', () => {
@@ -162,7 +162,7 @@ describe('forest guard upgrades (§10.3)', () => {
     run(state, ctx, 120 * 10);
     expect(state.grownForest.filter(Boolean)).toHaveLength(1);
     const grown = state.grownForest.findIndex(Boolean);
-    expect(state.forestPool[grown]).toBe(100_000);
+    expect(state.forestPool[grown]).toBe(ctx.config.forest.woodPool * 1000);
   });
 });
 

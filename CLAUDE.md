@@ -5,6 +5,7 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — tech plan: stack, folder layout, determinism, networking, milestones.
+- **[BOT-STRATEGY.md](BOT-STRATEGY.md)** — economy findings from simulations and designer notes, for bot strategy (M7).
 
 ## Rules
 1. **Only implement what DESIGN.md says.** If something is missing, ambiguous, or listed under DESIGN.md §14

@@ -31,7 +31,7 @@ describe('woodchopper (DESIGN §6.2)', () => {
     put(state, ctx, 'woodchopper', 0, cell(0, 0));
     run(state, ctx, 1000 / ctx.rates.woodchopper); // ticks to cut 1 wood
     expect(stackOf(state, ctx, cell(0, 0))).toBe(1);
-    expect(state.forestPool[idx(ctx, cell(0, 0))!]).toBe(99_000);
+    expect(state.forestPool[idx(ctx, cell(0, 0))!]).toBe(ctx.config.forest.woodPool * 1000 - 1000);
   });
 
   it('the forest disappears when its pool reaches 0', () => {

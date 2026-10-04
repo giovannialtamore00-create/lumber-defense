@@ -1,0 +1,5 @@
+[
+ {"name":"A guards1","expandBelowForest":400,"expandEveryBuildings":6,"guardsPerOutpost":1},
+ {"name":"B guards2","expandBelowForest":400,"expandEveryBuildings":6,"guardsPerOutpost":2},
+ {"name":"E guards growth","expandBelowForest":400,"expandEveryBuildings":6,"guardsPerOutpost":1,"workshopAt":6,"upgrades":[["forestGuard",0],["forestGuard",0],["forestGuard",0]]}
+]

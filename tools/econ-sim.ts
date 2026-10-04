@@ -1,6 +1,10 @@
 // Economy simulator (balance tool): plays solo matches with scripted strategies on the real sim, no rendering, and
 // reports how the economy develops. Only normal commands are used, so every rule applies.
 //   npx tsx tools/econ-sim.ts <strategies.json> [--playtest] [--minutes 60] [--seed 5] [--out results.json]
+//     [--pool <wood per forest hex>] [--chop <woodchopper wood/s>] [--costs <factor on every item cost>]
+// The overrides try balance changes without editing config.json.
+// "Passive minutes": minutes of play in which less wood reached factory-mills than passive income gives, i.e. the
+// player was living mostly on passive income.
 // strategies.json: an array of Strategy objects (see below); unknown fields fall back to the defaults.
 import { readFileSync, writeFileSync } from 'node:fs';
 import config from '../src/data/config.json';
@@ -38,6 +42,8 @@ interface Strategy {
   guardsPerOutpost: number;
   /** Prefer carrier routes straight into a factory-mill over dropping into the river. */
   carrierToMill: boolean;
+  /** Hammer docks that don't touch a factory-mill (they can't feed one, DESIGN §6.6). */
+  hammerUselessDocks: boolean;
 }
 
 const DEFAULTS: Strategy = {
@@ -53,6 +59,7 @@ const DEFAULTS: Strategy = {
   upgrades: [],
   guardsPerOutpost: 0,
   carrierToMill: true,
+  hammerUselessDocks: true,
 };
 
 const args = process.argv.slice(2);
@@ -66,7 +73,25 @@ const MINUTES = Number(flag('--minutes', '60'));
 const SEED = Number(flag('--seed', '5'));
 const OUT = flag('--out', '');
 
-const ctx = createContext(map01 as MapData, config as Config);
+/** The config with the balance overrides from the command line. */
+function tunedConfig(): Config {
+  const c = structuredClone(config) as Config;
+  if (args.includes('--pool')) c.forest.woodPool = Number(flag('--pool', '100'));
+  if (args.includes('--chop')) c.woodchopper.woodPerSecond = Number(flag('--chop', '0.25'));
+  if (args.includes('--costs')) {
+    const f = Number(flag('--costs', '1'));
+    for (const item of Object.values(c.items)) item.cost = Math.max(1, Math.round(item.cost * f));
+  }
+  return c;
+}
+/** map01 stores each forest hex's wood itself: a --pool override applies there too. */
+function tunedMap(c: Config): MapData {
+  const m = structuredClone(map01) as MapData;
+  if (args.includes('--pool')) for (const h of m.hexes) if (h.woodPool !== undefined) h.woodPool = c.forest.woodPool;
+  return m;
+}
+const tuned = tunedConfig();
+const ctx = createContext(tunedMap(tuned), tuned);
 const ME = 0;
 const STRUCTS: StructureKind[] = ['outpost', 'factory', 'dock', 'woodchopper', 'bridge', 'dam', 'workshop', 'excavator'];
 
@@ -109,7 +134,9 @@ function play(st: Strategy) {
             const j = idxOf(n);
             return j !== undefined && state.forestPool[j]! > 0 && n.r === h.r;
           }).length;
-          return river + forest * 2;
+          // A woodchopper whose carrier can't reach any factory-mill: put one on its row, within carrier range.
+          const serves = unservedChoppers().some((w) => w.r === h.r && Math.abs(w.q - h.q) <= ctx.config.carrier.maxRouteDistance);
+          return river + forest * 2 + (serves ? 100 : 0);
         });
       case 'dock':
         return st.docksByMillOnly ? (spots.find(millNear) ?? null) : (spots.find(millNear) ?? spots[0]!);
@@ -126,6 +153,11 @@ function play(st: Strategy) {
         return byScore((h) => -Math.min(...outposts.map((o) => distance(o, h))));
       }
     }
+  }
+
+  /** Woodchoppers with no factory-mill drop-off on their row (their wood could only go into the river). */
+  function unservedChoppers() {
+    return mine('woodchopper').filter((w) => !dropOffs(state, ctx, ME, w.q, w.r).some((d) => d.riverQ === null));
   }
 
   function carrierRoute(): { aQ: number; bQ: number; r: number } | null {
@@ -160,6 +192,11 @@ function play(st: Strategy) {
       if (item === 'forestGuard') return send({ type: 'placeGuard', player: ME, q: h.q, r: h.r });
       return send({ type: 'place', player: ME, item: item as StructureKind, q: h.q, r: h.r });
     }
+    // Hammer: a dock that doesn't touch a factory-mill is wasted wood (DESIGN §6.6).
+    if (st.hammerUselessDocks) {
+      const useless = mine('dock').find((d) => !millNear(d) && d.dismantleTicks === undefined);
+      if (useless) return send({ type: 'dismantle', player: ME, id: useless.id });
+    }
     // Upgrades in the strategy's order.
     const next = st.upgrades[upgradeStep];
     if (next && mine('workshop').length) {
@@ -177,6 +214,7 @@ function play(st: Strategy) {
     const wants: ItemKind[] = [];
     if (count('carrier') < n('woodchopper') * st.carriersPerChopper && carrierRoute()) wants.push('carrier');
     if (n('factory') < 1) wants.push('factory');
+    if (st.carrierToMill && unservedChoppers().length > 0 && n('factory') < 3 * outposts) wants.push('factory');
     if (n('woodchopper') < Math.min(2, st.choppersPerOutpost)) wants.push('woodchopper');
     if (n('dock') < n('factory') * st.docksPerMill) wants.push('dock');
     if (st.workshopAt && n('workshop') < 1 && buildings() >= st.workshopAt) wants.push('workshop');
@@ -186,12 +224,16 @@ function play(st: Strategy) {
     if (n('woodchopper') < st.choppersPerOutpost * outposts) wants.push('woodchopper');
     if (n('factory') < Math.ceil(st.millsPerOutpost * outposts)) wants.push('factory');
     if (count('guard') < st.guardsPerOutpost * outposts) wants.push('forestGuard');
-    const pick = wants.find((k) => !craftError(state, ctx, ME, k) && (k === 'carrier' || canPlaceAnywhere(state, ctx, ME, k)));
+    // Only craft what has a good spot right now (a crafted item with nowhere to go is wasted wood in the warehouse).
+    const pick = wants.find((k) => !craftError(state, ctx, ME, k) && (k === 'carrier' ? !!carrierRoute() : canPlaceAnywhere(state, ctx, ME, k) && spot(k) !== null));
     if (pick) send({ type: 'craft', player: ME, item: pick });
   }
 
   if (PLAYTEST) send({ type: 'setPlaytest', player: ME, on: true });
   const perMinute: { min: number; wood: number; buildings: number; collected: number; forest: number }[] = [];
+  let lastCollected = 0;
+  let passiveMinutes = 0;
+  let firstPassive = -1;
   let t10 = -1;
   let t25 = -1;
   const totalTicks = MINUTES * 60 * ctx.config.tickRate;
@@ -203,6 +245,16 @@ function play(st: Strategy) {
     const min = state.tick / 600;
     if (t10 < 0 && b > 10) t10 = min;
     if (t25 < 0 && b > 25) t25 = min;
+    if (state.tick % 600 === 0 && state.phase === 'running') {
+      const got = p().stats.woodCollected - lastCollected;
+      lastCollected = p().stats.woodCollected;
+      // Passive: less wood reached factory-mills this minute than passive income gives.
+      const passivePerMin = (ctx.config.passiveIncome.wood * 60 * 1000) / ctx.config.passiveIncome.everyS;
+      if (got < passivePerMin) {
+        passiveMinutes++;
+        if (firstPassive < 0) firstPassive = min;
+      }
+    }
     if (state.tick % 600 === 0 && state.phase === 'running')
       perMinute.push({ min, wood: Math.floor(p().wood / 1000), buildings: b, collected: Math.floor(p().stats.woodCollected / 1000), forest: Math.round(territoryForest()) });
   }
@@ -225,6 +277,8 @@ function play(st: Strategy) {
     collected: Math.floor(s.woodCollected / 1000),
     chopped: Math.floor(s.woodChopped / 1000),
     perMin: +(s.woodCollected / 1000 / MINUTES).toFixed(1),
+    passiveMinutes,
+    firstPassive: firstPassive < 0 ? null : Math.round(firstPassive),
     woodLeft: Math.floor(p().wood / 1000),
     forestLeft: Math.round(territoryForest()),
     idleChoppers: `${idle}/${choppers.length}`,
@@ -237,7 +291,7 @@ const results = strategies.map(play);
 for (const r of results)
   console.log(
     `${r.name.padEnd(18)} bldg ${String(r.buildings).padStart(3)} | t10 ${String(r.t10 ?? '-').padStart(5)} t25 ${String(r.t25 ?? '-').padStart(5)} | ` +
-      `collected ${String(r.collected).padStart(5)} (${r.perMin}/min) chopped ${r.chopped} | forest left ${r.forestLeft} idle ${r.idleChoppers} | ` +
+      `collected ${String(r.collected).padStart(5)} (${r.perMin}/min) chopped ${r.chopped} | passive min ${r.passiveMinutes} (first ${r.firstPassive ?? '-'}) | forest left ${r.forestLeft} idle ${r.idleChoppers} | ` +
       `bldg@10/20/30/45/60 ${Object.values(r.at).join('/')} | ${JSON.stringify(r.kinds)} carriers ${r.carriers} guards ${r.guards} | upg ${JSON.stringify(r.upgrades)}`,
   );
 if (OUT) writeFileSync(OUT, JSON.stringify(results, null, 1));

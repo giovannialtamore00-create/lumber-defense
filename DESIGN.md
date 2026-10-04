@@ -44,7 +44,7 @@ Game design for a 2–4 player browser tower-defense / territory game built arou
   upstream and collect it downstream inside their own region.
 
 ### 4.3 Terrain
-- **Forests** are the main landmark. Each forest hex holds a pool of **100 wood**.
+- **Forests** are the main landmark. Each forest hex holds a pool of **150 wood** (raised from 100 after the economy simulations, see §8.1).
 - **Forest density:** about **20 forest hexes per 75-hex region**. Map rule: **every possible 7-hex-diameter
   (radius 3) area inside a region must contain at least one forest hex**, so wherever the player places their first
   outpost they start with forest.
@@ -281,20 +281,27 @@ Craft times are base times, before the factory-mill reduction (§6.7).
 
 | Item | Cost | Craft time | HP | Other stats |
 |---|---|---|---|---|
-| Outpost | 50 | 30 s | 150 | Territory radius 3 |
-| Factory-mill | 60 | 45 s | 200 | Riverside; reduces craft time (§6.7); one queue slot (§7.2) |
-| Dock | 20 | 20 s | 80 | Capacity 20, dispenses 1 wood/s to an adjacent factory |
+| Outpost | 48 | 30 s | 150 | Territory radius 3 |
+| Factory-mill | 57 | 45 s | 200 | Riverside; reduces craft time (§6.7); one queue slot (§7.2) |
+| Dock | 19 | 20 s | 80 | Capacity 20, dispenses 1 wood/s to an adjacent factory |
 | Carrier | 10 | 10 s | 30 | Capacity 5, speed 0.5 hex/s, max A-to-B distance 5 hexes |
-| Woodchopper | 15 | 15 s | 40 | 0.25 wood/s |
-| Bridge | 30 | 20 s | 120 | Lets wheeled units cross a river |
-| Dam | 30 | 20 s | 240 | Stops floating wood (§8.4b); HP doubled in playtest 2 |
-| Forest guard | 25 | 20 s | 40 | Moving unit; regrows spent forests around it (§8.7) |
-| Stone cutter | 50 | 30 s | 40 | Moving unit on a rock; breaks it for 1 stone (§8.4d) |
-| Excavator | 40 | 30 s | 100 | Digs an empty land hex in 3 min, then is used up (§8.4c) |
-| Workshop | 50 | 30 s | 120 | Where upgrades (the dev tree) are bought |
-| Catapult | 60 | 40 s | 80 | Range 4 hexes, 10 dmg/hit, 0.5 hits/s, speed 0.5 hex/s |
+| Woodchopper | 14 | 15 s | 40 | 0.25 wood/s |
+| Bridge | 29 | 20 s | 120 | Lets wheeled units cross a river |
+| Dam | 29 | 20 s | 240 | Stops floating wood (§8.4b); HP doubled in playtest 2 |
+| Forest guard | 24 | 20 s | 40 | Moving unit; regrows spent forests around it (§8.7) |
+| Stone cutter | 48 | 30 s | 40 | Moving unit on a rock; breaks it for 1 stone (§8.4d) |
+| Excavator | 38 | 30 s | 100 | Digs an empty land hex in 3 min, then is used up (§8.4c) |
+| Workshop | 48 | 30 s | 120 | Where upgrades (the dev tree) are bought |
+| Catapult | 57 | 40 s | 80 | Range 4 hexes, 10 dmg/hit, 0.5 hits/s, speed 0.5 hex/s |
 
-Fixed values: starting wood **50**, forest **100 wood per hex**.
+Fixed values: starting wood **50**, forest **150 wood per hex**.
+
+**Economy rebalance (decided, after simulations):** costs are **95%** of the previous placeholders (rounded) and forests
+hold **150 wood** (was 100); woodchopping stays at 0.25 wood/s. Target: a player who plays well (expands, carries
+wood straight into factory-mills, replants with forest guards, wastes nothing) **never falls back to living on
+passive income**: in every minute more wood reaches their factory-mills than passive income gives. This is the
+highest price level that met the target on all tested seeds; findings and method in BOT-STRATEGY.md and
+`npm run econ-sim`.
 
 ### 8.2 Outpost
 - Gives control of territory within a **3-hex radius** (37 hexes).
@@ -384,10 +391,10 @@ Fixed values: starting wood **50**, forest **100 wood per hex**.
 
 ### 8.7 Forest guard (decided; replaces the gardener)
 - A **moving unit**, crafted and placed like a carrier (it doesn't occupy a hex). Placed on a land hex in your
-  territory; it **patrols that hex and the hexes around it (range 1)**. Placeholders: 25 wood, 20 s, 40 HP.
+  territory; it **patrols that hex and the hexes around it (range 1)**. Placeholders: 24 wood, 20 s, 40 HP.
 - On a hex that **used to be forest** and is now empty, it **plants a baby forest**.
 - A baby forest grows only while it has growth time. Each visit, where the guard **attends it for 5 s**, gives it
-  **10 s of growth**. It needs **60 s** of growth in total, so **6 visits**, then it's a full forest again (100 wood).
+  **10 s of growth**. It needs **60 s** of growth in total, so **6 visits**, then it's a full forest again (a full wood pool).
 - The guard walks **1 hex per 2.5 s** and always goes to the baby forest (or empty ex-forest hex) that needs it
   most. So one baby forest regrows in exactly **60 s**; two take **90 s** (he goes back and forth); in general
   **max(60 s, 45 s × number of baby forests)** (a little more when two of them aren't next to each other).
@@ -441,7 +448,7 @@ Everything is made of wood, so a fire feeds itself until the item is gone.
   isn't burning yet, then again **every 20 s** while the item still stands (placeholder). On that hex it catches
   **one item**: the structure first, else a unit, else the forest, else debris.
 - **A burning unit** carries its fire with it.
-- **Forests** burn their wood (max HP = their wood pool, 100); when the wood is gone the hex is a cut forest.
+- **Forests** burn their wood (max HP = a full wood pool, 150); when the wood is gone the hex is a cut forest.
 - **Debris** burns too (max HP = its wood value) and is gone when it has burned; the hex is cleared.
 - **Burnt out:** a structure destroyed while burning leaves **burnt debris**: it blocks building like debris, can't
   catch fire again, and gives **no wood** when a woodchopper clears it. Units burn away with whatever they carried.
