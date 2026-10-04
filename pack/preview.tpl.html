@@ -1,0 +1,121 @@
+<title>Lumber Defense Asset Pack</title>
+<style>
+/* Layout: sample map first, then a catalogue of every sprite grouped by kind. */
+:root{
+  --bg:#f3f2ef; --fg:#26282b; --muted:#6c7075; --tile:#ffffff; --line:#d9d7d2; --map:#e7efe0;
+  --font-ui:"Nunito","Segoe UI",system-ui,sans-serif; --font-label:"Space Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1d1f22;--fg:#ececea;--muted:#9a9ea3;--tile:#2b2e33;--line:#3d4147;--map:#26302a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1f22;--fg:#ececea;--muted:#9a9ea3;--tile:#2b2e33;--line:#3d4147;--map:#26302a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);padding-inline:16px;padding-block:24px}
+main{max-width:1100px;margin:0 auto}
+h1{font-size:1.5rem;margin:0 0 4px}
+h2{font-size:1.1rem;margin:28px 0 6px}
+.sub{color:var(--muted);margin:0 0 14px;max-width:66ch}
+.mapwrap{background:var(--map);border:1px solid var(--line);border-radius:6px;overflow-x:auto}
+canvas#map{display:block;width:100%;min-width:640px;image-rendering:pixelated}
+.cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.item{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile{background:var(--tile);border:1px solid var(--line);border-radius:6px;aspect-ratio:140/112;display:flex}
+.tile canvas{width:100%;height:100%;image-rendering:pixelated}
+.nm{font-family:var(--font-label);font-size:.62rem;color:var(--muted);word-break:break-all}
+.players{display:flex;gap:8px;align-items:center;margin:6px 0 10px;flex-wrap:wrap}
+.players button{font:inherit;border:1px solid var(--line);background:var(--tile);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer}
+.players button[aria-pressed="true"]{border-color:var(--fg);font-weight:800}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+</style>
+<main>
+<h1>Lumber Defense Asset Pack</h1>
+<p class="sub">Isometric pixel sprites in the chunky outline style. Every sprite shares one hex anchor, so a structure drawn at a tile's position lands on it. The river is animated by water.js.</p>
+<h2>Sample map</h2>
+<div class="mapwrap"><canvas id="map"></canvas></div>
+<h2>Catalogue</h2>
+<div class="players" id="players"><span>Owner colour</span></div>
+<div id="cats"></div>
+</main>
+<script>
+/*WATER*/
+</script>
+<script>
+/*LOADER*/
+</script>
+<script>
+var MANIFEST=/*MANIFEST*/;
+var img=new Image();
+img.onload=function(){start(LumberAssets.fromData(MANIFEST,img));};
+img.src="/*ATLAS*/";
+function start(A){
+  var player=1,cv=document.getElementById('map'),ctx=cv.getContext('2d');
+  var T=A.tile,COLS=7,ROWS=5,PAD=20;
+  var W=T.stepX*(COLS-1)+T.w+PAD*2,H=T.stepY*(ROWS+0.5)+T.h+120;
+  cv.width=Math.round(W);cv.height=Math.round(H);
+  var ox=PAD+T.w/2,oy=110;
+  function pos(q,r){var p=A.hexToScreen(q,r);return {x:ox+p.x,y:oy+p.y};}
+  var objects=[
+    {q:0,r:0,n:'hex_forest'},{q:0,r:1,n:'hex_forest'},{q:1,r:0,n:'hex_forest_baby'},{q:1,r:1,n:'hex_forest'},{q:1,r:2,n:'hex_forest_depleted'},
+    {q:0,r:3,n:'hex_rock'},{q:1,r:4,n:'hex_rock'},
+    {q:6,r:0,n:'hex_rock'},{q:6,r:1,n:'hex_dug'}
+  ];
+  var tiles={},river=[{q:3,r:0,s:0},{q:3,r:1,s:0.15},{q:3,r:2,f:1},{q:3,r:3,s:0.55},{q:3,r:4,s:0.85}];
+  function setTile(q,r,n){tiles[q+','+r]=n;}
+  var q,r;
+  for(q=0;q<COLS;q++)for(r=0;r<ROWS;r++)setTile(q,r,'hex_land');
+  objects.forEach(function(o){setTile(o.q,o.r,o.n);});
+  river.forEach(function(o){delete tiles[o.q+','+o.r];});
+  var things=[
+    {q:4,r:1,n:'mill.upgraded',p:1},{q:4,r:3,n:'dock.base',p:1},{q:3,r:3,n:'bridge.base',p:1,o:1},{q:3,r:1,n:'dam.base',p:1,o:1},
+    {q:5,r:1,n:'outpost.archer',p:2},{q:5,r:3,n:'workshop.base',p:2},{q:6,r:2,n:'excavator.digging',p:2},{q:2,r:3,n:'carrier.size2',p:1},
+    {q:5,r:2,n:'catapult.base',p:2},{q:1,r:3,n:'woodchopper.base',p:1},{q:2,r:1,n:'outpost.base',p:1},{q:6,r:3,n:'logstack_3'}
+  ];
+  var order=[];
+  Object.keys(tiles).forEach(function(k){var a=k.split(',').map(Number);order.push({k:'t',q:a[0],r:a[1],n:tiles[k]});});
+  river.forEach(function(o){order.push({k:'w',q:o.q,r:o.r,s:o.s,f:o.f});});
+  things.forEach(function(o){order.push({k:'o',q:o.q,r:o.r,n:o.n,p:o.p});});
+  function key(o){var p=pos(o.q,o.r);return p.y+(o.k==='o'?0.5:0);}
+  order.sort(function(a,b){var d=(a.k==='o')-(b.k==='o');if(d)return d; return key(a)-key(b)||pos(a.q,a.r).x-pos(b.q,b.r).x;});
+  // tiles and water first (back to front), then everything standing on them
+  function frame(t){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    order.forEach(function(o){
+      var p=pos(o.q,o.r);
+      if(o.k==='t')A.draw(ctx,o.n,p.x,p.y);
+      else if(o.k==='w')A.drawWater(ctx,p.x,p.y,t/1000,o.s||0,{waterfall:!!o.f});
+    });
+    order.filter(function(o){return o.k==='o';}).forEach(function(o){
+      var p=pos(o.q,o.r);A.draw(ctx,o.n,p.x,p.y,{player:o.p});
+    });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // catalogue
+  var cats=document.getElementById('cats'),pl=document.getElementById('players');
+  var groups={structures:'Structures',units:'Units',terrain:'Terrain',nature:'Trees, rocks and resources'};
+  function build(){
+    cats.innerHTML='';
+    Object.keys(groups).forEach(function(g){
+      var h=document.createElement('h2');h.textContent=groups[g];cats.appendChild(h);
+      var grid=document.createElement('div');grid.className='cat';cats.appendChild(grid);
+      var seen={};
+      Object.keys(MANIFEST.sprites).forEach(function(n){
+        var s=MANIFEST.sprites[n];if(s.group!==g)return;
+        var m=n.match(/^(.*)\.p(\d)$/);
+        if(m){if(+m[2]!==player)return;}
+        var it=document.createElement('div');it.className='item';
+        it.innerHTML='<div class="tile"><canvas width="140" height="112"></canvas></div><div class="nm">'+(m?m[1]:n)+'</div>';
+        grid.appendChild(it);
+        var c=it.querySelector('canvas').getContext('2d');
+        c.imageSmoothingEnabled=false;c.drawImage(img,s.x,s.y,s.w,s.h,0,0,s.w,s.h);
+      });
+    });
+  }
+  MANIFEST.players.forEach(function(p){
+    var b=document.createElement('button');b.type='button';b.id='pl'+p.id;
+    b.innerHTML='<span class="sw" style="background:'+p.color+'"></span>'+p.name;
+    b.setAttribute('aria-pressed',p.id===1?'true':'false');
+    b.onclick=function(){player=p.id;MANIFEST.players.forEach(function(q){document.getElementById('pl'+q.id).setAttribute('aria-pressed',q.id===player?'true':'false');});build();};
+    pl.appendChild(b);
+  });
+  build();
+}
+</script>

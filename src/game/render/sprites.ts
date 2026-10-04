@@ -34,7 +34,7 @@ interface PackManifest {
 export function preloadLumberPack(scene: Phaser.Scene): void {
   scene.load.atlas(PACK_KEY, `${BASE}atlas.png`, `${BASE}atlas.phaser.json`);
   scene.load.json(MANIFEST_KEY, `${BASE}manifest.json`);
-  scene.load.spritesheet(WATER_KEY, `${BASE}water.png`, { frameWidth: 140, frameHeight: 112 });
+  scene.load.spritesheet(WATER_KEY, `${BASE}water.png`, { frameWidth: 140, frameHeight: 140 }); // = manifest water.frameW/H
 }
 
 function manifest(scene: Phaser.Scene): PackManifest | undefined {

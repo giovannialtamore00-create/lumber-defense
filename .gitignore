@@ -3,3 +3,10 @@ dist/
 *.zip
 *.log
 .DS_Store
+
+# Sprite pack build outputs (rebuild with: cd pack && node build.js pointy)
+pack/dist*/
+pack/*.png
+pack/legacy/
+pack/mapcheck*.js
+pack/patch*.js

@@ -1,0 +1,92 @@
+<title>Hex Perspective Comparison</title>
+<style>
+/* Layout: two map cards stacked, each with a caption; the maps animate the river. */
+:root{
+  --bg:#f3f2ef; --fg:#26282b; --muted:#6c7075; --card:#ffffff; --line:#d9d7d2; --map:#e7efe0;
+  --font-ui:"Nunito","Segoe UI",system-ui,sans-serif; --font-label:"Space Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1d1f22;--fg:#ececea;--muted:#9a9ea3;--card:#2b2e33;--line:#3d4147;--map:#26302a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1d1f22;--fg:#ececea;--muted:#9a9ea3;--card:#2b2e33;--line:#3d4147;--map:#26302a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);padding-inline:16px;padding-block:24px}
+main{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-size:1.5rem;margin:0}
+h2{font-size:1.1rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0;max-width:68ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.facts{font-family:var(--font-label);font-size:.72rem;color:var(--muted);margin:0;line-height:1.5}
+.mapwrap{background:var(--map);border-radius:6px;overflow-x:auto}
+canvas.map{display:block;width:100%;min-width:560px;image-rendering:pixelated}
+</style>
+<main>
+<h1>Hex Perspective Comparison</h1>
+<p class="sub">The same pieces drawn for two grids. Every piece is redrawn to fit its grid: structures sit inside the hex, the mill wheel and dock face the river, and the bridge and dam lie across the flow.</p>
+<section class="card">
+  <div><h2>A. Pointy-top, squash 0.62 (your current grid)</h2>
+  <p class="facts">Matches src/game/iso.ts. Hex 111 px wide, 79 px tall at radius 64. The river zigzags down-left and down-right, as in DESIGN.md.</p></div>
+  <div class="mapwrap"><canvas id="mapP" class="map"></canvas></div>
+</section>
+<section class="card">
+  <div><h2>B. Flat-top, 2:1</h2>
+  <p class="facts">Needs a grid change in iso.ts. Hex 128 px wide, 55 px tall at radius 64. The river runs straight down the screen.</p></div>
+  <div class="mapwrap"><canvas id="mapF" class="map"></canvas></div>
+</section>
+</main>
+<script>
+/*WATER*/
+</script>
+<script>
+/*LOADER*/
+</script>
+<script>
+var DATA=/*DATA*/;
+function loadImg(src){return new Promise(function(res){var i=new Image();i.onload=function(){res(i);};i.src=src;});}
+function setup(key,canvasId,spec){
+  return loadImg(DATA[key].atlas).then(function(img){
+    var A=LumberAssets.fromData(DATA[key].manifest,img);
+    A.waterApi=LumberWater.create({pointy:key==='pointy',sq:DATA[key].manifest.tile.sq,R:DATA[key].manifest.tile.size});
+    var cv=document.getElementById(canvasId),ctx=cv.getContext('2d');
+    var pos=function(q,r){return A.hexToScreen(q,r);};
+    var minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9,q,r;
+    for(q=0;q<spec.cols;q++)for(r=0;r<spec.rows;r++){var p=pos(q,r);minx=Math.min(minx,p.x);maxx=Math.max(maxx,p.x);miny=Math.min(miny,p.y);maxy=Math.max(maxy,p.y);}
+    var T=A.tile,padX=T.w/2+16,padTop=84,padBot=60;
+    cv.width=Math.round(maxx-minx+padX*2);cv.height=Math.round(maxy-miny+padTop+padBot);
+    var ox=padX-minx,oy=padTop-miny;
+    var tiles={};
+    for(q=0;q<spec.cols;q++)for(r=0;r<spec.rows;r++)tiles[q+','+r]='hex_land';
+    Object.keys(spec.terrain).forEach(function(k){tiles[k]=spec.terrain[k];});
+    spec.river.forEach(function(o){delete tiles[o.q+','+o.r];});
+    var order=[];
+    Object.keys(tiles).forEach(function(k){var a=k.split(',').map(Number);order.push({k:'t',q:a[0],r:a[1],n:tiles[k]});});
+    spec.river.forEach(function(o){order.push({k:'w',q:o.q,r:o.r,s:o.s||0,f:o.f,flow:o.flow});});
+    var things=spec.things.map(function(o){return {k:'o',q:o.q,r:o.r,n:o.n,p:o.p};});
+    function srt(a,b){var pa=pos(a.q,a.r),pb=pos(b.q,b.r);return pa.y-pb.y||pa.x-pb.x;}
+    var under=order.slice().sort(srt),over=things.sort(srt);
+    function frame(t){
+      ctx.clearRect(0,0,cv.width,cv.height);
+      under.forEach(function(o){
+        var p=pos(o.q,o.r),x=ox+p.x,y=oy+p.y;
+        if(o.k==='t')A.draw(ctx,o.n,x,y);else A.drawWater(ctx,x,y,t/1000,o.s,{waterfall:!!o.f,flow:o.flow});
+      });
+      over.forEach(function(o){var p=pos(o.q,o.r);A.draw(ctx,o.n,ox+p.x,oy+p.y,{player:o.p});});
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+}
+// A: pointy-top. The river zigzags (4,0) SE (4,1) SW (3,2) SE (3,3) SW (2,4).
+setup('pointy','mapP',{cols:7,rows:5,
+  terrain:{'0,0':'hex_forest','0,1':'hex_forest','1,0':'hex_forest_baby','1,1':'hex_forest','1,2':'hex_forest_depleted','0,3':'hex_rock','6,0':'hex_rock','6,1':'hex_dug','1,4':'hex_rock'},
+  river:[{q:4,r:0,s:0,flow:'SE'},{q:4,r:1,s:0.15,flow:'SW'},{q:3,r:2,f:1},{q:3,r:3,s:0.55,flow:'SW'},{q:2,r:4,s:0.85,flow:'SW'}],
+  things:[
+    {q:4,r:2,n:'mill.upgraded',p:1},{q:5,r:0,n:'dock.base',p:1},{q:3,r:3,n:'bridge.flowSW',p:1},{q:4,r:1,n:'dam.flowSW',p:1},
+    {q:5,r:2,n:'outpost.archer',p:2},{q:5,r:3,n:'workshop.base',p:2},{q:6,r:2,n:'excavator.digging',p:2},{q:2,r:2,n:'carrier.size2',p:1},
+    {q:5,r:1,n:'catapult.base',p:2},{q:1,r:3,n:'woodchopper.base',p:1},{q:2,r:1,n:'outpost.base',p:1},{q:6,r:3,n:'logstack_3'}]});
+// B: flat-top. The river runs straight down column 3.
+setup('flat','mapF',{cols:7,rows:5,
+  terrain:{'0,0':'hex_forest','0,1':'hex_forest','1,0':'hex_forest_baby','1,1':'hex_forest','1,2':'hex_forest_depleted','0,3':'hex_rock','6,0':'hex_rock','6,1':'hex_dug'},
+  river:[{q:3,r:0,s:0,flow:'S'},{q:3,r:1,s:0.15,flow:'S'},{q:3,r:2,f:1},{q:3,r:3,s:0.55,flow:'S'},{q:3,r:4,s:0.85,flow:'S'}],
+  things:[
+    {q:4,r:1,n:'mill.upgraded',p:1},{q:4,r:3,n:'dock.base',p:1},{q:3,r:3,n:'bridge.base',p:1},{q:3,r:1,n:'dam.base',p:1},
+    {q:5,r:1,n:'outpost.archer',p:2},{q:5,r:3,n:'workshop.base',p:2},{q:6,r:2,n:'excavator.digging',p:2},{q:2,r:3,n:'carrier.size2',p:1},
+    {q:5,r:2,n:'catapult.base',p:2},{q:1,r:3,n:'woodchopper.base',p:1},{q:2,r:1,n:'outpost.base',p:1},{q:6,r:3,n:'logstack_3'}]});
+</script>

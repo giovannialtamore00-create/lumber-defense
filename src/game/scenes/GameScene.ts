@@ -88,6 +88,13 @@ function riverColorForStrength(level: number): number {
 
 /** Buildings and units are drawn 50% bigger than the pack's size (terrain and log stacks stay as drawn). */
 const ITEM_SIZE = 1.5;
+/** Several units of a kind on one hex are drawn as a stack, each this much smaller (DESIGN §12). */
+const STACKED_SIZE = 0.7;
+/**
+ * Sprite stage (1–3) by the highest upgrade level the owner has on that type, Pokemon style: no upgrades = stage 1,
+ * level 1–2 = stage 2, level 3 = stage 3. One look per stage, whichever path it came from.
+ */
+const STAGE_BY_LEVEL = [1, 2, 2, 3];
 /** The woodchopper walks a loop around its forest hex: one lap in this many ms. */
 const CHOPPER_LAP_MS = 9000;
 
@@ -117,6 +124,9 @@ export class GameScene extends Phaser.Scene {
   private art = false;
   private tiles: (Phaser.GameObjects.Image | undefined)[] = [];
   private dugWater = new Map<number, Phaser.GameObjects.Sprite>();
+  /** River water sprites by hex, so the water held behind a dam can stand still. */
+  private riverWater = new Map<number, Phaser.GameObjects.Sprite>();
+  private damKey = '';
   private sprites!: SpritePool;
   /** Last direction each carrier drove (1 east, -1 west), so it keeps facing that way while it waits. */
   private carrierDir = new Map<number, number>();
@@ -183,6 +193,11 @@ export class GameScene extends Phaser.Scene {
     const dugKey = state.dug.map((d, i) => (d ? (state.dugWater[i] ? 'w' : 'd') : '')).join(',');
     if (this.art) {
       if (decorKey !== this.decorKey || dugKey !== this.dugKey) this.refreshTiles();
+      const damKey = state.entities.map((e) => (e.type === 'structure' && e.kind === 'dam' ? `${e.q},${e.r}` : '')).join('') + dugKey;
+      if (damKey !== this.damKey) {
+        this.damKey = damKey;
+        this.refreshStillWater();
+      }
       this.decorKey = decorKey;
       this.dugKey = dugKey;
     } else {
@@ -379,7 +394,9 @@ export class GameScene extends Phaser.Scene {
       }
     }
     MAP.hexes.forEach((h, i) => {
-      if (state.debris[i]! > 0) drawDebris(g, hexToScreen(h), state.debrisBurnt[i]);
+      if (state.debris[i]! <= 0) return;
+      const c = hexToScreen(h);
+      if (!(this.art && this.sprites.put(state.debrisBurnt[i] ? 'debris_burnt' : 'debris', c.x, c.y))) drawDebris(g, c, state.debrisBurnt[i]);
     });
     MAP.hexes.forEach((h, i) => {
       if (state.stacks[i]! <= 0) return;
@@ -394,24 +411,36 @@ export class GameScene extends Phaser.Scene {
     MAP.hexes.forEach((h, i) => {
       if (state.saplingGrowth[i]! >= 0) drawSapling(g, hexToScreen(h), state.saplingGrowth[i]! / growS);
     });
+    const stacks = this.unitStacks();
     for (const e of entities) {
       if (e.type !== 'carrier') continue;
-      const at = carrierPosition(e, this.runner.prevCarrierQ.get(e.id), alpha);
-      // Bigger carts with the Capacity upgrade (DESIGN §6.4). The cart faces the way it drives along its row.
-      const level = Math.min(3, 1 + upgradeLevel(state, ctx, e.owner, 'carrier', 'capacity'));
+      const { at, size } = this.stacked(e, carrierPosition(e, this.runner.prevCarrierQ.get(e.id), alpha), stacks);
+      // The cart faces the way it drives along its row.
       const target = (e.phase === 'toA' ? e.pickupQ : e.bQ) * 1000;
       if (target !== e.posQ) this.carrierDir.set(e.id, target > e.posQ ? 1 : -1);
-      const dir = this.carrierDir.get(e.id) ?? 1;
-      const cart = { owner: e.owner, size: ITEM_SIZE, flipX: dir < 0 };
-      if (!(this.art && this.sprites.put(`carrier.size${level}`, at.x, at.y, cart))) drawCarrier(g, e, at);
+      const cart = { owner: e.owner, size, flipX: (this.carrierDir.get(e.id) ?? 1) < 0 };
+      if (!(this.art && this.sprites.put(`carrier.s${this.stage(e.owner, 'carrier')}`, at.x, at.y, cart))) drawCarrier(g, e, at);
     }
-    for (const e of entities) if (e.type === 'guard') drawGuard(g, e, guardPosition(e, ctx, alpha), time);
+    for (const e of entities) {
+      if (e.type !== 'guard') continue;
+      const { at, size } = this.stacked(e, guardPosition(e, ctx, alpha), stacks);
+      if (!(this.art && this.sprites.put(`forestGuard.s${this.stage(e.owner, 'forestGuard')}`, at.x, at.y, { owner: e.owner, size }))) drawGuard(g, e, at, time);
+    }
     // Stone cutters, grouped by the rock they work on, with the rock's progress.
     const rockTicks = ctx.config.stoneCutter.secondsPerRock * ctx.config.tickRate;
     const cutters = entities.filter((e): e is StoneCutter => e.type === 'cutter');
     for (const i of [...new Set(cutters.map((c) => ctx.indexOf.get(hexKey(c))!))]) {
       const here = cutters.filter((c) => ctx.indexOf.get(hexKey(c)) === i);
-      drawCutters(g, here, hexToScreen(ctx.map.hexes[i]!), Math.min(1, state.rockWork[i]! / rockTicks), time);
+      const c = hexToScreen(ctx.map.hexes[i]!);
+      const progress = Math.min(1, state.rockWork[i]! / rockTicks);
+      const putCutter = (u: StoneCutter) => {
+        const { at, size } = this.stacked(u, c, stacks);
+        return this.sprites.put('stoneCutter.base', at.x, at.y, { owner: u.owner, size });
+      };
+      if (this.art && here.every(putCutter)) {
+        g.fillStyle(0x000000, 0.6).fillRect(c.x - 14, c.y + 9, 28, 4);
+        g.fillStyle(0xb3b6ba, 1).fillRect(c.x - 14, c.y + 9, 28 * progress, 4);
+      } else drawCutters(g, here, c, progress, time);
     }
 
     const piles = entities.filter((e) => e.type === 'pile');
@@ -428,9 +457,10 @@ export class GameScene extends Phaser.Scene {
     // Catapults and shots in the air (DESIGN §8.6), then health bars, impacts and damage numbers.
     for (const e of entities) {
       if (e.type !== 'catapult') continue;
-      const at = catapultPosition(e, ctx, alpha);
-      const flipX = hexToScreen({ q: e.aimQ, r: e.aimR }).x < at.x - 1; // the sprite faces east
-      if (!(this.art && this.sprites.put('catapult.base', at.x, at.y, { owner: e.owner, flipX, size: ITEM_SIZE }))) drawCatapult(g, e, at, this.swing(e));
+      const base = catapultPosition(e, ctx, alpha);
+      const { at, size } = this.stacked(e, base, stacks);
+      const flipX = hexToScreen({ q: e.aimQ, r: e.aimR }).x < base.x - 1; // the sprite faces east
+      if (!(this.art && this.sprites.put(`catapult.s${this.stage(e.owner, 'catapult')}`, at.x, at.y, { owner: e.owner, flipX, size }))) drawCatapult(g, e, at, this.swing(e));
     }
     this.sprites.end();
     for (const e of entities) if (e.type === 'shot') drawShot(g, e, alpha);
@@ -438,10 +468,37 @@ export class GameScene extends Phaser.Scene {
     this.drawCombatFeedback(g, time, alpha);
   }
 
-  /** Has the owner bought any level of this type's upgrades? Picks the "upgraded" look of a sprite. */
-  private upgraded(owner: number, type: string): boolean {
+  /** Sprite stage 1–3 for the owner's items of a type (neutral items: stage 1). */
+  private stage(owner: number, type: string): number {
     const { state, ctx } = this.runner;
-    return (state.players[owner]?.upgrades[typeIndex(ctx, type)]?.levels ?? [0, 0]).some((l) => l > 0);
+    const levels = state.players[owner]?.upgrades[typeIndex(ctx, type)]?.levels ?? [0, 0];
+    return STAGE_BY_LEVEL[Math.max(...levels)] ?? 1;
+  }
+
+  /** Units of the same kind standing on the same hex, by "kind|hex", in id order. */
+  private unitStacks(): Map<string, number[]> {
+    const map = new Map<string, number[]>();
+    for (const e of this.runner.state.entities) {
+      if (e.type !== 'carrier' && e.type !== 'guard' && e.type !== 'cutter' && e.type !== 'catapult') continue;
+      const h = hexOf(e);
+      const key = `${e.type}|${h.q},${h.r}`;
+      map.set(key, [...(map.get(key) ?? []), e.id]);
+    }
+    return map;
+  }
+
+  /**
+   * Where a unit is drawn when others of its kind share its hex: a small stack going back into the hex, each one 30%
+   * smaller, so they can all be seen (DESIGN §12). Alone, it's drawn where it is at full size.
+   */
+  private stacked(e: Ownable, at: Point, stacks: Map<string, number[]>): { at: Point; size: number } {
+    const h = hexOf(e);
+    const group = stacks.get(`${e.type}|${h.q},${h.r}`) ?? [e.id];
+    if (group.length < 2) return { at, size: ITEM_SIZE };
+    const k = group.indexOf(e.id);
+    const n = group.length;
+    const step = { x: 7, y: -5 }; // each further one sits up and to the right (further back)
+    return { at: { x: at.x + (k - (n - 1) / 2) * step.x, y: at.y + (k - (n - 1) / 2) * step.y }, size: ITEM_SIZE * STACKED_SIZE };
   }
 
   /** A structure as a pack sprite (grey when neutral). False (draw the placeholder) if the sprite is missing. */
@@ -453,26 +510,26 @@ export class GameScene extends Phaser.Scene {
     const flow = this.flowAt(i);
     switch (e.kind) {
       case 'outpost':
-        return this.sprites.put(upgradeLevel(state, ctx, owner, 'outpost', 'archer') > 0 ? 'outpost.archer' : 'outpost.base', c.x, c.y, { owner, size });
+        return this.sprites.put(`outpost.s${this.stage(owner, 'outpost')}`, c.x, c.y, { owner, size });
       case 'factory': {
         // The wheel is drawn on the south-west side: mirror it when the river is east. The building stands at the
         // edge of its hex, with the wheel in the water.
         const mill = this.millPositions(e)[0];
         const at = mill ? { x: c.x + (mill.x - c.x) * 0.45, y: c.y + (mill.y + 4 - c.y) * 0.45 } : c;
-        return this.sprites.put(this.upgraded(owner, 'factory') ? 'mill.upgraded' : 'mill.base', at.x, at.y, { owner, size, flipX: !!mill && mill.x > c.x });
+        return this.sprites.put(`mill.s${this.stage(owner, 'factory')}`, at.x, at.y, { owner, size, flipX: !!mill && mill.x > c.x });
       }
       case 'dock': {
         const w = this.towardsWater(i);
-        return this.sprites.put(this.upgraded(owner, 'dock') ? 'dock.upgraded' : 'dock.base', c.x, c.y, { owner, size, flipX: !!w && w.x > 0 });
+        return this.sprites.put(`dock.s${this.stage(owner, 'dock')}`, c.x, c.y, { owner, size, flipX: !!w && w.x > 0 });
       }
       case 'bridge':
-        return this.sprites.put(`bridge.flow${flow}`, c.x, c.y, { owner, size, alpha: isWorkingBridge(state, ctx, i) ? 1 : 0.55 });
+        return this.sprites.put(`bridge.s${this.stage(owner, 'bridge')}.flow${flow}`, c.x, c.y, { owner, alpha: isWorkingBridge(state, ctx, i) ? 1 : 0.55 }); // spans the river: natural size
       case 'dam': {
         const damaged = e.hp * 2 < maxHp(state, ctx, e);
-        return this.sprites.put(damaged ? `dam.damaged_flow${flow}` : `dam.flow${flow}`, c.x, c.y, { owner, size });
+        return this.sprites.put(damaged ? `dam.damaged_flow${flow}` : `dam.flow${flow}`, c.x, c.y, { owner }); // spans the river: natural size
       }
       case 'workshop':
-        return this.sprites.put(this.upgraded(owner, 'workshop') ? 'workshop.upgraded' : 'workshop.base', c.x, c.y, { owner, size });
+        return this.sprites.put(`workshop.s${this.stage(owner, 'workshop')}`, c.x, c.y, { owner, size });
       case 'excavator':
         return this.sprites.put((e.workTicks ?? 0) > 0 ? 'excavator.digging' : 'excavator.base', c.x, c.y, { owner, size });
       case 'woodchopper': {
@@ -482,7 +539,7 @@ export class GameScene extends Phaser.Scene {
         const ry = HEX_SIZE * 0.42 * ISO_SQUASH;
         const x = c.x + Math.cos(a) * rx;
         const y = c.y + Math.sin(a) * ry + 2;
-        const name = this.upgraded(owner, 'woodchopper') ? 'woodchopper.upgraded' : 'woodchopper.base';
+        const name = `woodchopper.s${this.stage(owner, 'woodchopper')}`;
         return this.sprites.put(name, x, y, { owner, size, flipX: Math.sin(a) > 0 }); // dx/da = -sin(a): walking west when sin > 0
       }
     }
@@ -503,10 +560,31 @@ export class GameScene extends Phaser.Scene {
     const scale = packScale(HEX_SIZE);
     if (h.terrain === 'river') {
       const strength = (riverStrengthLevel(MAP, h.r) - 1) / Math.max(1, MAX_STRENGTH - 1);
-      addWaterSprite(this, c.x, c.y, this.flowAt(i), strength)?.setScale(scale);
+      const w = addWaterSprite(this, c.x, c.y, this.flowAt(i), strength)?.setScale(scale);
+      if (w) this.riverWater.set(i, w);
       return;
     }
     this.tiles[i] = addPackSprite(this, 'hex_land', c.x, c.y)?.setScale(scale);
+  }
+
+  /** Water held behind a dam doesn't flow: those hexes show still water (DESIGN §8.4b). */
+  private refreshStillWater(): void {
+    const { state, ctx } = this.runner;
+    const held = new Set<number>();
+    for (const e of state.entities) {
+      if (e.type !== 'structure' || e.kind !== 'dam') continue;
+      const d = ctx.indexOf.get(hexKey(e))!;
+      if (ctx.forkBranch[d]) continue; // on a fork it sends the wood down the other branch: the water still runs
+      for (let j = 0; j < ctx.map.hexes.length; j++) {
+        if (!isWater(state, ctx, j)) continue;
+        const down = downstream(state, ctx, j);
+        if (down !== 'exit' && down.includes(d)) held.add(j);
+      }
+    }
+    for (const [i, w] of [...this.riverWater, ...this.dugWater]) {
+      if (held.has(i)) w.anims.pause();
+      else if (w.anims.isPaused) w.anims.resume();
+    }
   }
 
   /** Terrain tiles follow the state: forest, cut forest, baby forest, rock, dug land, dug water. */
