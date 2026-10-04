@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate-map": "tsx tools/validate-map.ts",
+    "econ-sim": "tsx tools/econ-sim.ts",
     "zip": "tsx tools/zip-dist.ts",
     "share": "vite build && node tools/share.mjs"
   },

@@ -1,0 +1,12 @@
+[
+ {"name":"1 old-greedy","docksPerMill":12,"docksByMillOnly":false,"choppersPerOutpost":5,"expandBelowForest":0,"expandEveryBuildings":14,"workshopAt":12,"carrierToMill":false,"upgrades":[["dock",0],["outpost",0],["factory",0],["woodchopper",0],["workshop",0]]},
+ {"name":"2 balanced"},
+ {"name":"3 mill-heavy","millsPerOutpost":2},
+ {"name":"4 expand-early","expandBelowForest":400,"expandEveryBuildings":6},
+ {"name":"5 chopper-heavy","choppersPerOutpost":5},
+ {"name":"6 two-carriers","carriersPerChopper":2},
+ {"name":"7 econ-upgrades","workshopAt":6,"upgrades":[["woodchopper",0],["dock",1],["woodchopper",0],["factory",0],["carrier",1],["woodchopper",0]]},
+ {"name":"8 forest-guards","guardsPerOutpost":1,"expandBelowForest":100},
+ {"name":"9 no-docks","docksPerMill":0},
+ {"name":"10 river-route","carrierToMill":false,"docksPerMill":2}
+]

@@ -36,6 +36,8 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 - `npm test` — Vitest (sim unit tests, determinism)
 - `npm run typecheck`
 - `npm run validate-map` — checks map rules from DESIGN §4.3
+- `npm run econ-sim -- tools/econ-strategies/round2.json [--playtest] [--minutes 60] [--seed 5]` — plays solo matches
+  with scripted strategies on the real sim (no rendering, seconds per match) and prints how the economy develops.
 - `npm run share` — builds, serves `dist/` on http://localhost:4180 and opens a Cloudflare tunnel; prints the public
   link for playtests with friends. Ctrl+C stops it.
 - `tools/browser.mjs` — headless-Chrome helper for automated checks and screenshots (dev hooks `window.__runner`,

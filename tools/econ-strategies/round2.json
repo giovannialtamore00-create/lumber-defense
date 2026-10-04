@@ -1,0 +1,12 @@
+[
+ {"name":"1 expand","expandBelowForest":400,"expandEveryBuildings":6},
+ {"name":"2 expand+mills","expandBelowForest":400,"expandEveryBuildings":6,"millsPerOutpost":2},
+ {"name":"3 expand+2carr","expandBelowForest":400,"expandEveryBuildings":6,"carriersPerChopper":2},
+ {"name":"4 expand+upgr","expandBelowForest":400,"expandEveryBuildings":6,"workshopAt":6,"upgrades":[["woodchopper",0],["factory",0],["woodchopper",0],["outpost",0],["woodchopper",0],["factory",0]]},
+ {"name":"5 expand+guards","expandBelowForest":400,"expandEveryBuildings":6,"guardsPerOutpost":1},
+ {"name":"6 combo","expandBelowForest":400,"expandEveryBuildings":6,"millsPerOutpost":1.5,"carriersPerChopper":2,"workshopAt":6,"upgrades":[["woodchopper",0],["factory",0],["woodchopper",0],["outpost",0]]},
+ {"name":"7 expand-max","expandBelowForest":600,"expandEveryBuildings":4},
+ {"name":"8 expand-slow","expandBelowForest":250,"expandEveryBuildings":9},
+ {"name":"9 combo+guards","expandBelowForest":400,"expandEveryBuildings":6,"millsPerOutpost":1.5,"carriersPerChopper":2,"guardsPerOutpost":1,"workshopAt":6,"upgrades":[["woodchopper",0],["forestGuard",0],["factory",0]]},
+ {"name":"10 combo-nodocks","expandBelowForest":400,"expandEveryBuildings":6,"millsPerOutpost":1.5,"carriersPerChopper":2,"docksPerMill":0,"workshopAt":6,"upgrades":[["woodchopper",0],["factory",0],["woodchopper",0]]}
+]
