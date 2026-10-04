@@ -147,6 +147,20 @@ export class UIScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.runner.submit({ type: 'setPlaytest', player: this.local, on: !this.runner.state.playtest }));
+    // Main menu: leave this match (with a confirmation) and go back to the start screen to begin a new one.
+    this.add
+      .text(fb.left - 8, 12, 'Menu', { ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', color: '#ffffff', backgroundColor: '#3a4a6b' })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        const host = this.runner.session.isHost && this.runner.session.info.slots.filter((x) => x.name !== null).length > 1;
+        this.ask(
+          'Leave this match and go back to the main menu?\n' +
+            (host ? 'You are the host: the match ends for everyone.' : 'You can rejoin later with the same room code and name.'),
+          'Leave',
+          () => (window.location.href = window.location.pathname),
+        );
+      });
     this.defeatText = this.add
       .text((width - PANEL_W) / 2, 142, 'You are out of the match: watching until it ends.', { ...TEXT_STYLE, fontSize: '16px', fontStyle: 'bold', backgroundColor: '#8a2a1ecc' })
       .setOrigin(0.5, 0)

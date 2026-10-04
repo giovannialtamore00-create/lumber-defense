@@ -103,8 +103,9 @@ const BAR_MS = 3000;
 const IMPACT_MS = 350;
 const NUMBER_MS = 900;
 
-const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 3;
+/** Screen width of the build panel on the right (UIScene), which the map should not hide under. */
+const SIDE_PANEL_PX = 340;
 
 export class GameScene extends Phaser.Scene {
   private coordLabels: Phaser.GameObjects.Text[] = [];
@@ -943,9 +944,18 @@ export class GameScene extends Phaser.Scene {
     const maxX = Math.max(...pts.map((p) => p.x)) + HEX_SIZE * 5; // room for the waterfall label
     const minY = Math.min(...pts.map((p) => p.y)) - HEX_SIZE * 3;
     const maxY = Math.max(...pts.map((p) => p.y)) + HEX_SIZE * 3;
-    cam.setBounds(minX - 400, minY - 400, maxX - minX + 800, maxY - minY + 800);
+    // The camera stays on the map: the furthest you can zoom out shows the whole map as big as it fits the window,
+    // and you can only zoom in from there.
+    // The build panel covers the right edge of the screen: the map fits left of it, with room to scroll past.
+    const fitZoom = () => Math.min(ZOOM_MAX, (this.scale.width - SIDE_PANEL_PX) / (maxX - minX), this.scale.height / (maxY - minY));
+    const bound = () => {
+      // Spare height at the furthest zoom goes equally above and below, so the map sits in the middle.
+      const spareY = Math.max(0, (this.scale.height / fitZoom() - (maxY - minY)) / 2);
+      cam.setBounds(minX, minY - spareY, maxX - minX + SIDE_PANEL_PX / fitZoom(), maxY - minY + 2 * spareY);
+    };
+    bound();
+    cam.setZoom(fitZoom());
     cam.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
-    cam.setZoom(Phaser.Math.Clamp(Math.min(this.scale.width / (maxX - minX), (this.scale.height - 40) / (maxY - minY)), ZOOM_MIN, ZOOM_MAX));
 
     // Dev: `?zoom=2.5` zooms onto the local player's first outpost (close-up screenshots with `?demo`).
     const zoomParam = new URLSearchParams(window.location.search).get('zoom');
@@ -966,12 +976,20 @@ export class GameScene extends Phaser.Scene {
     // Zoom: mouse wheel, anchored on the cursor.
     this.input.on('wheel', (p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
       const before = cam.getWorldPoint(p.x, p.y);
-      cam.setZoom(Phaser.Math.Clamp(cam.zoom * (dy > 0 ? 0.9 : 1.1), ZOOM_MIN, ZOOM_MAX));
+      cam.setZoom(Phaser.Math.Clamp(cam.zoom * (dy > 0 ? 0.9 : 1.1), fitZoom(), ZOOM_MAX));
       cam.preRender();
       const after = cam.getWorldPoint(p.x, p.y);
       cam.scrollX += before.x - after.x;
       cam.scrollY += before.y - after.y;
     });
+
+    // A resized window changes how far out the whole map fits.
+    const refit = () => {
+      bound();
+      cam.setZoom(Math.max(cam.zoom, fitZoom()));
+    };
+    this.scale.on('resize', refit);
+    this.events.once('shutdown', () => this.scale.off('resize', refit));
 
     // Keyboard pan.
     const keys = this.input.keyboard?.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT') as Record<string, Phaser.Input.Keyboard.Key> | undefined;
