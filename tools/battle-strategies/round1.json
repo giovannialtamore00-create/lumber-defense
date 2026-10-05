@@ -42,14 +42,14 @@
  },
  {
   "name": "A",
-  "millsEarly": 1,
-  "docksPerMill": 1,
+  "millsEarly": 2,
+  "docksPerMill": 2,
   "choppersPerOutpost": 3,
   "guardsPerOutpost": 1,
   "workshopAt": 6,
-  "aggressionFromMin": 3,
-  "catapultsFromMin": 4,
-  "catapultsIdle": 2,
+  "aggressionFromMin": 8,
+  "catapultsFromMin": 7,
+  "catapultsIdle": 3,
   "catapultsPerConflict": 6,
   "upgrades": [
    [

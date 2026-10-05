@@ -17,7 +17,7 @@
     "laterTurnS": 15
   },
   "items": {
-    "outpost": { "cost": 48, "craftTimeS": 30, "hp": 150 },
+    "outpost": { "cost": 48, "craftTimeS": 30, "hp": 100 },
     "factory": { "cost": 57, "craftTimeS": 45, "hp": 200 },
     "dock": { "cost": 19, "craftTimeS": 20, "hp": 80 },
     "carrier": { "cost": 10, "craftTimeS": 10, "hp": 30 },

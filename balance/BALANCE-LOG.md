@@ -13,6 +13,7 @@ Strategies in `tools/battle-strategies/`. Raw output per batch in this folder (`
 | 3 | after batch 1 | Outpost Archer damage L1 / L2 / L3 | 5 / 8 / 8 → 3 / 5 / 5 | Players with Archer won 42% (25% = random); archers dealt most damage, killed early pushes and catapults (80 HP) in ~16 s |
 | 4 | after batch 1 | Gatehouse archer damage | 5 → 3 | Same as the Outpost Archer L1 it copies |
 | 5 | after batch 2 | Outpost Archer range L1 / L2 / L3, Gatehouse | 2 / 3 / 3, 2 → 1 / 2 / 2, 1 | Archers were still the deciding factor: an outpost pushed into enemy land plus Archer destroyed enemy buildings with no catapult (Base killed 7 outposts that way); every winner had Archer, the only strategy without it (C) won 0/10 |
+| 7 | after batch 5 | Outpost HP | 150 → 100 | Designer: outposts too hard to bring down; no eliminations from war |
 | 6 | after batch 4 | Catapult damage (base / Firepower L1 / Fireball / Firestorm) | 10 / 15 / 20 / 20 → 15 / 20 / 25 / 25 | Wars stalled: armies of 5–8 catapults dealt up to 15,000 damage but brought down 0–8 outposts per match; no player was ever eliminated after minute 10 and no match was decided before 30:00 |
 
 ## Batch 1 (seeds 1–5, strategies Base / A / B / C, forest guards early for everyone)
@@ -47,6 +48,16 @@ Strategies in `tools/battle-strategies/`. Raw output per batch in this folder (`
 ## Batch 5 (seeds 21–25, after change 6)
 - Wins: B 3, Base 1, C 1. Still no dominations; all matches judged at 30:00. West regions won 5/5.
 - Since change 5 (15 matches): B 6, Base 5, C 3, **A 1** — early aggression is the weakest strategy.
+
+## Batch 6 (seeds 26–30, after change 7; A now attacks first: catapults from minute 7, push from 8)
+- Wins: B 3, Base 2, A 0, C 0. No dominations.
+- A deals the most damage of anyone (8,500–13,800) but takes no ground: catapults shoot the closest enemy item
+  (mostly carriers and woodchoppers), and A spends on its army instead of expanding (territory flat at 32 in 3/5).
+- Outpost kills up with the lower HP (up to 9 per player); eliminations still hit the weak map regions.
+- **The map is full by minute 10:** almost every player's territory stops changing after that; afterwards ground
+  only changes hands by conquest, which is rare. Playtest mode (half costs and times) compresses the build-up, which
+  also defeats the slow-start criterion. Next: test without playtest mode; designer to decide on catapult target
+  priority (outposts before the closest item).
 
 ## Proposed (needs designer approval)
 - **map01 region 3 (SE):** give it about as much riverside land and strong-river riverside as the others (e.g.
