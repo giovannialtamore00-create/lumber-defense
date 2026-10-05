@@ -1,0 +1,9 @@
+seed 38: winner O (seat 2) by domination, ended at 14.5 min
+  S      region 2 turn 0 | terr 0 bldg 0 DEFEATED | cats 17 dmg 5343 outposts-killed 17 | lost-in-10 5% | upg {"outpost":"0/1","factory":"1/0","woodchopper":"1/0","catapult":"1/2","forestGuard":"0/1"}
+         5m b22 t84 cut474 spent526 c0 u4 | 10m b35 t91 cut2559 spent1432 c10 u7
+  P      region 1 turn 2 | terr 0 bldg 0 DEFEATED | cats 5 dmg 760 outposts-killed 4 | lost-in-10 0% | upg {"outpost":"0/1","factory":"1/0","woodchopper":"1/0","catapult":"1/1","forestGuard":"0/1"}
+         5m b14 t32 cut483 spent383 c0 u5 | 10m b12 t32 cut1293 spent460 c1 u6
+  O      region 0 turn 1 | terr 233 bldg 103 | cats 6 dmg 4594 outposts-killed 5 | lost-in-10 0% | upg {"outpost":"0/1","woodchopper":"1/0","catapult":"1/1","forestGuard":"0/1"}
+         5m b16 t42 cut314 spent323 c0 u1 | 10m b58 t132 cut1333 spent1466 c5 u5
+  B      region 3 turn 3 | terr 0 bldg 0 DEFEATED | cats 0 dmg 0 outposts-killed 0 | lost-in-10 100% | upg {"outpost":"0/2","factory":"1/0","dock":"0/1","woodchopper":"1/0","forestGuard":"0/3"}
+         5m b10 t19 cut256 spent207 c0 u1 | 10m b0 t0 cut600 spent608 c0 u8

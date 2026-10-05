@@ -1,0 +1,204 @@
+{
+ "seed": 39,
+ "minutes": 30,
+ "endedAt": 14.1,
+ "domination": true,
+ "winner": 0,
+ "winnerStrategy": "S",
+ "players": [
+  {
+   "seat": 0,
+   "strategy": "S",
+   "region": 0,
+   "turnOrder": 0,
+   "territory": 191,
+   "buildings": 64,
+   "defeated": false,
+   "snapshots": [
+    {
+     "min": 5,
+     "woodCut": 371,
+     "woodSpent": 362,
+     "wood": 13,
+     "buildings": 17,
+     "territory": 42,
+     "units": 12,
+     "catapults": 0,
+     "upgrades": 2,
+     "alive": true
+    },
+    {
+     "min": 10,
+     "woodCut": 1637,
+     "woodSpent": 1466,
+     "wood": 289,
+     "buildings": 54,
+     "territory": 125,
+     "units": 30,
+     "catapults": 7,
+     "upgrades": 7,
+     "alive": true
+    }
+   ],
+   "kinds": {
+    "woodchopper": 28,
+    "factory": 13,
+    "dock": 6,
+    "outpost": 16,
+    "workshop": 1
+   },
+   "catapultsBuilt": 17,
+   "upgradeLevels": {
+    "outpost": "0/1",
+    "factory": "1/0",
+    "woodchopper": "1/0",
+    "catapult": "1/2",
+    "forestGuard": "0/1"
+   },
+   "damageDealt": 10179,
+   "outpostsDestroyed": 15,
+   "maxTerritoryLostIn10": 0
+  },
+  {
+   "seat": 1,
+   "strategy": "P",
+   "region": 1,
+   "turnOrder": 2,
+   "territory": 0,
+   "buildings": 0,
+   "defeated": true,
+   "snapshots": [
+    {
+     "min": 5,
+     "woodCut": 483,
+     "woodSpent": 383,
+     "wood": 14,
+     "buildings": 14,
+     "territory": 32,
+     "units": 12,
+     "catapults": 0,
+     "upgrades": 5,
+     "alive": true
+    },
+    {
+     "min": 10,
+     "woodCut": 1355,
+     "woodSpent": 421,
+     "wood": 440,
+     "buildings": 8,
+     "territory": 27,
+     "units": 7,
+     "catapults": 0,
+     "upgrades": 6,
+     "alive": true
+    }
+   ],
+   "kinds": {},
+   "catapultsBuilt": 0,
+   "upgradeLevels": {
+    "outpost": "0/1",
+    "factory": "1/0",
+    "woodchopper": "1/0",
+    "catapult": "1/1",
+    "forestGuard": "0/1"
+   },
+   "damageDealt": 0,
+   "outpostsDestroyed": 0,
+   "maxTerritoryLostIn10": 16
+  },
+  {
+   "seat": 2,
+   "strategy": "O",
+   "region": 3,
+   "turnOrder": 3,
+   "territory": 0,
+   "buildings": 0,
+   "defeated": true,
+   "snapshots": [
+    {
+     "min": 5,
+     "woodCut": 276,
+     "woodSpent": 163,
+     "wood": 1,
+     "buildings": 11,
+     "territory": 42,
+     "units": 7,
+     "catapults": 0,
+     "upgrades": 0,
+     "alive": true
+    },
+    {
+     "min": 10,
+     "woodCut": 820,
+     "woodSpent": 383,
+     "wood": 11,
+     "buildings": 12,
+     "territory": 42,
+     "units": 8,
+     "catapults": 0,
+     "upgrades": 5,
+     "alive": true
+    }
+   ],
+   "kinds": {},
+   "catapultsBuilt": 1,
+   "upgradeLevels": {
+    "outpost": "0/1",
+    "woodchopper": "1/0",
+    "catapult": "1/1",
+    "forestGuard": "0/1"
+   },
+   "damageDealt": 60,
+   "outpostsDestroyed": 0,
+   "maxTerritoryLostIn10": 0
+  },
+  {
+   "seat": 3,
+   "strategy": "B",
+   "region": 2,
+   "turnOrder": 1,
+   "territory": 0,
+   "buildings": 0,
+   "defeated": true,
+   "snapshots": [
+    {
+     "min": 5,
+     "woodCut": 422,
+     "woodSpent": 542,
+     "wood": 21,
+     "buildings": 19,
+     "territory": 63,
+     "units": 13,
+     "catapults": 0,
+     "upgrades": 3,
+     "alive": true
+    },
+    {
+     "min": 10,
+     "woodCut": 2161,
+     "woodSpent": 1674,
+     "wood": 831,
+     "buildings": 43,
+     "territory": 134,
+     "units": 24,
+     "catapults": 4,
+     "upgrades": 8,
+     "alive": true
+    }
+   ],
+   "kinds": {},
+   "catapultsBuilt": 10,
+   "upgradeLevels": {
+    "outpost": "0/2",
+    "factory": "1/0",
+    "dock": "0/1",
+    "woodchopper": "1/0",
+    "forestGuard": "0/3"
+   },
+   "damageDealt": 2860,
+   "outpostsDestroyed": 5,
+   "maxTerritoryLostIn10": 0
+  }
+ ],
+ "notes": []
+}

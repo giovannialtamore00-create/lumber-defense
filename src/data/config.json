@@ -17,7 +17,7 @@
     "laterTurnS": 15
   },
   "items": {
-    "outpost": { "cost": 48, "craftTimeS": 30, "hp": 100 },
+    "outpost": { "cost": 48, "craftTimeS": 30, "hp": 125 },
     "factory": { "cost": 57, "craftTimeS": 45, "hp": 200 },
     "dock": { "cost": 19, "craftTimeS": 20, "hp": 80 },
     "carrier": { "cost": 10, "craftTimeS": 10, "hp": 30 },
@@ -25,7 +25,7 @@
     "bridge": { "cost": 29, "craftTimeS": 20, "hp": 120 },
     "dam": { "cost": 29, "craftTimeS": 20, "hp": 240 },
     "workshop": { "cost": 48, "craftTimeS": 30, "hp": 120 },
-    "catapult": { "cost": 57, "craftTimeS": 40, "hp": 80 },
+    "catapult": { "cost": 85, "craftTimeS": 70, "hp": 80 },
     "forestGuard": { "cost": 24, "craftTimeS": 20, "hp": 40 },
     "stoneCutter": { "cost": 48, "craftTimeS": 30, "hp": 40 },
     "excavator": { "cost": 38, "craftTimeS": 30, "hp": 100 }

@@ -2,7 +2,7 @@
 // players used).
 //   npx tsx tools/battle-batch.ts <strategies.json> --seeds 1,2,3,4,5 [--seats Base,A,B,C] [--minutes 30] [--playtest] [--out batch.json]
 import { readFileSync, writeFileSync } from 'node:fs';
-import { type MatchResult, type Strategy, printMatch, runMatch } from './battle-sim';
+import { DEFAULTS, type MatchResult, type Strategy, printMatch, runMatch } from './battle-sim';
 
 const args = process.argv.slice(2);
 const flag = (name: string, fallback: string) => {
@@ -24,11 +24,7 @@ for (const seed of seeds) {
 }
 
 function withDefaults(s: Partial<Strategy>): Strategy {
-  return {
-    name: 'x', millsEarly: 2, docksPerMill: 1, choppersPerOutpost: 3, carriersPerChopper: 1, guardsPerOutpost: 0,
-    expandBelowForest: 400, expandEveryBuildings: 8, maxOutposts: 12, workshopAt: 8, upgrades: [],
-    aggressionFromMin: 999, catapultsFromMin: 15, catapultsPerConflict: 2, catapultsIdle: 0, ...s,
-  } as Strategy;
+  return { ...DEFAULTS, ...s } as Strategy;
 }
 
 // Summary.

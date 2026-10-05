@@ -1,0 +1,9 @@
+seed 36: winner O (seat 2) by domination, ended at 25.6 min
+  S      region 1 turn 3 | terr 0 bldg 0 DEFEATED | cats 1 dmg 1869 outposts-killed 2 | lost-in-10 25% | upg {"outpost":"0/1","factory":"1/0","woodchopper":"1/0","catapult":"1/2","forestGuard":"0/1"}
+         5m b14 t32 cut502 spent386 c0 u5 | 10m b12 t27 cut1543 spent543 c1 u7 | 15m b0 t0 cut1557 spent543 c0 u7 | 20m b0 t0 cut1557 spent543 c0 u7 | 25m b0 t0 cut1557 spent543 c0 u7
+  P      region 3 turn 1 | terr 0 bldg 0 DEFEATED | cats 0 dmg 0 outposts-killed 0 | lost-in-10 100% | upg {"woodchopper":"1/0","forestGuard":"0/1"}
+         5m b11 t42 cut265 spent165 c0 u0 | 10m b0 t0 cut561 spent313 c0 u2 | 15m b0 t0 cut561 spent313 c0 u2 | 20m b0 t0 cut561 spent313 c0 u2 | 25m b0 t0 cut561 spent313 c0 u2
+  O      region 2 turn 0 | terr 269 bldg 142 | cats 52 dmg 7687 outposts-killed 18 | lost-in-10 0% | upg {"outpost":"0/1","woodchopper":"1/0","catapult":"1/1","forestGuard":"0/1"}
+         5m b23 t63 cut373 spent550 c0 u3 | 10m b52 t99 cut1866 spent2049 c13 u5 | 15m b95 t212 cut4406 spent3492 c16 u5 | 20m b102 t264 cut6176 spent4667 c18 u5 | 25m b131 t253 cut7351 spent6158 c18 u5
+  B      region 0 turn 2 | terr 0 bldg 0 DEFEATED | cats 13 dmg 13383 outposts-killed 29 | lost-in-10 0% | upg {"outpost":"0/3","factory":"1/0","dock":"0/1","woodchopper":"1/0","forestGuard":"0/3"}
+         5m b16 t42 cut298 spent319 c0 u1 | 10m b53 t127 cut1423 spent1487 c0 u9 | 15m b47 t69 cut3135 spent2176 c0 u9 | 20m b31 t40 cut4174 spent2744 c0 u9 | 25m b12 t33 cut5221 spent3242 c2 u9

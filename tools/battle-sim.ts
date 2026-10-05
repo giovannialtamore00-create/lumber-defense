@@ -36,9 +36,15 @@ export interface Strategy {
   catapultsFromMin: number; // from this minute, build catapults
   catapultsPerConflict: number; // catapults wanted (in total) while we have a conflict zone
   catapultsIdle: number; // catapults wanted even without a conflict zone (aggressors prepare)
+  /** From this minute, focus everything on the weakest living enemy's nearest outpost (999 = never). */
+  focusFromMin: number;
+  /** Only attack an enemy whose wood income is at most 1/leadRatio of ours (game theory: fight when ahead). */
+  leadRatio: number;
+  /** Attack in Conquest (outposts only, capture the rest) instead of Destruction. */
+  conquest: boolean;
 }
 
-const DEFAULTS: Strategy = {
+export const DEFAULTS: Strategy = {
   name: 'default',
   millsEarly: 2,
   docksPerMill: 1,
@@ -54,6 +60,9 @@ const DEFAULTS: Strategy = {
   catapultsFromMin: 15,
   catapultsPerConflict: 2,
   catapultsIdle: 0,
+  focusFromMin: 999,
+  leadRatio: 1.2,
+  conquest: true,
 };
 
 const args = process.argv.slice(2);
@@ -114,6 +123,16 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
   const peakIn10 = [0, 0, 0, 0];
   const lostIn10 = [0, 0, 0, 0];
 
+  /** Wood collected per player at each minute mark, for income estimates. */
+  const collectedAt: number[][] = [[], [], [], []];
+  /** Wood income over the last 2 minutes (wood that reached factory-mills, plus nothing else). */
+  const income = (pl: number) => {
+    const h = collectedAt[pl]!;
+    const now = state.players[pl]!.stats.woodCollected;
+    const then = h.length >= 2 ? h[h.length - 2]! : 0;
+    return Math.max(0, now - then) / 1000;
+  };
+
   function bot(me: number, st: Strategy) {
     const queue: Command[] = [];
     const send = (c: Command) => queue.push(c);
@@ -129,6 +148,35 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
     const enemyOutposts = () => state.entities.filter((e): e is Structure => e.type === 'structure' && e.kind === 'outpost' && e.owner >= 0 && e.owner !== me);
     const conflictHexes = () => hexes.map((_, i) => i).filter((i) => isConflictFor(state, i, me));
     const aggressive = () => minute() >= st.aggressionFromMin;
+    /**
+     * Focus fire: the weakest living enemy (fewest outposts, then least territory) and its outpost nearest to us. To
+     * hit it, it must sit in a conflict zone inside our territory: an outpost of ours within 3 hexes covers it.
+     */
+    /**
+     * Who to attack, if anyone: from focusFromMin, the enemy we out-produce the most (income over the last 2 minutes,
+     * at least leadRatio times theirs), weighted toward the nearest and the smallest. Returns that enemy's outpost
+     * nearest to us. Fighting an equal is a coin flip that lets the others grow, so we only fight when ahead.
+     */
+    function focusTarget(): Structure | null {
+      if (minute() < st.focusFromMin) return null;
+      const mineOut = mine('outpost');
+      if (!mineOut.length) return null;
+      const myIncome = income(me);
+      let best: { score: number; outpost: Structure } | null = null;
+      for (const pl of state.players) {
+        if (pl.id === me || !pl.started || pl.defeated) continue;
+        const theirs = enemyOutposts().filter((o) => o.owner === pl.id);
+        if (!theirs.length) continue;
+        const theirIncome = income(pl.id);
+        if (myIncome < st.leadRatio * theirIncome) continue; // not ahead of them: don't start a fight
+        const d = (o: Structure) => Math.min(...mineOut.map((m) => distance(m, o)));
+        const nearest = theirs.reduce((x, y) => (d(y) < d(x) ? y : x));
+        const score = (myIncome + 1) / (theirIncome + 1) - d(nearest) * 0.15 - territoryOf(pl.id) / 100;
+        if (!best || score > best.score) best = { score, outpost: nearest };
+      }
+      return best?.outpost ?? null;
+    }
+    const targetCovered = (t: Structure) => covered(idxOf(t)!);
 
     const expansionScore = (h: { q: number; r: number }, radius: number) =>
       hexesInRadius(h, radius).reduce((s, n) => {
@@ -159,6 +207,11 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
       switch (item) {
         case 'outpost':
           if (!p().started) return byScore((h) => expansionScore(h, ctx.config.outpost.firstTerritoryRadius));
+          {
+            // Focus: as close as possible to the target outpost, so our territory covers it.
+            const t = focusTarget();
+            if (t && !targetCovered(t)) return byScore((h) => -distance(h, t));
+          }
           return aggressive() ? byScore(pushScore) : byScore((h) => expansionScore(h, ctx.config.outpost.territoryRadius));
         case 'factory':
           return byScore((h) => {
@@ -183,6 +236,16 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
             }).length,
           );
         case 'catapult': {
+          // Focus: 4 hexes from the target outpost (in range, out of archer reach), so it's their closest target.
+          const ft = focusTarget();
+          if (ft) {
+            const others = enemyOutposts().filter((o) => o !== ft);
+            return byScore((h) => {
+              const d = distance(h, ft);
+              const safe = others.every((o) => distance(o, h) >= 3);
+              return (d === 4 ? 60 : d === 3 ? 50 : 0) - Math.abs(d - 4) + (safe ? 20 : 0);
+            });
+          }
           // Near the conflict zone (or the nearest enemy outpost) but out of reach of enemy archers: at least 4 hexes
           // from any enemy outpost (batch 1 found catapults placed in archer range die and get rebuilt in a loop).
           const zone = conflictHexes().map((i) => hexes[i]!);
@@ -215,7 +278,12 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
       else if (!p().started) {
         const h = spot('outpost');
         if (h) send({ type: 'placeOutpost', player: me, q: h.q, r: h.r });
-      } else plan();
+      } else {
+        const invaded = state.entities.some((e) => e.type === 'catapult' && e.owner !== me && e.owner >= 0 && covered(idxOf(e)!));
+        const want = invaded || !st.conquest || !focusTarget() ? 'destruction' : 'conquest';
+        if (p().stance !== want) send({ type: 'setStance', player: me, stance: want });
+        plan();
+      }
       return queue.splice(0);
     }
 
@@ -237,6 +305,11 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
       }
       const useless = mine('dock').find((d) => !millNear(d) && d.dismantleTicks === undefined);
       if (useless) return send({ type: 'dismantle', player: me, id: useless.id });
+      // Defence: once any enemy catapult exists, get Archer L1 first (archers only shoot catapults).
+      const threat = state.entities.some((e) => e.type === 'catapult' && e.owner !== me && e.owner >= 0);
+      const archer = typeIndex(ctx, 'outpost');
+      if (threat && mine('workshop').length && p().upgrades[archer]!.levels[1] === 0 && !p().research.some((r) => r.type === archer) && !upgradeError(state, ctx, me, archer, 1))
+        return send({ type: 'buyUpgrade', player: me, upgradeType: archer, path: 1 });
       const next = st.upgrades[upgradeStep];
       if (next && mine('workshop').length) {
         const t = typeIndex(ctx, next[0]);
@@ -251,8 +324,20 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
       const n = (k: StructureKind) => mine(k).length;
       const wants: ItemKind[] = [];
       const conflict = conflictHexes().length > 0;
-      // Military first when it's time.
-      if (minute() >= st.catapultsFromMin) {
+      // Defence: enemy catapults in or near our land -> a defensive army right away, whatever the plan (round 3: the
+      // Patient bot waited for its planned minute and was overrun every match).
+      const near = state.entities.some((e) => e.type === 'catapult' && e.owner !== me && e.owner >= 0 && mine('outpost').some((o) => distance(o, e) <= 6));
+      if (near && count('catapult') < 3) wants.push('catapult');
+      // Focus fire: first make the target outpost hittable (cover it with an outpost), then mass catapults on it.
+      const ft = focusTarget();
+      if (ft) {
+        // Army first (sim 1: pushing outposts with no army behind them built 31 outposts and lost every one), then
+        // creep one outpost closer whenever the army is ready.
+        const army = 3 + Math.floor(p().wood / 50_000);
+        if (count('catapult') < 3) wants.push('catapult');
+        else if (!targetCovered(ft)) wants.push('outpost');
+        if (count('catapult') < army) wants.push('catapult');
+      } else if (minute() >= st.catapultsFromMin) {
         // A fixed army per strategy, plus one more per 100 banked wood (batch 3: bots banked ~2,700 wood with nothing
         // to spend it on, so no match was ever won before the cap).
         const surplus = Math.floor(p().wood / 100_000);
@@ -297,6 +382,7 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
     step(state, ctx, cmds);
     const min = state.tick / 600;
     if (state.tick % 600 === 0) {
+      for (let pl = 0; pl < 4; pl++) collectedAt[pl]!.push(state.players[pl]!.stats.woodCollected);
       for (let pl = 0; pl < 4; pl++) {
         const t = territoryOf(pl);
         if (min <= 10) {
