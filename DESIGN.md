@@ -292,7 +292,7 @@ Craft times are base times, before the factory-mill reduction (§6.7).
 | Stone cutter | 48 | 30 s | 40 | Moving unit on a rock; breaks it for 1 stone (§8.4d) |
 | Excavator | 38 | 30 s | 100 | Digs an empty land hex in 3 min, then is used up (§8.4c) |
 | Workshop | 48 | 30 s | 120 | Where upgrades (the dev tree) are bought |
-| Catapult | 85 | 55 s | 80 | Range 4 hexes, 15 dmg/hit (balance pass: was 57 wood, 40 s, 10 dmg), 0.5 hits/s, speed 0.5 hex/s |
+| Catapult | 128 | 83 s | 80 | Range 4 hexes, 15 dmg/hit (balance pass: was 57 wood, 40 s, 10 dmg; then +50% cost and time, designer), 0.5 hits/s, speed 0.5 hex/s |
 
 Fixed values: starting wood **50**, forest **150 wood per hex**.
 

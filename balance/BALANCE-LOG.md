@@ -125,7 +125,10 @@ no catapult upgrades 3 — catapult upgrades help, but don't decide matches.
 **Start region decides everything:** wins region 0 (NW) 14, region 1 (NE) 10; regions 2 and 3 were eliminated in
 24/24 matches each. The map is now the dominant factor (designer will rework the map).
 
-**Current numbers:** outpost 48 wood / 40 s / 150 HP; catapult 85 wood / 55 s / 80 HP / 15 dmg; archers shoot
+**Designer change after round 3:** catapult cost and craft time **+50%**: 85 wood / 55 s → **128 wood / 83 s** (catapults are
+unique in what they do, so they can be expensive). Not yet simulated.
+
+**Current numbers:** outpost 48 wood / 40 s / 150 HP; catapult 128 wood / 83 s / 80 HP / 15 dmg; archers shoot
 catapults only, range 3 / 4 / 4, damage 3 / 5 / 5; Firepower 20 / 25 / 25; upgrades 52 / 104 / 208 wood, 34 / 68 /
 102 s.
 

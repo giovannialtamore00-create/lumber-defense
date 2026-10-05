@@ -25,7 +25,7 @@
     "bridge": { "cost": 29, "craftTimeS": 20, "hp": 120 },
     "dam": { "cost": 29, "craftTimeS": 20, "hp": 240 },
     "workshop": { "cost": 48, "craftTimeS": 30, "hp": 120 },
-    "catapult": { "cost": 85, "craftTimeS": 55, "hp": 80 },
+    "catapult": { "cost": 128, "craftTimeS": 83, "hp": 80 },
     "forestGuard": { "cost": 24, "craftTimeS": 20, "hp": 40 },
     "stoneCutter": { "cost": 48, "craftTimeS": 30, "hp": 40 },
     "excavator": { "cost": 38, "craftTimeS": 30, "hp": 100 }
