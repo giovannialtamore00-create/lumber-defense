@@ -1,0 +1,293 @@
+[
+ {
+  "name": "S",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 4,
+  "guardsPerOutpost": 1,
+  "workshopAt": 6,
+  "catapultsFromMin": 9,
+  "catapultsPerConflict": 4,
+  "focusFromMin": 11,
+  "leadRatio": 1.2,
+  "upgrades": [
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ],
+   [
+    "factory",
+    0
+   ],
+   [
+    "catapult",
+    1
+   ],
+   [
+    "catapult",
+    0
+   ],
+   [
+    "catapult",
+    1
+   ]
+  ]
+ },
+ {
+  "name": "P",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 4,
+  "guardsPerOutpost": 2,
+  "workshopAt": 6,
+  "catapultsFromMin": 12,
+  "catapultsPerConflict": 4,
+  "focusFromMin": 13,
+  "leadRatio": 1.5,
+  "upgrades": [
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ],
+   [
+    "factory",
+    0
+   ],
+   [
+    "outpost",
+    1
+   ],
+   [
+    "catapult",
+    1
+   ],
+   [
+    "catapult",
+    0
+   ]
+  ]
+ },
+ {
+  "name": "O",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 3,
+  "guardsPerOutpost": 1,
+  "workshopAt": 6,
+  "catapultsFromMin": 9,
+  "catapultsPerConflict": 4,
+  "focusFromMin": 10,
+  "leadRatio": 1,
+  "upgrades": [
+   [
+    "catapult",
+    1
+   ],
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "catapult",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ]
+  ]
+ },
+ {
+  "name": "B",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 4,
+  "guardsPerOutpost": 2,
+  "workshopAt": 8,
+  "aggressionFromMin": 23,
+  "catapultsFromMin": 20,
+  "catapultsPerConflict": 4,
+  "upgrades": [
+   [
+    "forestGuard",
+    1
+   ],
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "factory",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ],
+   [
+    "dock",
+    1
+   ],
+   [
+    "outpost",
+    1
+   ],
+   [
+    "outpost",
+    1
+   ],
+   [
+    "forestGuard",
+    1
+   ]
+  ]
+ },
+ {
+  "name": "S2",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 4,
+  "guardsPerOutpost": 1,
+  "workshopAt": 6,
+  "catapultsFromMin": 9,
+  "catapultsPerConflict": 4,
+  "focusFromMin": 10,
+  "leadRatio": 1,
+  "upgrades": [
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ],
+   [
+    "factory",
+    0
+   ],
+   [
+    "catapult",
+    1
+   ],
+   [
+    "catapult",
+    0
+   ],
+   [
+    "catapult",
+    1
+   ]
+  ]
+ },
+ {
+  "name": "P2",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 4,
+  "guardsPerOutpost": 1,
+  "workshopAt": 6,
+  "catapultsFromMin": 12,
+  "catapultsPerConflict": 4,
+  "focusFromMin": 12,
+  "leadRatio": 1.3,
+  "upgrades": [
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ],
+   [
+    "factory",
+    0
+   ],
+   [
+    "outpost",
+    1
+   ],
+   [
+    "catapult",
+    1
+   ],
+   [
+    "catapult",
+    0
+   ]
+  ]
+ },
+ {
+  "name": "O2",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 4,
+  "guardsPerOutpost": 1,
+  "workshopAt": 6,
+  "catapultsFromMin": 9,
+  "catapultsPerConflict": 4,
+  "focusFromMin": 12,
+  "leadRatio": 1,
+  "upgrades": [
+   [
+    "catapult",
+    1
+   ],
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "catapult",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ]
+  ]
+ },
+ {
+  "name": "X",
+  "millsEarly": 2,
+  "docksPerMill": 2,
+  "choppersPerOutpost": 4,
+  "guardsPerOutpost": 1,
+  "workshopAt": 6,
+  "catapultsFromMin": 9,
+  "catapultsPerConflict": 4,
+  "focusFromMin": 11,
+  "leadRatio": 1.2,
+  "upgrades": [
+   [
+    "outpost",
+    0
+   ],
+   [
+    "woodchopper",
+    0
+   ],
+   [
+    "catapult",
+    1
+   ],
+   [
+    "catapult",
+    0
+   ],
+   [
+    "forestGuard",
+    1
+   ]
+  ]
+ }
+]

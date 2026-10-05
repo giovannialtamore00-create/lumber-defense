@@ -1,0 +1,21 @@
+
+== Group A: S vs P vs O vs B
+  game 1 (seed 100): S by domination at 21.8 min
+  game 2 (seed 101): P by domination at 25.6 min
+  game 3 (seed 102): P at the 30:00 cap
+  points: P 8, S 4, B 1, O 0
+
+== Group B: S2 vs P2 vs O2 vs X
+  game 1 (seed 103): O2 by domination at 23.5 min
+  game 2 (seed 104): X by domination at 20.3 min
+  game 3 (seed 105): P2 by domination at 29.5 min
+  points: P2 4, O2 4, X 4, S2 0
+
+== Final: P vs S vs P2 vs O2
+  game 1 (seed 106): S by domination at 17 min
+  game 2 (seed 107): S at the 30:00 cap
+  game 3 (seed 108): O2 by domination at 28.1 min
+  points: S 8, O2 4, P 1, P2 0
+
+Champion: S
+Matches: 9, finished by domination: 7 (78%), lengths: 21.8, 25.6, 30, 23.5, 20.3, 29.5, 17, 30, 28.1

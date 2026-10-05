@@ -281,7 +281,7 @@ Craft times are base times, before the factory-mill reduction (§6.7).
 
 | Item | Cost | Craft time | HP | Other stats |
 |---|---|---|---|---|
-| Outpost | 48 | 30 s | 100 | Territory radius 3 (HP was 150, balance pass) |
+| Outpost | 48 | 30 s | 150 | Territory radius 3 (balance pass: HP 150 → 100 → 150) |
 | Factory-mill | 57 | 45 s | 200 | Riverside; reduces craft time (§6.7); one queue slot (§7.2) |
 | Dock | 19 | 20 s | 80 | Capacity 20, dispenses 1 wood/s to an adjacent factory |
 | Carrier | 10 | 10 s | 30 | Capacity 5, speed 0.5 hex/s, max A-to-B distance 5 hexes |
@@ -292,7 +292,7 @@ Craft times are base times, before the factory-mill reduction (§6.7).
 | Stone cutter | 48 | 30 s | 40 | Moving unit on a rock; breaks it for 1 stone (§8.4d) |
 | Excavator | 38 | 30 s | 100 | Digs an empty land hex in 3 min, then is used up (§8.4c) |
 | Workshop | 48 | 30 s | 120 | Where upgrades (the dev tree) are bought |
-| Catapult | 57 | 40 s | 80 | Range 4 hexes, 15 dmg/hit (was 10, balance pass), 0.5 hits/s, speed 0.5 hex/s |
+| Catapult | 85 | 70 s | 80 | Range 4 hexes, 15 dmg/hit (balance pass: was 57 wood, 40 s, 10 dmg), 0.5 hits/s, speed 0.5 hex/s |
 
 Fixed values: starting wood **50**, forest **150 wood per hex**.
 
@@ -502,7 +502,7 @@ Balance pass 1 (decided by the designer): upgrade costs **+30%** (40 / 80 / 160 
 | Structure | Path | L1 | L2 | L3 |
 |---|---|---|---|---|
 | **Outpost** | Reach | radius +1 (every outpost, the first one too) | +2 | +3 |
-| | Archer | archer: range 1, 3 dmg, 1 hit/s (was range 2, 5 dmg; balance pass) | range 2, 5 dmg (was 3, 8) | Fire arrows: range 2, 5 dmg, sets targets on fire |
+| | Archer | archer (shoots catapults only): range 3, 3 dmg, 1 hit/s | range 4, 5 dmg | Fire arrows: range 4, 5 dmg, sets catapults on fire |
 | **Factory-mill** | Efficiency | crafting cost −10% | −20% | −30% |
 | | Improved Frames 🔒 | all your structures +15% HP | +30% | +50% |
 | **Dock** | Capacity | 20 → 40 | → 70 | → 100 |

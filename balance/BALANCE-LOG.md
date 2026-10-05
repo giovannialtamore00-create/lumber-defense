@@ -13,7 +13,7 @@ Strategies in `tools/battle-strategies/`. Raw output per batch in this folder (`
 | 3 | after batch 1 | Outpost Archer damage L1 / L2 / L3 | 5 / 8 / 8 → 3 / 5 / 5 | Players with Archer won 42% (25% = random); archers dealt most damage, killed early pushes and catapults (80 HP) in ~16 s |
 | 4 | after batch 1 | Gatehouse archer damage | 5 → 3 | Same as the Outpost Archer L1 it copies |
 | 5 | after batch 2 | Outpost Archer range L1 / L2 / L3, Gatehouse | 2 / 3 / 3, 2 → 1 / 2 / 2, 1 | Archers were still the deciding factor: an outpost pushed into enemy land plus Archer destroyed enemy buildings with no catapult (Base killed 7 outposts that way); every winner had Archer, the only strategy without it (C) won 0/10 |
-| 7 | after batch 5 | Outpost HP | 150 → 100 | Designer: outposts too hard to bring down; no eliminations from war |
+| 7 | after batch 5 | Outpost HP | 150 → 100 (later 125, 175, now **150**: see round 3) | Designer: outposts too hard to bring down; no eliminations from war |
 | 6 | after batch 4 | Catapult damage (base / Firepower L1 / Fireball / Firestorm) | 10 / 15 / 20 / 20 → 15 / 20 / 25 / 25 | Wars stalled: armies of 5–8 catapults dealt up to 15,000 damage but brought down 0–8 outposts per match; no player was ever eliminated after minute 10 and no match was decided before 30:00 |
 
 ## Batch 1 (seeds 1–5, strategies Base / A / B / C, forest guards early for everyone)
@@ -58,6 +58,50 @@ Strategies in `tools/battle-strategies/`. Raw output per batch in this folder (`
   only changes hands by conquest, which is rare. Playtest mode (half costs and times) compresses the build-up, which
   also defeats the slow-start criterion. Next: test without playtest mode; designer to decide on catapult target
   priority (outposts before the closest item).
+
+## Round 3: smart bots, defensive archers, Conquest (designer decisions)
+Designer changes: archers shoot only catapults (defensive); per-player stance Conquest (catapults shoot only outposts,
+so the rest is captured) / Destruction (closest target). Goal: matches 15–30 min, at most 10% unfinished at 30:00,
+economy-first snowball strategies, attack only when it pays.
+
+Bots (tools/battle-sim.ts): attack the enemy they out-produce (income over 2 minutes ≥ leadRatio × theirs), or
+out-number (army ≥ 1.5× + 2), or the last enemy from minute 15; Conquest while attacking, Destruction when invaded;
+defensive army of 3 when enemy catapults are near; Archer L1 under threat; army first, then creep outposts toward
+the target one at a time; buy **Reach** when outposts are just out of range; dismantle own buildings to make room.
+Strategies (tools/battle-strategies/round3.json): S Snowball (attack from 11, lead 1.2), P Patient (13, lead 1.5,
+2 guards/outpost), O Opportunist (10, lead 1.0), B isolationist (no focus). No bot attacks before minute 10.
+
+| Step | Change / bot fix | Result (finished by domination) |
+|---|---|---|
+| r3 m1 | (start) | O won on territory; S and B wiped out before minute 10 by O's minute-7 rush |
+| 8 | Archer range 1/2/2 → 3/4/4, Gatehouse 1 → 3 (archers can't hit buildings any more) | P won on territory, snowballed late (17 outposts) |
+| 9 | Catapult cost 57 → 85 | first domination (O, 15.1 min) but two players dead before minute 10 |
+| 10 | Catapult craft time 40 → 70 s | rush slowed; early deaths remain in the weak map regions |
+| bot | defend when catapults near; no attacks before minute 10 | 4/4 dominations, 14.5–23.9 min |
+| 11 | Outpost HP 100 → 125 | 10 seeds: 2/10 — two survivors sit on 50–70 idle catapults |
+| bot | attack on army lead / in the final duel | 3/10 |
+| bot | make room at the front; creep; **buy Reach** | 8/10, but most at 13–14 min |
+| 12 | Outpost HP 125 → 175 | 10/10 in playtest mode, 12.9–20.4 min |
+| — | **switch to normal mode** (real matches; playtest compresses everything) | 7/10, 21.8–26 min, nobody lost >30% in 10 min |
+| 13 | Outpost HP 175 → 150 | 9/10 (21.4–27.2); on 10 fresh seeds 8/10 (14.7–27.4) |
+| 14 | Outpost HP 150 → 140 (reverted) | 17/20, wins less even |
+| 15 | Catapult cost 85 → 70 (reverted) | 13/20, S won 13 — cheap catapults feed the strongest snowballer |
+
+**Current state (outpost HP 150, catapult 85 wood / 70 s), normal mode, 20 seeds:** 17/20 finished by domination
+(85%; target 90%), lengths 14.7–27.4 min (2 just under 15), nobody loses >30% of territory in the first 10
+minutes. Wins: S 9, P 6, O 5, B 0 — economy-first snowball strategies win, the passive one never does.
+Usage vs winning (20 seeds): catapult upgrades 48%, catapults 42%, Archer 34%, woodchopper upgrades 33%, forest
+guard upgrades 31% (25% = random).
+
+**Tournament** (groups of 4, best of 3, top 2 to the final): champion **S**; group B a three-way tie (P2, O2, X);
+7/9 finished, 17–29.5 min. See tournament1.txt.
+
+**Unfinished matches:** near-finishes (loser down to ~20 hexes at 30:00) and poor stalemates (two equal survivors
+with 1–2 catapults and no wood after a long war).
+
+**Early rush finding (needs a design decision):** a catapult rush before minute 10 (O at minute 7) beat every
+economy-first opponent and decided matches by minute 15. In the simulations bots don't attack before minute 10.
+Options: (a) the first outpost has a basic archer; (b) catapults need a workshop; (c) a protection period.
 
 ## Proposed (needs designer approval)
 - **map01 region 3 (SE):** give it about as much riverside land and strong-river riverside as the others (e.g.
