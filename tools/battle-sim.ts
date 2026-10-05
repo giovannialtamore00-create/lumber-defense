@@ -15,7 +15,7 @@ import { craftError } from '../src/sim/systems/crafting';
 import { canPlaceAnywhere, dropOffs, pickupError, placementError } from '../src/sim/systems/placement';
 import { isCoveredBy } from '../src/sim/systems/territory';
 import { step } from '../src/sim/tick';
-import type { Command, Config, GameState, ItemKind, Structure, StructureKind } from '../src/sim/types';
+import type { Catapult, Command, Config, GameState, ItemKind, Structure, StructureKind } from '../src/sim/types';
 import { typeIndex, upgradeError } from '../src/sim/upgrades';
 
 export interface Strategy {
@@ -168,7 +168,12 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
         const theirs = enemyOutposts().filter((o) => o.owner === pl.id);
         if (!theirs.length) continue;
         const theirIncome = income(pl.id);
-        if (myIncome < st.leadRatio * theirIncome) continue; // not ahead of them: don't start a fight
+        // Fight only when ahead: in income, or in army (1.5x theirs + 2), or in the final duel from minute 15 (no third
+        // player left to profit from the fight; round 3: two equal survivors sat on 50-70 idle catapults until 30:00).
+        const army = (pl2: number) => state.entities.filter((e) => e.type === 'catapult' && e.owner === pl2).length;
+        const duel = state.players.filter((x) => x.id !== me && x.started && !x.defeated).length === 1 && minute() >= 15;
+        const ahead = myIncome >= st.leadRatio * theirIncome || army(me) >= 1.5 * army(pl.id) + 2 || duel;
+        if (!ahead) continue;
         const d = (o: Structure) => Math.min(...mineOut.map((m) => distance(m, o)));
         const nearest = theirs.reduce((x, y) => (d(y) < d(x) ? y : x));
         const score = (myIncome + 1) / (theirIncome + 1) - d(nearest) * 0.15 - territoryOf(pl.id) / 100;
@@ -279,6 +284,11 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
         const h = spot('outpost');
         if (h) send({ type: 'placeOutpost', player: me, q: h.q, r: h.r });
       } else {
+        if (process.env.BATTLE_DEBUG && state.tick % 3000 === 0) {
+          const t = focusTarget();
+          const cats = state.entities.filter((e): e is Catapult => e.type === 'catapult' && e.owner === me);
+          notes.push(`m${Math.round(minute())} ${st.name}: target ${t ? `outpost of p${t.owner} at ${t.q},${t.r} covered=${targetCovered(t)}` : 'none'} cats ${cats.length}${t && cats.length ? ` nearest-cat-dist ${Math.min(...cats.map((c) => distance(c, t)))}` : ''} outposts ${mine('outpost').length} spot-dist ${t ? (() => { const h = spot('outpost'); return h ? distance(h, t) : 'no spot'; })() : '-'} queue ${p().queue.map((j) => j.item).join('+') || '-'} hand ${p().hand.join('+') || '-'} wood ${Math.floor(p().wood / 1000)} craftErr ${craftError(state, ctx, me, 'outpost')}`);
+        }
         const invaded = state.entities.some((e) => e.type === 'catapult' && e.owner !== me && e.owner >= 0 && covered(idxOf(e)!));
         const want = invaded || !st.conquest || !focusTarget() ? 'destruction' : 'conquest';
         if (p().stance !== want) send({ type: 'setStance', player: me, stance: want });
@@ -335,7 +345,26 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
         // creep one outpost closer whenever the army is ready.
         const army = 3 + Math.floor(p().wood / 50_000);
         if (count('catapult') < 3) wants.push('catapult');
-        else if (!targetCovered(ft)) wants.push('outpost');
+        else if (!targetCovered(ft)) {
+          // Only an outpost within 3 hexes of the target covers it. No free hex there (round 3: territories fill up with
+          // forest and buildings): make room by dismantling one of our own buildings near the target, like a player would.
+          const h = spot('outpost');
+          const closest = Math.min(...mine('outpost').map((o) => distance(o, ft)));
+          const queued = p().queue.some((j) => j.item === 'outpost') || p().hand.includes('outpost');
+          // Creep: any free hex that brings an outpost closer to the target than we already are (one at a time).
+          if (h && (distance(h, ft) <= ctx.config.outpost.territoryRadius || distance(h, ft) < closest)) {
+            if (!queued) wants.push('outpost');
+          }
+          else if (mine('workshop').length && !p().research.length && closest <= ctx.config.outpost.territoryRadius + 3 && !upgradeError(state, ctx, me, typeIndex(ctx, 'outpost'), 0)) {
+            // Our outposts are just out of reach: Reach (+1 radius for every outpost) covers the target.
+            return send({ type: 'buyUpgrade', player: me, upgradeType: typeIndex(ctx, 'outpost'), path: 0 });
+          } else if (!state.entities.some((e) => e.type === 'structure' && e.owner === me && e.dismantleTicks !== undefined)) {
+            const room = mine('woodchopper').concat(mine('dock'), mine('workshop'), mine('factory'), mine('excavator'))
+              .filter((b) => distance(b, ft) <= ctx.config.outpost.territoryRadius && state.forestPool[idxOf(b)!] === 0 && b.kind !== 'woodchopper')
+              .sort((x, y) => distance(x, ft) - distance(y, ft))[0];
+            if (room) return send({ type: 'dismantle', player: me, id: room.id });
+          }
+        }
         if (count('catapult') < army) wants.push('catapult');
       } else if (minute() >= st.catapultsFromMin) {
         // A fixed army per strategy, plus one more per 100 banked wood (batch 3: bots banked ~2,700 wood with nothing
