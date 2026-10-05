@@ -292,7 +292,7 @@ Craft times are base times, before the factory-mill reduction (§6.7).
 | Stone cutter | 48 | 30 s | 40 | Moving unit on a rock; breaks it for 1 stone (§8.4d) |
 | Excavator | 38 | 30 s | 100 | Digs an empty land hex in 3 min, then is used up (§8.4c) |
 | Workshop | 48 | 30 s | 120 | Where upgrades (the dev tree) are bought |
-| Catapult | 57 | 40 s | 80 | Range 4 hexes, 10 dmg/hit, 0.5 hits/s, speed 0.5 hex/s |
+| Catapult | 57 | 40 s | 80 | Range 4 hexes, 15 dmg/hit (was 10, balance pass), 0.5 hits/s, speed 0.5 hex/s |
 
 Fixed values: starting wood **50**, forest **150 wood per hex**.
 
@@ -496,7 +496,7 @@ Balance pass 1 (decided by the designer): upgrade costs **+30%** (40 / 80 / 160 
 | Structure | Path | L1 | L2 | L3 |
 |---|---|---|---|---|
 | **Outpost** | Reach | radius +1 (every outpost, the first one too) | +2 | +3 |
-| | Archer | archer: range 2, 3 dmg, 1 hit/s (was 5, balance pass) | range 3, 5 dmg (was 8) | Fire arrows: range 3, 5 dmg, sets targets on fire |
+| | Archer | archer: range 1, 3 dmg, 1 hit/s (was range 2, 5 dmg; balance pass) | range 2, 5 dmg (was 3, 8) | Fire arrows: range 2, 5 dmg, sets targets on fire |
 | **Factory-mill** | Efficiency | crafting cost −10% | −20% | −30% |
 | | Improved Frames 🔒 | all your structures +15% HP | +30% | +50% |
 | **Dock** | Capacity | 20 → 40 | → 70 | → 100 |
@@ -510,7 +510,7 @@ Balance pass 1 (decided by the designer): upgrade costs **+30%** (40 / 80 / 160 
 | **Workshop** | Discount | upgrades −10% cost | −20% | −30% |
 | | Fast Research | research time −20% | −35% | −50% |
 | **Catapult** | Range 🔒 | 4 → 5 | → 6 | → 7 |
-| | Firepower 🔒 | 10 → 15 dmg | Fireball: 20 + burning | Firestorm: burns forests in conflict zones |
+| | Firepower | 15 → 20 dmg | Fireball: 25 + burning | Firestorm: 25 + burns forests in conflict zones |
 | **Forest guard** | Growth | growth per visit 10 → 12.5 s | → 15 s | → 20 s |
 | | Afforest | also turns 1 empty land hex in its area into forest | 2 hexes | 🔒 also in conflict zones |
 | **Dam** | *(no paths for now)* | | | |
