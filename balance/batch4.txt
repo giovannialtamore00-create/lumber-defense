@@ -1,0 +1,59 @@
+seed 16: winner Base (seat 0), ended at 30 min
+  Base   region 0 turn 1 | terr 149 bldg 66 | cats 42 dmg 15250 outposts-killed 8 | lost-in-10 0% | upg {"outpost":"0/1","factory":"1/0","dock":"0/1","woodchopper":"1/0","catapult":"1/0","forestGuard":"0/2"}
+         5m b17 t42 cut371 spent362 c0 u2 | 10m b56 t154 cut1478 spent1353 c0 u7 | 15m b81 t170 cut4203 spent2489 c13 u7 | 20m b76 t170 cut5953 spent3155 c7 u7 | 25m b66 t149 cut6781 spent3705 c7 u7 | 30m b66 t149 cut6999 spent4223 c7 u7
+  A      region 1 turn 3 | terr 32 bldg 8 | cats 10 dmg 9495 outposts-killed 0 | lost-in-10 0% | upg {"outpost":"0/1","catapult":"2/1","forestGuard":"0/1"}
+         5m b12 t32 cut306 spent263 c2 u1 | 10m b15 t32 cut770 spent596 c6 u4 | 15m b9 t32 cut1203 spent903 c4 u5 | 20m b9 t32 cut1653 spent903 c4 u5 | 25m b8 t32 cut1954 spent903 c4 u5 | 30m b8 t32 cut2113 spent903 c4 u5
+  B      region 3 turn 0 | terr 37 bldg 5 | cats 0 dmg 0 outposts-killed 0 | lost-in-10 0% | upg {}
+         5m b6 t19 cut234 spent103 c0 u0 | 10m b6 t19 cut459 spent166 c0 u0 | 15m b6 t37 cut711 spent228 c0 u0 | 20m b6 t37 cut1010 spent240 c0 u0 | 25m b6 t37 cut1218 spent240 c0 u0 | 30m b5 t37 cut1294 spent240 c0 u0
+  C      region 2 turn 2 | terr 118 bldg 31 | cats 15 dmg 4620 outposts-killed 1 | lost-in-10 0% | upg {"factory":"1/0","carrier":"0/1","woodchopper":"3/0","forestGuard":"0/1"}
+         5m b11 t42 cut286 spent383 c0 u3 | 10m b39 t109 cut1238 spent1095 c0 u6 | 15m b18 t62 cut2440 spent1615 c0 u6 | 20m b25 t75 cut3131 spent2474 c15 u6 | 25m b31 t118 cut3593 spent2972 c15 u6 | 30m b31 t118 cut3797 spent3445 c15 u6
+seed 17: winner B (seat 2), ended at 30 min
+  Base   region 1 turn 3 | terr 27 bldg 6 | cats 16 dmg 2420 outposts-killed 5 | lost-in-10 0% | upg {"outpost":"0/1","factory":"1/0","dock":"0/1","woodchopper":"1/0","catapult":"1/0","forestGuard":"0/2"}
+         5m b14 t32 cut502 spent386 c0 u6 | 10m b13 t32 cut1363 spent424 c0 u7 | 15m b13 t32 cut2152 spent691 c8 u7 | 20m b13 t32 cut2791 spent911 c15 u7 | 25m b8 t27 cut3265 spent925 c16 u7 | 30m b6 t27 cut3613 spent925 c15 u7
+  A      region 2 turn 1 | terr 67 bldg 29 | cats 12 dmg 10330 outposts-killed 1 | lost-in-10 0% | upg {"outpost":"0/1","catapult":"2/1","forestGuard":"0/1"}
+         5m b10 t19 cut202 spent271 c0 u4 | 10m b8 t19 cut427 spent551 c6 u5 | 15m b14 t42 cut800 spent694 c8 u5 | 20m b14 t42 cut1237 spent911 c10 u5 | 25m b32 t67 cut1684 spent1549 c10 u5 | 30m b29 t67 cut2248 spent2096 c10 u5
+  B      region 3 turn 0 | terr 79 bldg 31 | cats 19 dmg 4695 outposts-killed 3 | lost-in-10 0% | upg {"outpost":"0/2","factory":"1/0","dock":"0/1","woodchopper":"1/0","forestGuard":"0/3"}
+         5m b10 t19 cut256 spent207 c0 u1 | 10m b15 t79 cut668 spent684 c0 u8 | 15m b25 t79 cut1445 spent1179 c0 u8 | 20m b25 t79 cut2008 spent1644 c0 u8 | 25m b21 t58 cut2488 spent2356 c10 u8 | 30m b31 t79 cut2915 spent2837 c12 u8
+  C      region 0 turn 2 | terr 68 bldg 23 | cats 33 dmg 2960 outposts-killed 0 | lost-in-10 0% | upg {"factory":"1/0","carrier":"0/1","woodchopper":"3/0","forestGuard":"0/1"}
+         5m b7 t19 cut198 spent207 c0 u3 | 10m b22 t62 cut1168 spent744 c0 u6 | 15m b24 t68 cut2546 spent999 c0 u6 | 20m b24 t68 cut3611 spent1538 c1 u6 | 25m b23 t68 cut4391 spent1692 c2 u6 | 30m b23 t68 cut5196 spent1922 c3 u6
+seed 18: winner C (seat 3), ended at 30 min
+  Base   region 1 turn 1 | terr 32 bldg 7 | cats 0 dmg 0 outposts-killed 0 | lost-in-10 0% | upg {"outpost":"0/1","factory":"1/0","dock":"0/1","woodchopper":"1/0","catapult":"1/0","forestGuard":"0/2"}
+         5m b14 t32 cut502 spent386 c0 u6 | 10m b11 t32 cut1384 spent386 c0 u7 | 15m b11 t32 cut2176 spent386 c0 u7 | 20m b10 t32 cut2642 spent386 c0 u7 | 25m b8 t32 cut2827 spent386 c0 u7 | 30m b7 t32 cut2901 spent386 c0 u7
+  A      region 3 turn 0 | terr 74 bldg 30 | cats 18 dmg 12935 outposts-killed 2 | lost-in-10 0% | upg {"outpost":"0/1","catapult":"2/1","forestGuard":"0/1"}
+         5m b11 t42 cut276 spent163 c0 u0 | 10m b23 t56 cut748 spent828 c8 u4 | 15m b23 t56 cut1200 spent975 c12 u5 | 20m b26 t74 cut1447 spent1492 c13 u5 | 25m b30 t74 cut1989 spent1851 c14 u5 | 30m b30 t74 cut2855 spent2320 c17 u5
+  B      region 0 turn 3 | terr 88 bldg 47 | cats 42 dmg 4205 outposts-killed 1 | lost-in-10 0% | upg {"outpost":"0/2","factory":"1/0","dock":"0/1","woodchopper":"1/0","forestGuard":"0/3"}
+         5m b16 t42 cut298 spent319 c0 u1 | 10m b46 t108 cut1460 spent1344 c0 u8 | 15m b54 t109 cut3114 spent1817 c0 u8 | 20m b46 t88 cut4481 spent2092 c0 u8 | 25m b47 t88 cut6043 spent2947 c33 u8 | 30m b47 t88 cut7343 spent3272 c42 u8
+  C      region 2 turn 2 | terr 100 bldg 25 | cats 10 dmg 4310 outposts-killed 1 | lost-in-10 12% | upg {"factory":"1/0","carrier":"0/1","woodchopper":"3/0","forestGuard":"0/1"}
+         5m b11 t42 cut286 spent383 c0 u3 | 10m b12 t37 cut1059 spent866 c0 u6 | 15m b24 t100 cut1792 spent1239 c0 u6 | 20m b25 t100 cut2428 spent1793 c5 u6 | 25m b25 t100 cut2737 spent2131 c5 u6 | 30m b25 t100 cut2882 spent2458 c5 u6
+seed 19: winner B (seat 2), ended at 30 min
+  Base   region 1 turn 1 | terr 27 bldg 5 | cats 14 dmg 4840 outposts-killed 1 | lost-in-10 0% | upg {"outpost":"0/1","factory":"1/0","dock":"0/1","woodchopper":"1/0","catapult":"1/0","forestGuard":"0/2"}
+         5m b14 t32 cut502 spent386 c0 u6 | 10m b14 t32 cut1324 spent386 c0 u7 | 15m b10 t39 cut1940 spent671 c7 u7 | 20m b13 t39 cut2667 spent766 c9 u7 | 25m b11 t39 cut3095 spent995 c0 u7 | 30m b5 t27 cut3352 spent1178 c0 u7
+  A      region 0 turn 3 | terr 122 bldg 52 | cats 20 dmg 10870 outposts-killed 1 | lost-in-10 0% | upg {"outpost":"0/1","catapult":"2/1","forestGuard":"0/1"}
+         5m b10 t19 cut202 spent290 c0 u3 | 10m b10 t19 cut427 spent427 c3 u5 | 15m b26 t56 cut857 spent918 c8 u5 | 20m b29 t56 cut1733 spent1132 c9 u5 | 25m b33 t114 cut2339 spent1781 c3 u5 | 30m b52 t122 cut2734 spent2373 c2 u5
+  B      region 2 turn 0 | terr 158 bldg 51 | cats 35 dmg 8830 outposts-killed 5 | lost-in-10 0% | upg {"outpost":"0/2","factory":"1/0","dock":"0/1","woodchopper":"1/0","forestGuard":"0/3"}
+         5m b18 t61 cut401 spent505 c0 u3 | 10m b63 t131 cut2095 spent1428 c0 u8 | 15m b54 t131 cut4135 spent1878 c0 u8 | 20m b52 t131 cut4689 spent2387 c0 u8 | 25m b46 t136 cut5137 spent3562 c8 u8 | 30m b51 t158 cut5709 spent4154 c7 u8
+  C      region 3 turn 2 | terr 0 bldg 0 DEFEATED | cats 0 dmg 0 outposts-killed 0 | lost-in-10 100% | upg {"woodchopper":"1/0"}
+         5m b6 t19 cut141 spent107 c0 u0 | 10m b0 t0 cut243 spent119 c0 u1 | 15m b0 t0 cut243 spent119 c0 u1 | 20m b0 t0 cut243 spent119 c0 u1 | 25m b0 t0 cut243 spent119 c0 u1 | 30m b0 t0 cut243 spent119 c0 u1
+seed 20: winner Base (seat 0), ended at 30 min
+  Base   region 2 turn 0 | terr 148 bldg 60 | cats 28 dmg 14666 outposts-killed 4 | lost-in-10 0% | upg {"outpost":"0/1","factory":"1/0","dock":"0/1","woodchopper":"1/0","catapult":"1/0","forestGuard":"0/2"}
+         5m b21 t61 cut466 spent491 c0 u4 | 10m b58 t144 cut2360 spent1343 c0 u7 | 15m b55 t126 cut4338 spent2199 c20 u7 | 20m b62 t148 cut5194 spent2734 c23 u7 | 25m b59 t148 cut5757 spent3335 c18 u7 | 30m b60 t148 cut6163 spent3741 c18 u7
+  A      region 3 turn 3 | terr 0 bldg 0 DEFEATED | cats 0 dmg 0 outposts-killed 0 | lost-in-10 0% | upg {"catapult":"1/0"}
+         5m b8 t19 cut197 spent103 c0 u0 | 10m b6 t19 cut422 spent165 c0 u1 | 15m b0 t0 cut477 spent177 c0 u1 | 20m b0 t0 cut477 spent177 c0 u1 | 25m b0 t0 cut477 spent177 c0 u1 | 30m b0 t0 cut477 spent177 c0 u1
+  B      region 0 turn 2 | terr 143 bldg 73 | cats 26 dmg 9140 outposts-killed 3 | lost-in-10 0% | upg {"outpost":"0/2","factory":"1/0","dock":"0/1","woodchopper":"1/0","forestGuard":"0/3"}
+         5m b16 t42 cut298 spent319 c0 u1 | 10m b53 t127 cut1415 spent1391 c0 u8 | 15m b72 t140 cut3550 spent1951 c0 u8 | 20m b73 t143 cut4368 spent2454 c0 u8 | 25m b73 t143 cut4482 spent3449 c0 u8 | 30m b73 t143 cut4573 spent3921 c0 u8
+  C      region 1 turn 1 | terr 0 bldg 0 DEFEATED | cats 0 dmg 0 outposts-killed 0 | lost-in-10 0% | upg {"factory":"1/0","carrier":"0/1","woodchopper":"3/0","forestGuard":"0/1"}
+         5m b6 t19 cut206 spent299 c0 u3 | 10m b10 t32 cut855 spent446 c0 u6 | 15m b7 t32 cut1597 spent451 c0 u6 | 20m b0 t0 cut1800 spent451 c0 u6 | 25m b0 t0 cut1800 spent451 c0 u6 | 30m b0 t0 cut1800 spent451 c0 u6
+
+=== summary of 5 matches
+wins by strategy       {"Base":2,"B":2,"C":1}
+wins by start region   {"0":1,"2":3,"3":1}
+wins by turn order     {"0":3,"1":1,"2":1}
+dominations            0 ended at 30, 30, 30, 30, 30
+lost >30% in 10 min    C@seed19:100%
+catapults              used by 15 players, won 5 (33%)
+no catapults           used by 5 players, won 0 (0%)
+outpost archer         used by 13 players, won 4 (31%)
+woodchopper upgrades   used by 14 players, won 5 (36%)
+forest guard upgrades  used by 17 players, won 5 (29%)
+catapult upgrades      used by 10 players, won 2 (20%)
+workshop               used by 15 players, won 5 (33%)

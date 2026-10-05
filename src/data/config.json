@@ -92,7 +92,7 @@
   },
   "catapult": {
     "range": 4,
-    "damage": 10,
+    "damage": 15,
     "hitsPerSecond": 0.5,
     "speedHexPerSecond": 0.5
   },

@@ -253,9 +253,12 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
       const conflict = conflictHexes().length > 0;
       // Military first when it's time.
       if (minute() >= st.catapultsFromMin) {
-        const wantCats = conflict ? st.catapultsPerConflict : st.catapultsIdle; // a fixed army per strategy
+        // A fixed army per strategy, plus one more per 100 banked wood (batch 3: bots banked ~2,700 wood with nothing
+        // to spend it on, so no match was ever won before the cap).
+        const surplus = Math.floor(p().wood / 100_000);
+        const wantCats = (conflict ? st.catapultsPerConflict : st.catapultsIdle) + surplus;
         // Stop feeding a front that keeps killing them: at most twice the planned army in total.
-        if (count('catapult') < wantCats && catapultsBuilt[me]! < 2 * Math.max(st.catapultsPerConflict, st.catapultsIdle)) wants.push('catapult');
+        if (count('catapult') < wantCats && catapultsBuilt[me]! < 2 * Math.max(st.catapultsPerConflict, st.catapultsIdle) + surplus) wants.push('catapult');
       }
       if (count('carrier') < n('woodchopper') * st.carriersPerChopper && carrierRoute()) wants.push('carrier');
       if (n('factory') < 1) wants.push('factory');

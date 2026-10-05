@@ -18,9 +18,9 @@
           { "desc": "Radius +3", "radiusBonus": 3 }
         ] },
         { "id": "archer", "name": "Archer", "levels": [
-          { "desc": "An archer on top: range 2, 3 dmg, 1 hit/s", "range": 2, "damage": 3, "hitsPerSecond": 1 },
-          { "desc": "Range 3, 5 dmg", "range": 3, "damage": 5, "hitsPerSecond": 1 },
-          { "desc": "Fire arrows: range 3, 5 dmg, set targets on fire", "range": 3, "damage": 5, "hitsPerSecond": 1, "fire": 1 }
+          { "desc": "An archer on top: range 1, 3 dmg, 1 hit/s", "range": 1, "damage": 3, "hitsPerSecond": 1 },
+          { "desc": "Range 2, 5 dmg", "range": 2, "damage": 5, "hitsPerSecond": 1 },
+          { "desc": "Fire arrows: range 2, 5 dmg, set targets on fire", "range": 2, "damage": 5, "hitsPerSecond": 1, "fire": 1 }
         ] }
       ]
     },
@@ -95,7 +95,7 @@
         { "id": "drawbridge", "name": "Drawbridge", "levels": [
           { "desc": "Other players' wheeled units can't cross", "blockOthers": 1 },
           { "desc": "Grate: floating wood stops here for your carriers", "blockOthers": 1, "grate": 1 },
-          { "desc": "Gatehouse archer (like the outpost archer)", "blockOthers": 1, "grate": 1, "range": 2, "damage": 3, "hitsPerSecond": 1 }
+          { "desc": "Gatehouse archer (like the outpost archer)", "blockOthers": 1, "grate": 1, "range": 1, "damage": 3, "hitsPerSecond": 1 }
         ] },
         { "id": "causeway", "name": "Causeway", "levels": [
           { "desc": "Your wheeled units +50% speed for 10 s after crossing", "boostPct": 50, "boostS": 10, "span": 1 },
@@ -130,9 +130,9 @@
           { "desc": "Range 7", "range": 7 }
         ] },
         { "id": "firepower", "name": "Firepower", "levels": [
-          { "desc": "10 → 15 dmg", "damage": 15 },
-          { "desc": "Fireball: 20 dmg, sets the target on fire", "damage": 20, "fire": 1 },
-          { "desc": "Firestorm: Fireball, and sets forests in conflict zones on fire", "damage": 20, "fire": 1, "firestorm": 1 }
+          { "desc": "15 → 20 dmg", "damage": 20 },
+          { "desc": "Fireball: 25 dmg, sets the target on fire", "damage": 25, "fire": 1 },
+          { "desc": "Firestorm: Fireball, and sets forests in conflict zones on fire", "damage": 25, "fire": 1, "firestorm": 1 }
         ] }
       ]
     },
