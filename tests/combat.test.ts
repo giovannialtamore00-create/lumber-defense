@@ -197,3 +197,37 @@ describe('debris and HP (§9, §10.1)', () => {
     expect(dock.hp).toBe(62); // still 30 below max
   });
 });
+
+describe('stance and defensive archers (§8.6, §10.1)', () => {
+  it('in Conquest a catapult ignores closer buildings and goes for an outpost; in Destruction the closest', () => {
+    const { ctx, state, b } = duel();
+    b.hp = 1000;
+    put(state, ctx, 'outpost', 0, cell(5, 2)).hp = 1000; // our land reaches their outpost, so it's a legal target
+    territoryChanged(state, ctx);
+    const dock = put(state, ctx, 'dock', 1, cell(4, 2));
+    dock.hp = 1000;
+    const c = catapult(state, 0, cell(3, 2));
+    step(state, ctx, []);
+    expect(c.targetId).toBe(dock.id); // Destruction (default): the closest
+    step(state, ctx, [{ type: 'setStance', player: 0, stance: 'conquest' }]);
+    c.thinkTicks = 0;
+    step(state, ctx, []);
+    expect(c.targetId).toBe(b.id); // Conquest: only outposts
+  });
+
+  it('outpost archers only shoot catapults, never buildings', () => {
+    const { ctx, state, a } = duel();
+    state.players[0]!.upgrades[ctx.upgrades.types.findIndex((t) => t.type === 'outpost')]!.levels = [0, 2];
+    put(state, ctx, 'outpost', 1, cell(4, 2)).hp = 1000; // player 1 reaches player 0's outpost: a conflict zone around it
+    territoryChanged(state, ctx);
+    const dock = put(state, ctx, 'dock', 1, cell(2, 2)); // next to player 0's outpost, in the conflict zone
+    dock.hp = 50;
+    run(state, ctx, 50);
+    expect(dock.hp).toBe(50);
+    const enemy = catapult(state, 1, cell(2, 2));
+    enemy.thinkTicks = 9999; // stays put, doesn't shoot back
+    run(state, ctx, 50);
+    expect(enemy.hp).toBeLessThan(80);
+    void a;
+  });
+});

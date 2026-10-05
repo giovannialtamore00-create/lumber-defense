@@ -37,12 +37,24 @@ export function isLegalTarget(state: GameState, ctx: SimContext, attacker: numbe
   return i !== undefined && isConflictFor(state, i, attacker);
 }
 
+/**
+ * What a shooter may aim at, on top of the legal-target rule: archers only defend, so they only shoot catapults;
+ * catapults in Conquest only shoot outposts (DESIGN §8.6, §10.1).
+ */
+type Aim = 'any' | 'catapults' | 'outposts';
+function aimable(e: Ownable, aim: Aim): boolean {
+  if (aim === 'catapults') return e.type === 'catapult';
+  if (aim === 'outposts') return e.type === 'structure' && e.kind === 'outpost';
+  return true;
+}
+const catapultAim = (state: GameState, owner: number): Aim => (state.players[owner]?.stance === 'conquest' ? 'outposts' : 'any');
+
 /** The closest legal target to `from` (ties: lowest id), optionally within `range`. */
-function closestTarget(state: GameState, ctx: SimContext, attacker: number, from: Hex, range = -1): Ownable | null {
+function closestTarget(state: GameState, ctx: SimContext, attacker: number, from: Hex, range = -1, aim: Aim = 'any'): Ownable | null {
   let best: Ownable | null = null;
   let bestD = 0;
   for (const e of state.entities) {
-    if (!isLegalTarget(state, ctx, attacker, e)) continue;
+    if (!isLegalTarget(state, ctx, attacker, e) || !aimable(e, aim)) continue;
     const d = distance(from, hexOf(e));
     if (range >= 0 && d > range) continue;
     if (!best || d < bestD) {
@@ -168,12 +180,12 @@ function archersSystem(state: GameState, ctx: SimContext): void {
     if (range === 0) continue;
     if ((s.thinkTicks ?? 0) <= 0) {
       s.thinkTicks = ticks(ctx, ctx.config.combat.retargetS);
-      s.targetId = closestTarget(state, ctx, s.owner, s, range)?.id ?? null;
+      s.targetId = closestTarget(state, ctx, s.owner, s, range, 'catapults')?.id ?? null; // archers only defend
     }
     s.thinkTicks!--;
     if ((s.fireTicks ?? 0) > 0) s.fireTicks!--;
     const target = byId(state, s.targetId);
-    if (!target || !isLegalTarget(state, ctx, s.owner, target) || distance(s, hexOf(target)) > range || (s.fireTicks ?? 0) > 0) continue;
+    if (!target || !isLegalTarget(state, ctx, s.owner, target) || !aimable(target, 'catapults') || distance(s, hexOf(target)) > range || (s.fireTicks ?? 0) > 0) continue;
     const burning = upgradeValue(state, ctx, s.owner, type, path, 'fire', 0) > 0; // Fire arrows
     fire(state, ctx, 'arrow', s.owner, s, target, upgradeValue(state, ctx, s.owner, type, path, 'damage', 0), { fire: burning, firestorm: false });
     s.fireTicks = ticks(ctx, 1 / upgradeValue(state, ctx, s.owner, type, path, 'hitsPerSecond', 1));
@@ -266,10 +278,10 @@ function catapultSystem(state: GameState, ctx: SimContext): void {
     // Think every second: the closest legal target (DESIGN §8.6).
     if (--c.thinkTicks <= 0) {
       c.thinkTicks = ticks(ctx, ctx.config.combat.retargetS);
-      c.targetId = closestTarget(state, ctx, c.owner, c)?.id ?? null;
+      c.targetId = closestTarget(state, ctx, c.owner, c, -1, catapultAim(state, c.owner))?.id ?? null;
     }
     const target = byId(state, c.targetId);
-    if (!target || !isLegalTarget(state, ctx, c.owner, target)) continue;
+    if (!target || !isLegalTarget(state, ctx, c.owner, target) || !aimable(target, catapultAim(state, c.owner))) continue;
     const th = hexOf(target);
     c.aimQ = th.q;
     c.aimR = th.r;

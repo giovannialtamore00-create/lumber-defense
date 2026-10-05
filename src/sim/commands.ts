@@ -116,6 +116,9 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
       });
       return;
     }
+    case 'setStance':
+      if (cmd.stance === 'conquest' || cmd.stance === 'destruction') player.stance = cmd.stance;
+      return;
     case 'surrender':
       if (state.phase === 'running') surrender(state, ctx, cmd.player);
       return;

@@ -11,6 +11,9 @@ export type StructureKind = 'outpost' | 'factory' | 'dock' | 'woodchopper' | 'br
 /** Moving units (don't occupy a hex): carrier, forest guard, stone cutter, catapult (DESIGN §6.4, §8.6, §8.7). */
 export type ItemKind = StructureKind | 'carrier' | 'forestGuard' | 'stoneCutter' | 'catapult';
 
+/** Offensive stance (DESIGN §8.6): Destruction = closest target; Conquest = only outposts, to capture the rest. */
+export type Stance = 'destruction' | 'conquest';
+
 /** Owner of neutral items (DESIGN §9): nobody. */
 export const NEUTRAL = -1;
 
@@ -70,6 +73,8 @@ export interface Player {
   research: Research[];
   /** Out of the game: lost every outpost, or surrendered (DESIGN §11). */
   defeated: boolean;
+  /** What the player's catapults go for (DESIGN §8.6): the closest target, or only outposts. */
+  stance: Stance;
   stats: PlayerStats;
 }
 
@@ -336,5 +341,7 @@ export type Command =
   | { type: 'placeCatapult'; player: number; q: number; r: number }
   /** Switch playtest mode on or off for the whole match (DESIGN §7.5). */
   | { type: 'setPlaytest'; player: number; on: boolean }
+  /** Choose what your catapults go for (DESIGN §8.6). */
+  | { type: 'setStance'; player: number; stance: Stance }
   /** Give up: outposts and catapults dismantled, the rest turns neutral (DESIGN §11). */
   | { type: 'surrender'; player: number };

@@ -42,6 +42,7 @@ export class UIScene extends Phaser.Scene {
   private pauseButton!: Phaser.GameObjects.Text;
   private pausedBanner!: Phaser.GameObjects.Text;
   private playtestButton!: Phaser.GameObjects.Text;
+  private stanceButton!: Phaser.GameObjects.Text;
   private debugText!: Phaser.GameObjects.Text;
   private tutorial!: Phaser.GameObjects.Container;
   private tutorialTitle!: Phaser.GameObjects.Text;
@@ -160,6 +161,15 @@ export class UIScene extends Phaser.Scene {
           'Leave',
           () => (window.location.href = window.location.pathname),
         );
+      });
+    // Offensive stance (DESIGN §8.6): what your catapults go for.
+    this.stanceButton = this.add
+      .text(fb.left, 84, '', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold' })
+      .setOrigin(0, 0)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        const now = this.runner.state.players[this.local]!.stance;
+        this.runner.submit({ type: 'setStance', player: this.local, stance: now === 'conquest' ? 'destruction' : 'conquest' });
       });
     this.defeatText = this.add
       .text((width - PANEL_W) / 2, 142, 'You are out of the match: watching until it ends.', { ...TEXT_STYLE, fontSize: '16px', fontStyle: 'bold', backgroundColor: '#8a2a1ecc' })
@@ -310,6 +320,10 @@ export class UIScene extends Phaser.Scene {
     if (state.phase === 'over' && !this.endShown) this.showEndScreen();
     const paused = this.runner.paused;
     this.pauseButton.setText(paused ? '▶ Resume' : '⏸ Pause').setBackgroundColor(paused ? '#2f6b34' : '#000000aa');
+    const conquest = me.stance === 'conquest';
+    this.stanceButton
+      .setText(conquest ? 'Catapults: Conquest (outposts only)' : 'Catapults: Destruction (closest target)')
+      .setBackgroundColor(conquest ? '#2f5d8a' : '#8a2a1e');
     const pm = ctx.config.playtestMode;
     this.playtestButton
       .setText(state.playtest ? `Playtest ON: costs ${pm.costPct}%, times ${pm.timePct}%` : 'Playtest mode: off')

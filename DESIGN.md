@@ -376,7 +376,11 @@ highest price level that met the target on all tested seeds; findings and method
   - **Movement:** it only moves **inside your own territory** (conflict zones included). It picks the closest legal
     target, drives to a hex from which the target is in range, stops and fires. If no hex in range can be reached,
     it gets as close as it can.
-  - **Thinking:** every **1 s** it looks again and switches to the **closest legal target**. A target that leaves
+  - **Stance (decided, balance pass):** each player picks one for all their catapults, with a button: **Destruction**
+    (default) = the closest legal target, as below; **Conquest** = **only enemy outposts**, so the buildings around a
+    destroyed outpost are captured instead of destroyed (ownership rule, §9).
+  - **Thinking:** every **1 s** it looks again and switches to the **closest legal target** (in Conquest: the closest
+    legal outpost). A target that leaves
     the legal zone (e.g. a carrier driving out) is dropped then. If the next closest target is far away, the
     catapult heads there and turns back as soon as a closer one is legal again; this can stall it. It's the owner's
     job to fix that, by extending their sight with a new outpost or by dismantling the catapult and placing a new one.
@@ -475,7 +479,9 @@ Everything is made of wood, so a fire feeds itself until the item is gone.
   Range/Firepower, Bridge Drawbridge) are **shown but locked until M5**. **M5:** they open, except the levels that
   need **burning** (Fire arrows, Fireball, Firestorm), which open in **M6** with burning (§9b).
 - **Archers** (Outpost Archer, Gatehouse archer) follow the catapult's target rules (§8.6): other players' items on
-  a conflict zone inside the owner's territory, closest first, re-checked every 1 s.
+  a conflict zone inside the owner's territory, closest first, re-checked every 1 s. **Archers are defensive only
+  (decided, balance pass): they shoot only offensive units, i.e. catapults, never buildings or other units**, so an
+  outpost can't be used as a siege weapon.
 - **HP upgrades (decided):** when max HP goes up, the extra is **added as healing**, so the damage taken stays the
   same (30/50 → max 80 gives 60/80).
 - **Workshop menu (decided):** a **Workshop** tab next to **Build**, available once you own a workshop: a dropdown
