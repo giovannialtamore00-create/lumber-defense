@@ -44,7 +44,7 @@ export function createInitialState(ctx: SimContext, playerCount: number, seed: n
       upgrades: ctx.upgrades.types.map(() => ({ levels: [0, 0] as [number, number], first: -1 })),
       research: [],
       defeated: false,
-      stats: { woodChopped: 0, woodCollected: 0, damageDealt: 0, unitsCrafted: 0, structuresCrafted: 0, outpostsDestroyed: 0 },
+      stats: { woodChopped: 0, woodCollected: 0, damageDealt: 0, unitsCrafted: 0, structuresCrafted: 0, outpostsDestroyed: 0, woodSpent: 0 },
     })),
     entities: [],
     nextId: 1,

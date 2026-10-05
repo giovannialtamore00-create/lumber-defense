@@ -36,6 +36,8 @@ export interface PlayerStats {
   unitsCrafted: number;
   structuresCrafted: number;
   outpostsDestroyed: number;
+  /** Wood paid for crafting and upgrades (milli-wood). */
+  woodSpent: number;
 }
 
 /** An item in the craft queue. `totalTicks` is fixed when the item starts crafting (0 = still waiting). */

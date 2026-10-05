@@ -156,7 +156,9 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
     }
     case 'craft': {
       if (craftError(state, ctx, cmd.player, cmd.item)) return;
-      player.wood -= craftCost(state, ctx, cmd.player, cmd.item);
+      const cost = craftCost(state, ctx, cmd.player, cmd.item);
+      player.wood -= cost;
+      player.stats.woodSpent += cost;
       player.queue.push({ item: cmd.item, totalTicks: 0, doneTicks: 0 });
       return;
     }

@@ -104,6 +104,7 @@ export function startResearch(state: GameState, ctx: SimContext, player: number,
   const p = state.players[player]!;
   const price = upgradePrice(state, ctx, player, typeIdx, path)!;
   p.wood -= price.cost * 1000;
+  p.stats.woodSpent += price.cost * 1000;
   const prog = p.upgrades[typeIdx]!;
   if (prog.first === -1) prog.first = path; // the first path picked stays the cheap one
   p.research.push({ type: typeIdx, path, level: price.level, totalTicks: 0, doneTicks: 0 });
