@@ -31,6 +31,9 @@ function research(state: GameState, ctx: Parameters<typeof step>[1], type: strin
   run(state, ctx, state.players[0]!.research[0]?.totalTicks ?? 0);
 }
 
+/** Level-1 price and research ticks from upgrades.json (DESIGN §10.2). */
+const L1 = { cost: upgrades.pricing.levels[0]!.cost, ticks: upgrades.pricing.levels[0]!.timeS * 10 };
+
 describe('buying upgrades (§10.1–10.2)', () => {
   it('needs a workshop, researches one at a time, and takes the listed time', () => {
     const { ctx, state } = setup(RIVER);
@@ -39,9 +42,9 @@ describe('buying upgrades (§10.1–10.2)', () => {
 
     const w = world();
     step(w.state, w.ctx, [{ type: 'buyUpgrade', player: 0, upgradeType: dock, path: 0 }]);
-    expect(w.state.players[0]!.research[0]).toMatchObject({ type: dock, path: 0, level: 1, totalTicks: 200 });
+    expect(w.state.players[0]!.research[0]).toMatchObject({ type: dock, path: 0, level: 1, totalTicks: L1.ticks });
     expect(upgradeError(w.state, w.ctx, 0, dock, 1)).toBe('one workshop: one upgrade at a time');
-    run(w.state, w.ctx, 198); // the purchase tick already counted as the first research tick
+    run(w.state, w.ctx, L1.ticks - 2); // the purchase tick already counted as the first research tick
     expect(upgradeLevel(w.state, w.ctx, 0, 'dock', 'capacity')).toBe(0);
     run(w.state, w.ctx, 1);
     expect(upgradeLevel(w.state, w.ctx, 0, 'dock', 'capacity')).toBe(1);
@@ -50,10 +53,10 @@ describe('buying upgrades (§10.1–10.2)', () => {
   it('the first path picked is the cheap one; the other costs double', () => {
     const { ctx, state } = world();
     const dock = typeIndex(ctx, 'dock');
-    expect(upgradePrice(state, ctx, 0, dock, 1)!.cost).toBe(40);
+    expect(upgradePrice(state, ctx, 0, dock, 1)!.cost).toBe(L1.cost);
     research(state, ctx, 'dock', 0);
-    expect(upgradePrice(state, ctx, 0, dock, 0)).toMatchObject({ cost: 80, level: 2 });
-    expect(upgradePrice(state, ctx, 0, dock, 1)).toMatchObject({ cost: 80, level: 1 }); // 40 × 2
+    expect(upgradePrice(state, ctx, 0, dock, 0)).toMatchObject({ cost: upgrades.pricing.levels[1]!.cost, level: 2 });
+    expect(upgradePrice(state, ctx, 0, dock, 1)).toMatchObject({ cost: L1.cost * 2, level: 1 }); // second path: double
   });
 
   it('Discount and Fast Research make later upgrades cheaper and quicker', () => {
@@ -61,7 +64,7 @@ describe('buying upgrades (§10.1–10.2)', () => {
     research(state, ctx, 'workshop', 0); // Discount 10%
     research(state, ctx, 'workshop', 1); // Fast Research 20% (second path: double cost)
     const dock = typeIndex(ctx, 'dock');
-    expect(upgradePrice(state, ctx, 0, dock, 0)).toMatchObject({ cost: 36, ticks: 160 });
+    expect(upgradePrice(state, ctx, 0, dock, 0)).toMatchObject({ cost: Math.floor(L1.cost * 0.9), ticks: Math.ceil(L1.ticks * 0.8) });
   });
 
   it('every path is open, burning levels included (M6)', () => {

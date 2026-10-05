@@ -1,9 +1,9 @@
 {
   "pricing": {
     "levels": [
-      { "cost": 40, "timeS": 20 },
-      { "cost": 80, "timeS": 40 },
-      { "cost": 160, "timeS": 60 }
+      { "cost": 52, "timeS": 34 },
+      { "cost": 104, "timeS": 68 },
+      { "cost": 208, "timeS": 102 }
     ],
     "secondPathCostMultiplier": 2
   },

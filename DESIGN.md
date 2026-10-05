@@ -484,8 +484,11 @@ Everything is made of wood, so a fire feeds itself until the item is gone.
 ### 10.2 Pricing *(placeholder)*
 | | L1 | L2 | L3 |
 |---|---|---|---|
-| First path picked | 40 wood, 20 s | 80 wood, 40 s | 160 wood, 60 s |
+| First path picked | 52 wood, 34 s | 104 wood, 68 s | 208 wood, 102 s |
 | Second path | ×2 cost | ×2 | ×2 |
+
+Balance pass 1 (decided by the designer): upgrade costs **+30%** (40 / 80 / 160 → 52 / 104 / 208) and research times
+**+70%** (20 / 40 / 60 s → 34 / 68 / 102 s), because upgrades were overpowered.
 
 ### 10.3 Paths (decided; all values placeholders, to be balanced later)
 🔒 = needs combat, shown but locked until M5. ★ ideas are accepted as listed. Numbers live in `src/data/upgrades.json`.
