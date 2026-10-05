@@ -1,6 +1,6 @@
 // Runs a batch of battle-sim matches and summarises win rates (by strategy, starting region, turn order and what the
 // players used).
-//   npx tsx tools/battle-batch.ts <strategies.json> --seeds 1,2,3,4,5 [--seats Base,A,B,C] [--minutes 30] [--playtest] [--out batch.json]
+//   npx tsx tools/battle-batch.ts <strategies.json> --seeds 1,2,3,4,5 [--seats Base,A,B,C] [--rotate] [--minutes 30] [--playtest] [--out batch.json]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DEFAULTS, type MatchResult, type Strategy, printMatch, runMatch } from './battle-sim';
 
@@ -17,8 +17,11 @@ const minutes = Number(flag('--minutes', '30'));
 const playtest = args.includes('--playtest');
 
 const matches: MatchResult[] = [];
-for (const seed of seeds) {
-  const m = runMatch(seats.map((s) => withDefaults(byName[s]!)), seed, minutes, playtest);
+// --rotate: each match shifts the seats by one, so every strategy plays every seat (and so every start region) equally.
+const rotate = args.includes('--rotate');
+for (const [k, seed] of seeds.entries()) {
+  const order = rotate ? seats.map((_, i) => seats[(i + k) % seats.length]!) : seats;
+  const m = runMatch(order.map((s) => withDefaults(byName[s]!)), seed, minutes, playtest);
   matches.push(m);
   printMatch(m);
 }

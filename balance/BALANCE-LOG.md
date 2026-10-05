@@ -103,6 +103,32 @@ with 1–2 catapults and no wood after a long war).
 economy-first opponent and decided matches by minute 15. In the simulations bots don't attack before minute 10.
 Options: (a) the first outpost has a basic archer; (b) catapults need a workshop; (c) a protection period.
 
+## Round 3, continued
+| Step | Change / bot fix | Result |
+|---|---|---|
+| bot | never dismantle factory-mills to make room | 18/20 (14.7–27.1) |
+| 16 | Catapult craft time 70 → 55 s (crafting is one item at a time: late armies were too small to finish duels) | 40 seeds: 33/40, all 15.0–29.9 |
+| — | craft 45 s (reverted) | 31/40 |
+| — | Archer L2/L3 range 4 → 3 (reverted: no effect) | 33/40 |
+| — | P expands every 6 buildings (reverted) | 31/40 |
+| — | Outpost craft time 30 → 20 s (reverted: more outposts to grind through) | 23/40 |
+| 19 | **Outpost craft time 30 → 40 s** (fewer outposts, faster eliminations) | 40 seeds: **36/40**, 16.1–30; fresh 20 seeds 17/20 |
+| — | Fire burn rate 10 → 5 %/s; Firepower 20/25/25 → 17/20/20 (both reverted: tested on unrotated seats, see below) | no effect |
+
+**Seat rotation (tools/battle-batch.ts --rotate):** without it, the same seeds give each seat the same start region,
+so tests of one strategy against a variant measured map position, not the strategy. Earlier "catapult upgrades
+win 50%" comparisons were confounded this way. With rotation (24 seeds): Range-only 7, Patient 8, Firepower-only 6,
+no catapult upgrades 3 — catapult upgrades help, but don't decide matches.
+
+**Final state, rotated seats, 24 seeds (normal mode):** 21/24 finished by domination (88%), lengths 16.1–29.2 min
+(none under 15), nobody lost >30% of territory in the first 10 minutes. Wins: P 12, S 10, O 2, B 0.
+**Start region decides everything:** wins region 0 (NW) 14, region 1 (NE) 10; regions 2 and 3 were eliminated in
+24/24 matches each. The map is now the dominant factor (designer will rework the map).
+
+**Current numbers:** outpost 48 wood / 40 s / 150 HP; catapult 85 wood / 55 s / 80 HP / 15 dmg; archers shoot
+catapults only, range 3 / 4 / 4, damage 3 / 5 / 5; Firepower 20 / 25 / 25; upgrades 52 / 104 / 208 wood, 34 / 68 /
+102 s.
+
 ## Proposed (needs designer approval)
 - **map01 region 3 (SE):** give it about as much riverside land and strong-river riverside as the others (e.g.
   route a river branch through it, or move rocks/forest off its riverbanks). Region 1 (NE) loses too; it may be
