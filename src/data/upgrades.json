@@ -18,9 +18,9 @@
           { "desc": "Radius +3", "radiusBonus": 3 }
         ] },
         { "id": "archer", "name": "Archer", "levels": [
-          { "desc": "An archer on top: range 2, 5 dmg, 1 hit/s", "range": 2, "damage": 5, "hitsPerSecond": 1 },
-          { "desc": "Range 3, 8 dmg", "range": 3, "damage": 8, "hitsPerSecond": 1 },
-          { "desc": "Fire arrows: range 3, 8 dmg, set targets on fire", "range": 3, "damage": 8, "hitsPerSecond": 1, "fire": 1 }
+          { "desc": "An archer on top: range 2, 3 dmg, 1 hit/s", "range": 2, "damage": 3, "hitsPerSecond": 1 },
+          { "desc": "Range 3, 5 dmg", "range": 3, "damage": 5, "hitsPerSecond": 1 },
+          { "desc": "Fire arrows: range 3, 5 dmg, set targets on fire", "range": 3, "damage": 5, "hitsPerSecond": 1, "fire": 1 }
         ] }
       ]
     },
@@ -95,7 +95,7 @@
         { "id": "drawbridge", "name": "Drawbridge", "levels": [
           { "desc": "Other players' wheeled units can't cross", "blockOthers": 1 },
           { "desc": "Grate: floating wood stops here for your carriers", "blockOthers": 1, "grate": 1 },
-          { "desc": "Gatehouse archer (like the outpost archer)", "blockOthers": 1, "grate": 1, "range": 2, "damage": 5, "hitsPerSecond": 1 }
+          { "desc": "Gatehouse archer (like the outpost archer)", "blockOthers": 1, "grate": 1, "range": 2, "damage": 3, "hitsPerSecond": 1 }
         ] },
         { "id": "causeway", "name": "Causeway", "levels": [
           { "desc": "Your wheeled units +50% speed for 10 s after crossing", "boostPct": 50, "boostS": 10, "span": 1 },

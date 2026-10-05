@@ -496,7 +496,7 @@ Balance pass 1 (decided by the designer): upgrade costs **+30%** (40 / 80 / 160 
 | Structure | Path | L1 | L2 | L3 |
 |---|---|---|---|---|
 | **Outpost** | Reach | radius +1 (every outpost, the first one too) | +2 | +3 |
-| | Archer 🔒 | archer: range 2, 5 dmg, 1 hit/s | range 3, 8 dmg | Fire arrows: burning damage |
+| | Archer | archer: range 2, 3 dmg, 1 hit/s (was 5, balance pass) | range 3, 5 dmg (was 8) | Fire arrows: range 3, 5 dmg, sets targets on fire |
 | **Factory-mill** | Efficiency | crafting cost −10% | −20% | −30% |
 | | Improved Frames 🔒 | all your structures +15% HP | +30% | +50% |
 | **Dock** | Capacity | 20 → 40 | → 70 | → 100 |

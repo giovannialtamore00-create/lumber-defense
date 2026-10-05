@@ -34,7 +34,7 @@ export interface Strategy {
   // Military
   aggressionFromMin: number; // from this minute, new outposts push toward the nearest enemy (999 = never)
   catapultsFromMin: number; // from this minute, build catapults
-  catapultsPerConflict: number; // catapults wanted while we have a conflict zone
+  catapultsPerConflict: number; // catapults wanted (in total) while we have a conflict zone
   catapultsIdle: number; // catapults wanted even without a conflict zone (aggressors prepare)
 }
 
@@ -183,11 +183,13 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
             }).length,
           );
         case 'catapult': {
-          // As close as possible to a conflict zone (or the nearest enemy outpost), inside our land.
+          // Near the conflict zone (or the nearest enemy outpost) but out of reach of enemy archers: at least 4 hexes
+          // from any enemy outpost (batch 1 found catapults placed in archer range die and get rebuilt in a loop).
           const zone = conflictHexes().map((i) => hexes[i]!);
           const targets = zone.length ? zone : enemyOutposts();
+          const safe = (h: { q: number; r: number }) => enemyOutposts().every((e) => distance(e, h) >= 4);
           if (!targets.length) return byScore((h) => -Math.min(...mine('outpost').map((o) => distance(o, h))));
-          return byScore((h) => -Math.min(...targets.map((t) => distance(t, h))));
+          return byScore((h) => (safe(h) ? 100 : 0) - Math.min(...targets.map((t) => distance(t, h))));
         }
         default:
           return byScore((h) => -Math.min(...mine('outpost').map((o) => distance(o, h))));
@@ -251,8 +253,9 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
       const conflict = conflictHexes().length > 0;
       // Military first when it's time.
       if (minute() >= st.catapultsFromMin) {
-        const wantCats = conflict ? st.catapultsPerConflict * Math.max(1, Math.ceil(conflictHexes().length / 6)) : st.catapultsIdle;
-        if (count('catapult') < wantCats) wants.push('catapult');
+        const wantCats = conflict ? st.catapultsPerConflict : st.catapultsIdle; // a fixed army per strategy
+        // Stop feeding a front that keeps killing them: at most twice the planned army in total.
+        if (count('catapult') < wantCats && catapultsBuilt[me]! < 2 * Math.max(st.catapultsPerConflict, st.catapultsIdle)) wants.push('catapult');
       }
       if (count('carrier') < n('woodchopper') * st.carriersPerChopper && carrierRoute()) wants.push('carrier');
       if (n('factory') < 1) wants.push('factory');
@@ -266,7 +269,8 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
         (territoryForest() < st.expandBelowForest ||
           (st.expandEveryBuildings > 0 && buildings() >= outposts * st.expandEveryBuildings) ||
           (aggressive() && !conflict));
-      if (expand) wants.push('outpost');
+      // Every bot gets a second outpost by minute 6 (batch 1: C never expanded and was overrun).
+      if (expand || (outposts < 2 && minute() >= 6)) wants.push('outpost');
       if (n('woodchopper') < st.choppersPerOutpost * outposts) wants.push('woodchopper');
       if (count('guard') < st.guardsPerOutpost * outposts) wants.push('forestGuard');
       const pick = wants.find(
