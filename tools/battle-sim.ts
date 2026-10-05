@@ -359,7 +359,8 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
             // Our outposts are just out of reach: Reach (+1 radius for every outpost) covers the target.
             return send({ type: 'buyUpgrade', player: me, upgradeType: typeIndex(ctx, 'outpost'), path: 0 });
           } else if (!state.entities.some((e) => e.type === 'structure' && e.owner === me && e.dismantleTicks !== undefined)) {
-            const room = mine('woodchopper').concat(mine('dock'), mine('workshop'), mine('factory'), mine('excavator'))
+            // Never factory-mills: they are the economy (taking them down left two broke survivors in a stalemate).
+            const room = mine('dock').concat(mine('excavator'), mine('workshop').length > 1 ? mine('workshop') : [])
               .filter((b) => distance(b, ft) <= ctx.config.outpost.territoryRadius && state.forestPool[idxOf(b)!] === 0 && b.kind !== 'woodchopper')
               .sort((x, y) => distance(x, ft) - distance(y, ft))[0];
             if (room) return send({ type: 'dismantle', player: me, id: room.id });
