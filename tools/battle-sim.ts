@@ -373,7 +373,8 @@ export function runMatch(strategies: Strategy[], seed: number, minutes: number, 
         const surplus = Math.floor(p().wood / 100_000);
         const wantCats = (conflict ? st.catapultsPerConflict : st.catapultsIdle) + surplus;
         // Stop feeding a front that keeps killing them: at most twice the planned army in total.
-        if (count('catapult') < wantCats && catapultsBuilt[me]! < 2 * Math.max(st.catapultsPerConflict, st.catapultsIdle) + surplus) wants.push('catapult');
+        const capped = catapultsBuilt[me]! >= 2 * Math.max(st.catapultsPerConflict, st.catapultsIdle) + surplus && p().wood < 300_000; // the cap only stops loops when broke
+        if (count('catapult') < wantCats && !capped) wants.push('catapult');
       }
       if (count('carrier') < n('woodchopper') * st.carriersPerChopper && carrierRoute()) wants.push('carrier');
       if (n('factory') < 1) wants.push('factory');
