@@ -281,7 +281,7 @@ Craft times are base times, before the factory-mill reduction (§6.7).
 
 | Item | Cost | Craft time | HP | Other stats |
 |---|---|---|---|---|
-| Outpost | 48 | 30 s | 150 | Territory radius 3 |
+| Outpost | 48 | 30 s | 100 | Territory radius 3 (HP was 150, balance pass) |
 | Factory-mill | 57 | 45 s | 200 | Riverside; reduces craft time (§6.7); one queue slot (§7.2) |
 | Dock | 19 | 20 s | 80 | Capacity 20, dispenses 1 wood/s to an adjacent factory |
 | Carrier | 10 | 10 s | 30 | Capacity 5, speed 0.5 hex/s, max A-to-B distance 5 hexes |
