@@ -2,6 +2,11 @@
 
 Browser tower-defense / territory game (2–4 players, wood floating down rivers), published on itch.io.
 
+## Status
+- Current milestone: (fill in at the next commit; see ARCHITECTURE.md §11)
+- Last commit: b4df293 "Catapult cost and craft time +50%". Uncommitted changes in the tree are the designer's work in progress; never commit them unasked.
+- Known issues / next step: (fill in)
+
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — tech plan: stack, folder layout, determinism, networking, milestones.
@@ -22,6 +27,12 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 5. **Work milestone by milestone** (ARCHITECTURE.md §11). At the end of each milestone: stop, explain how to run
    and test it, and **wait for designer approval** before starting the next.
 6. Maps are proposed with a rendered screenshot and `validate-map` output, and approved before gameplay builds on them.
+7. **"Done" = two checks.** (a) Machine: `npm test` and `npm run typecheck` pass, the game launches, a capped sim run finishes. Show the evidence.
+   (b) Playtest: Claude writes a card of 2-3 things to try (about 5 min: readability, responsiveness, confusion, "want another round?").
+   I answer green / yellow / red plus one line. Green: commit. Yellow: add notes to open questions, ask fix now or later. Red: fix first.
+   Never claim it is fun; that verdict is mine.
+8. **Sim runs are capped at 10 minutes of gameplay by default.** `econ-sim` refuses more unless `--allow-long` is passed, only when I ask for a long run.
+9. Hooks: a commit is blocked unless `npm test` passes (`.claude/hooks/test-before-commit.mjs`) and the message starts with `M<n>: ` (global hook).
 
 ## Working style (keeps token use down)
 - Short reports: what changed, how to test, open questions. Decisions live in DESIGN.md; don't restate them.
@@ -37,7 +48,7 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 - `npm test` — Vitest (sim unit tests, determinism)
 - `npm run typecheck`
 - `npm run validate-map` — checks map rules from DESIGN §4.3
-- `npm run econ-sim -- tools/econ-strategies/round2.json [--playtest] [--minutes 60] [--seed 5]` — plays solo matches
+- `npm run econ-sim -- tools/econ-strategies/round2.json [--playtest] [--minutes 10] [--allow-long] [--seed 5]` — plays solo matches
   with scripted strategies on the real sim (no rendering, seconds per match) and prints how the economy develops.
 - `npm run share` — builds, serves `dist/` on http://localhost:4180 and opens a Cloudflare tunnel; prints the public
   link for playtests with friends. Ctrl+C stops it.
@@ -48,3 +59,6 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 
 ## Stack
 TypeScript (strict), Phaser 3, Vite, Vitest, PeerJS. Node scripts run with `tsx`.
+
+## Known mistakes (one line each time Claude gets something wrong)
+- (none yet)

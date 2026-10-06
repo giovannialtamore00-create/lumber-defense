@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import map01 from '../../data/maps/map01.json';
+import map02 from '../../data/maps/map02.json';
+import config from '../../data/config.json';
 import { wholeUnits } from '../../sim/fixed';
 import { DIRECTIONS, type Hex, hexKey } from '../../sim/hex';
 import { type MapData, type MapHex, indexHexes, riverStrengthLevel } from '../../sim/map';
@@ -45,7 +46,7 @@ import { hexOf, thingAt } from '../ui/describe';
 import { bonusRow, downstream, isRock, isWater, riverIdAt } from '../../sim/water';
 import type { SimRunner } from '../simRunner';
 
-export const MAP = map01 as MapData;
+export const MAP = map02 as MapData;
 const ORDERED = [...MAP.hexes].sort((a, b) => a.r - b.r || a.q - b.q);
 
 const COLORS = {
@@ -68,13 +69,14 @@ const COLORS = {
   regionBorder: 0xfff3c4,
 };
 
-const REGION_NAMES = ['Region 0 (NW)', 'Region 1 (NE)', 'Region 2 (SW)', 'Region 3 (SE)'];
+const REGION_NAMES = ['West', 'Middle-west', 'Middle-east', 'East'];
 
-const MAX_STRENGTH = Math.max(...MAP.riverFlow.map((f) => riverStrengthLevel(MAP, f.r)));
+const STRENGTH_LEVELS = config.factoryMill.riverBonusBpByRow.length;
+const MAX_STRENGTH = Math.max(...MAP.riverFlow.map((f) => riverStrengthLevel(MAP, f.r, STRENGTH_LEVELS)));
 
 /** River colour from light (weak, top of a slope) to deep (strong, bottom of a slope). */
 function riverColor(r: number): number {
-  return riverColorForStrength(riverStrengthLevel(MAP, r));
+  return riverColorForStrength(riverStrengthLevel(MAP, r, STRENGTH_LEVELS));
 }
 
 /** Water colour for a flow strength: 1 (or 0, dug water's first hex) is lightest, the strongest is deepest. */
@@ -560,7 +562,7 @@ export class GameScene extends Phaser.Scene {
     const c = hexToScreen(h);
     const scale = packScale(HEX_SIZE);
     if (h.terrain === 'river') {
-      const strength = (riverStrengthLevel(MAP, h.r) - 1) / Math.max(1, MAX_STRENGTH - 1);
+      const strength = (riverStrengthLevel(MAP, h.r, STRENGTH_LEVELS) - 1) / Math.max(1, MAX_STRENGTH - 1);
       const w = addWaterSprite(this, c.x, c.y, this.flowAt(i), strength)?.setScale(scale);
       if (w) this.riverWater.set(i, w);
       return;
@@ -849,7 +851,7 @@ export class GameScene extends Phaser.Scene {
         const ux = dx / len;
         const uy = dy / len;
         // Arrow sits on the way out of the hex, pointing downstream; it grows with river strength.
-        const k = 0.6 + (0.7 * (riverStrengthLevel(MAP, f.r) - 1)) / Math.max(1, MAX_STRENGTH - 1);
+        const k = 0.6 + (0.7 * (riverStrengthLevel(MAP, f.r, STRENGTH_LEVELS) - 1)) / Math.max(1, MAX_STRENGTH - 1);
         const tip = { x: from.x + ux * 14 * k, y: from.y + uy * 14 * k };
         const back = { x: from.x - ux * 2 * k, y: from.y - uy * 2 * k };
         const px = -uy * 6 * k;
@@ -905,9 +907,8 @@ export class GameScene extends Phaser.Scene {
       const own = MAP.hexes.filter((h) => h.region === r);
       const pts = own.map(hexToScreen);
       const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-      // Labels sit outside the map: north regions above it, south regions below it.
-      const ys = MAP.hexes.map((h) => hexToScreen(h).y);
-      const cy = r < 2 ? Math.min(...ys) - HEX_SIZE * 1.3 : Math.max(...ys) + HEX_SIZE * 1.5;
+      // Labels sit above the map, one per vertical strip.
+      const cy = Math.min(...MAP.hexes.map((h) => hexToScreen(h).y)) - HEX_SIZE * 1.3;
       this.add
         .text(cx, cy, REGION_NAMES[r]!, {
           fontFamily: 'sans-serif',

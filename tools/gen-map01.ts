@@ -14,7 +14,8 @@ const WIDTH = 18;
 const HEIGHT = 16;
 const seed = Number(process.argv[2] ?? 1);
 const rng = createRng(seed);
-const rules = config.mapRules;
+const rules = config.mapRules; // now map02's rules: map01 is kept for reference and older tests
+const FOREST_UPPER_SHARE_PCT = 85; // map01's rule, removed from config with map02
 
 // --- Regions: 2×2 quadrants of 9×8 hexes (designer decision). 0 = NW, 1 = NE, 2 = SW, 3 = SE.
 // The waterfall sits on the north/south border, so both halves of every river have the same slope.
@@ -112,7 +113,7 @@ for (let region = 0; region < rules.regionCount; region++) {
     h.terrain = 'forest';
     h.woodPool = config.forest.woodPool;
   };
-  const upperTarget = Math.round((rules.forestPerRegion.target * rules.forestUpperSharePct) / 100);
+  const upperTarget = Math.round((rules.forestPerRegion.target * FOREST_UPPER_SHARE_PCT) / 100);
 
   // Coverage first: every upper-half hex gets a forest within radius 3.
   for (;;) {

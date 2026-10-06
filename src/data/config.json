@@ -108,14 +108,18 @@
     "woodPct": 25
   },
   "mapRules": {
-    "totalHexes": { "target": 300, "tolerancePct": 5 },
+    "totalHexes": { "target": 672, "tolerancePct": 5 },
     "regionCount": 4,
-    "regionHexes": { "target": 75, "tolerancePct": 5 },
-    "forestPerRegion": { "target": 20, "tolerance": 3 },
-    "forestUpperSharePct": 85,
+    "regionHexes": { "target": 168, "tolerancePct": 5 },
+    "forestPerRegion": { "target": 25, "tolerance": 5 },
+    "mountainRows": 7,
+    "mountainForestPerRegion": 22,
+    "foothillRows": 2,
+    "foothillForestDensityPct": 50,
+    "highRockRows": 3,
     "forestCoverageRadius": 3,
     "rockRatio": { "targetPct": 5, "tolerancePct": 1.5 },
-    "waterRatio": { "targetPct": 15, "tolerancePct": 2 },
+    "waterRatio": { "targetPct": 13, "tolerancePct": 2 },
     "minOwnRiverRowsPerRegion": 5,
     "minLowerRiversideLandPerRegion": 4
   }

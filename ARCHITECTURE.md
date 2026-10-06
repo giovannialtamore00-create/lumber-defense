@@ -64,7 +64,7 @@ Vite needs `base: './'` so asset paths work inside itch.io's iframe.
 │  ├─ data/
 │  │  ├─ config.json             # base stats + global numbers (DESIGN §8.1)
 │  │  ├─ upgrades.json           # dev tree (DESIGN §10)
-│  │  └─ maps/map01.json
+│  │  └─ maps/map02.json   (map01.json kept for older tests)
 │  ├─ net/
 │  │  ├─ transport.ts            # Transport interface
 │  │  ├─ peerTransport.ts        # PeerJS implementation

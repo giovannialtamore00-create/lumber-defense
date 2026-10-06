@@ -52,7 +52,7 @@ export function createContext(map: MapData, config: Config, upgrades: UpgradesDa
   }
   const riverside = map.hexes.map((h, i) => h.terrain !== 'river' && neighbourIdx[i]!.some((n) => isRiver[n]));
   const riverId = map.hexes.map((h) => (h.terrain === 'river' ? (h.river ?? 0) : -1));
-  const riverRow = map.hexes.map((h) => (h.terrain === 'river' ? riverStrengthLevel(map, h.r) : 0));
+  const riverRow = map.hexes.map((h) => (h.terrain === 'river' ? riverStrengthLevel(map, h.r, config.factoryMill.riverBonusBpByRow.length) : 0));
   const forkBranch = map.hexes.map(() => false);
   for (const d of down) if (d !== 'exit' && d.length > 1) for (const b of d) forkBranch[b] = true;
   const fm = config.factoryMill;

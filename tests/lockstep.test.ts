@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import config from '../src/data/config.json';
-import map01 from '../src/data/maps/map01.json';
+import map02 from '../src/data/maps/map02.json';
 import { demoCommands } from '../src/game/demo';
 import { SimRunner } from '../src/game/simRunner';
 import { ClientLobby, HostLobby } from '../src/net/lobby';
@@ -10,7 +10,7 @@ import { hashState } from '../src/sim/hash';
 import type { MapData } from '../src/sim/map';
 import type { Config } from '../src/sim/types';
 
-const MAP = map01 as MapData;
+const MAP = map02 as MapData;
 const CFG = config as Config;
 const TICK_MS = 1000 / CFG.tickRate;
 

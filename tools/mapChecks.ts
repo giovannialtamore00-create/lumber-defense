@@ -7,7 +7,11 @@ export interface MapRules {
   regionCount: number;
   regionHexes: { target: number; tolerancePct: number };
   forestPerRegion: { target: number; tolerance: number };
-  forestUpperSharePct: number;
+  mountainRows: number;
+  mountainForestPerRegion: number;
+  foothillRows: number;
+  foothillForestDensityPct: number;
+  highRockRows: number;
   forestCoverageRadius: number;
   rockRatio: { targetPct: number; tolerancePct: number };
   waterRatio: { targetPct: number; tolerancePct: number };
@@ -80,41 +84,23 @@ export function checkMap(map: MapData, config: MapCheckConfig): CheckResult[] {
     add(`region ${r} forest`, Math.abs(n - rules.forestPerRegion.target) <= fTol, `${n} (target ${rules.forestPerRegion.target} ±${fTol})`);
   }
 
-  // Designer decision: forest sits mostly in the upper half of each region.
-  for (const r of regions) {
-    const own = inRegion(r);
-    const forests = own.filter((h) => h.terrain === 'forest');
-    const upper = forests.filter((h) => isUpperHalf(h, own)).length;
-    const share = pct(upper, forests.length);
-    add(`region ${r} forest in upper half`, share >= rules.forestUpperSharePct, `${upper}/${forests.length} = ${fmt(share)}% (min ${rules.forestUpperSharePct}%)`);
-  }
+  // Designer decision (map02): forest grows only in the mountain (top rows) and the foothill rows just below it.
+  const forestRows = rules.mountainRows + rules.foothillRows;
+  const lowForest = map.hexes.filter((h) => h.terrain === 'forest' && h.r >= forestRows);
+  add('forest only in mountain and foothills', lowForest.length === 0, `${lowForest.length} forest hexes below row ${forestRows - 1}${lowForest.length ? ': ' + lowForest.map(hexKey).join(' ') : ''}`);
 
-  // DESIGN §4.3 coverage rule, limited to the upper half of each region (designer decision).
-  // ARCHITECTURE §4 reading: every radius-3 area fully inside the region's upper half contains a forest hex.
+  // Designer decision (map02): forest covers the mountain's river banks, so no factory can be built riverside there.
+  const freeBanks = map.hexes.filter((h) => h.r < rules.mountainRows && riverside(h));
+  add('mountain river banks are forest', freeBanks.length === 0, `${freeBanks.length} free riverside land hexes in the mountain${freeBanks.length ? ': ' + freeBanks.map(hexKey).join(' ') : ''}`);
+
+  // DESIGN §4.3 coverage rule, limited to the mountain: a first outpost placed anywhere in the region's mountain has
+  // forest of its region within radius 3.
   const rad = rules.forestCoverageRadius;
   for (const r of regions) {
     const own = inRegion(r);
-    let areas = 0;
-    const failing: string[] = [];
-    for (const c of own) {
-      const disc = hexesInRadius(c, rad);
-      const inside = disc.every((h) => {
-        const m = idx.get(hexKey(h));
-        return m?.region === r && isUpperHalf(m, own);
-      });
-      if (!inside) continue;
-      areas++;
-      if (!disc.some((h) => idx.get(hexKey(h))!.terrain === 'forest')) failing.push(hexKey(c));
-    }
-    add(`region ${r} forest in every radius-${rad} area (upper)`, failing.length === 0, `${areas} areas fully inside, ${failing.length} without forest${failing.length ? ': ' + failing.join(' ') : ''}`);
-  }
-
-  // DESIGN intent reading: a first outpost placed anywhere in the upper half has forest of its region within radius 3.
-  for (const r of regions) {
-    const own = inRegion(r);
     const forests = own.filter((h) => h.terrain === 'forest');
-    const failing = own.filter((c) => isUpperHalf(c, own) && !forests.some((f) => distance(c, f) <= rad));
-    add(`region ${r} forest from every upper outpost spot`, failing.length === 0, `${failing.length} upper-half spots without forest within ${rad}${failing.length ? ': ' + failing.map(hexKey).join(' ') : ''}`);
+    const failing = own.filter((c) => c.r < rules.mountainRows && !forests.some((f) => distance(c, f) <= rad));
+    add(`region ${r} forest from every mountain outpost spot`, failing.length === 0, `${failing.length} mountain spots without forest within ${rad}${failing.length ? ': ' + failing.map(hexKey).join(' ') : ''}`);
   }
 
   // Designer decisions: carriers move only east/west within a row and pass through forests and structures. Their
@@ -210,25 +196,27 @@ function checkRivers(map: MapData, idx: Map<string, MapHex>): CheckResult[] {
       const dk = hexKey(d);
       if (idx.get(dk)?.terrain !== 'river') problems.push(`${k} → ${dk} is not river`);
       if (distance(f, d) !== 1) problems.push(`${k} → ${dk} not adjacent`);
-      if (d.r !== f.r + 1) problems.push(`${k} → ${dk} does not flow south`);
+      // Designer decision (map02): rivers may also run sideways within a row, but never uphill.
+      if (d.r !== f.r + 1 && d.r !== f.r) problems.push(`${k} → ${dk} flows uphill`);
       upstreamCount.set(dk, (upstreamCount.get(dk) ?? 0) + 1);
     }
   }
-  add('rivers flow north → south only', problems.length === 0, problems.length ? problems.join('; ') : 'every step goes one row south to an adjacent river hex');
+  add('rivers never flow uphill', problems.length === 0, problems.length ? problems.join('; ') : 'every step goes south or sideways to an adjacent river hex');
 
   // Every river hex without an upstream must be a source on the northern edge (rivers span the map N→S).
   const sources = rivers.filter((h) => !upstreamCount.has(hexKey(h)));
   const badSources = sources.filter((h) => h.r !== minRow);
   add('rivers start at northern edge', badSources.length === 0, `${sources.length} sources${badSources.length ? ', not on edge: ' + badSources.map(hexKey).join(' ') : ''}`);
 
-  // Every path reaches an exit. Rows strictly increase so there are no cycles; check every hex reaches "exit".
+  // Every path reaches an exit. Sideways steps could loop, so a hex still being explored counts as stuck.
   const reaches = new Map<string, boolean>();
   const reachesExit = (h: Hex): boolean => {
     const k = hexKey(h);
     const cached = reaches.get(k);
     if (cached !== undefined) return cached;
+    reaches.set(k, false);
     const f = flowIdx.get(k);
-    const ok = !!f && (f.down === 'exit' || (f.down.length > 0 && f.down.every((d) => d.r > h.r && reachesExit(d))));
+    const ok = !!f && (f.down === 'exit' || (f.down.length > 0 && f.down.every((d) => d.r >= h.r && reachesExit(d))));
     reaches.set(k, ok);
     return ok;
   };

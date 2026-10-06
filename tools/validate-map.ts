@@ -5,7 +5,7 @@ import config from '../src/data/config.json';
 import type { MapData } from '../src/sim/map';
 import { checkMap } from './mapChecks';
 
-const path = process.argv[2] ?? 'src/data/maps/map01.json';
+const path = process.argv[2] ?? 'src/data/maps/map02.json';
 const map = JSON.parse(readFileSync(path, 'utf8')) as MapData;
 const results = checkMap(map, config);
 

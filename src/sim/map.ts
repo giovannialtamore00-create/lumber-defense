@@ -29,13 +29,20 @@ export interface MapData {
 }
 
 /**
- * River strength level at row `r`: 1 in the first row of the map and right below a waterfall, rising by 1 per row
- * to its maximum on the last row before the next waterfall or the southern edge (DESIGN §4.3).
+ * River strength level at row `r`: 1 in the first row of the map and right below a waterfall, rising row by row
+ * to `levels` on the last row before the next waterfall or the southern edge (DESIGN §4.3).
  */
-export function riverStrengthLevel(map: MapData, r: number): number {
+export function riverStrengthLevel(map: MapData, r: number, levels: number): number {
   let segmentStart = 0;
-  for (const w of map.waterfallAfterRows) if (w < r) segmentStart = Math.max(segmentStart, w + 1);
-  return r - segmentStart + 1;
+  let segmentEnd = map.height - 1;
+  for (const w of map.waterfallAfterRows) {
+    if (w < r) segmentStart = Math.max(segmentStart, w + 1);
+    else segmentEnd = Math.min(segmentEnd, w);
+  }
+  // A half taller than `levels` rows spreads the levels evenly: first row 1, last row `levels` (integer math).
+  const span = segmentEnd - segmentStart;
+  if (span < levels) return r - segmentStart + 1;
+  return 1 + Math.floor(((r - segmentStart) * (levels - 1)) / span);
 }
 
 /** Rectangle maps use "odd-r" offset rows (odd rows shifted east). North is row 0. */

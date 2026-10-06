@@ -1,6 +1,6 @@
 // Economy simulator (balance tool): plays solo matches with scripted strategies on the real sim, no rendering, and
 // reports how the economy develops. Only normal commands are used, so every rule applies.
-//   npx tsx tools/econ-sim.ts <strategies.json> [--playtest] [--minutes 60] [--seed 5] [--out results.json]
+//   npx tsx tools/econ-sim.ts <strategies.json> [--playtest] [--minutes 10] [--allow-long] [--seed 5] [--out results.json]
 //     [--pool <wood per forest hex>] [--chop <woodchopper wood/s>] [--costs <factor on every item cost>]
 // The overrides try balance changes without editing config.json.
 // "Passive minutes": minutes of play in which less wood reached factory-mills than passive income gives, i.e. the
@@ -8,7 +8,7 @@
 // strategies.json: an array of Strategy objects (see below); unknown fields fall back to the defaults.
 import { readFileSync, writeFileSync } from 'node:fs';
 import config from '../src/data/config.json';
-import map01 from '../src/data/maps/map01.json';
+import map02 from '../src/data/maps/map02.json';
 import { createContext } from '../src/sim/context';
 import { distance, hexesInRadius } from '../src/sim/hex';
 import type { MapData } from '../src/sim/map';
@@ -69,7 +69,12 @@ const flag = (name: string, fallback: string) => {
 };
 const strategies: Strategy[] = (JSON.parse(readFileSync(args[0]!, 'utf8')) as Partial<Strategy>[]).map((s) => ({ ...DEFAULTS, ...s }));
 const PLAYTEST = args.includes('--playtest');
-const MINUTES = Number(flag('--minutes', '60'));
+const MAX_DEFAULT_MINUTES = 10;
+const MINUTES = Number(flag('--minutes', String(MAX_DEFAULT_MINUTES)));
+if (MINUTES > MAX_DEFAULT_MINUTES && !args.includes('--allow-long')) {
+  console.error(`--minutes ${MINUTES} exceeds the ${MAX_DEFAULT_MINUTES}-minute default cap. Add --allow-long to run longer.`);
+  process.exit(1);
+}
 const SEED = Number(flag('--seed', '5'));
 const OUT = flag('--out', '');
 
@@ -84,9 +89,9 @@ function tunedConfig(): Config {
   }
   return c;
 }
-/** map01 stores each forest hex's wood itself: a --pool override applies there too. */
+/** map02 stores each forest hex's wood itself: a --pool override applies there too. */
 function tunedMap(c: Config): MapData {
-  const m = structuredClone(map01) as MapData;
+  const m = structuredClone(map02) as MapData;
   if (args.includes('--pool')) for (const h of m.hexes) if (h.woodPool !== undefined) h.woodPool = c.forest.woodPool;
   return m;
 }

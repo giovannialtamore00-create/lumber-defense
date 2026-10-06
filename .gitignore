@@ -13,3 +13,6 @@ pack/patch*.js
 
 # Local simulation screenshots
 sim-results/
+
+# Local headless-Chrome profile (tools/browser.mjs)
+chrome-prof/

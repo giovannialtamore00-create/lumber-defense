@@ -32,40 +32,48 @@ Game design for a 2–4 player browser tower-defense / territory game built arou
 ### 4.1 View and grid
 - **Isometric 2D.** All icons for structures and machines are **stylized**.
 - The map is made of **hexagonal chunks**. **Only one structure or machine per chunk.**
-- **North is uphill, south is downhill.** Rivers always flow **north → south**.
+- **North is uphill, south is downhill.** Rivers always flow **north → south**; they may also run **sideways along a
+  row** for a hex or two (never uphill), so they snake (decided, map02).
 - Throughout the design, **"close to" means adjacent** (touching hexes).
 
 ### 4.2 Size and regions
-- About **300 hexes** in total.
-- Divided into **4 regions** of about **75 hexes** each, one per player.
 - The map's starting layout is **fixed**: the same map every match.
-- **Region layout (decided):** 2×2 quadrants (NW, NE, SW, SE). map01 is **18×16 = 288 hexes**, 4 regions of 9×8 = 72.
-  The rivers are long enough that **every region has its own stretch of river**, so each player can drop wood in
-  upstream and collect it downstream inside their own region.
+- **Size and regions (decided, map02):** **28×24 = 672 hexes**, divided into **4 vertical strips** (sectors) of 7×24 =
+  168 hexes, one per player: **west, middle-west, middle-east, east**. (map01 was 18×16 with 2×2 quadrants.)
+  Every region has its own stretch of river, so each player can drop wood in upstream and collect it downstream.
+- **Mountain (decided):** the **top 30%** of the map (rows 0–6) is the mountain area.
 
 ### 4.3 Terrain
 - **Forests** are the main landmark. Each forest hex holds a pool of **150 wood** (raised from 100 after the economy simulations, see §8.1).
-- **Forest density:** about **20 forest hexes per 75-hex region**. Map rule: **every possible 7-hex-diameter
-  (radius 3) area inside a region must contain at least one forest hex**, so wherever the player places their first
-  outpost they start with forest.
-- **Forest placement (decided):** forest **grows out from the water** and sits **mostly in the upper (northern) half
-  of each region** (about 85%, placeholder). This is what makes downstreaming relevant: wood is cut up top, routed
-  to the river and carried downstream to where there is space to build. The coverage rule above now applies **only
-  to the upper half** of each region; an outpost placed low in a region may start without forest.
-- **Rocks/obstacles:** about **5%** of hexes.
+- **Forest placement (decided, map02):** forest grows **only in the mountain**, growing out from the water, about
+  **22 forest hexes per region** there. Every **river bank in the mountain is forest**, so no factory can be built
+  riverside up there. The **2 rows below the mountain** (foothills) get forest at **half the mountain's density**,
+  mostly next to rivers. Nothing grows lower. This makes downstreaming relevant: wood is cut up top, routed to the
+  river and carried downstream to where there is space to build. Map rule: from **any mountain hex** of a region
+  there is forest of that region within radius 3; an outpost placed lower may start without forest.
+- **Rocks/obstacles (decided, map02):** about **5%** of hexes. Rocks are **more likely next to rivers**, **twice as
+  likely in the mountain**, and half of those that would fall in the bottom half are moved into the **top 3 rows**.
+  A rock never cuts a forest off from its riverside drop-off.
 - **Rivers:** there can be **several rivers**. They span the map from north to south and can **fork and merge**.
-- **Water ratio (decided):** about **15%** of hexes are river. map01 has 3 rivers, including **forks and merges**
-  (decided); the central one runs along the west/east border and touches all four regions.
+- **Rivers on map02 (decided):** 3 rivers start in the mountain.
+  **River 1** starts in the east sector and flows south-west into middle-east, where it **forks**: one branch turns
+  back into the east sector, the other continues into middle-west and leaves at the south edge.
+  **River 2** starts in middle-east and turns west into middle-west almost immediately. **River 3** starts in the
+  west sector and flows south-east into middle-west, where it **merges** with river 2 about halfway down; the merged
+  river continues into the west sector and leaves at the south edge.
+- **Water ratio:** about **13%** of hexes are river on map02 (was 15% on map01; designer: don't stress the numbers).
 - **Float speed (decided):** river strength does **not** change how fast wood floats.
 - **Waterfall and piles (decided):** nothing happens to a pile at the waterfall; it keeps floating.
 - The river keeps flowing past the southern edge of the map, but **you can't see it there**.
 - **Waterfall and river strength (decided):** on a 4-player map a **small waterfall runs across the horizontal middle
   of the map** and levels the river slope. River strength (water speed) is **weakest in the first row** of each half
-  and **strongest in the last row** of each half (just above the waterfall, and at the southern edge). The waterfall
+  and **strongest in the last row** of each half (just above the waterfall, and at the southern edge). On map02 each
+  half is 12 rows tall, so the 8 strength levels are spread evenly over its rows (placeholder). The waterfall
   and the strength gradient are both **shown on the map** and explained in the UI.
 
 ### 4.4 Map authoring
 - Map layouts are proposed and then approved by the designer. **map01 approved** (18×16, 2026-09-29).
+  **map02 approved** (28×24, 2026-10-05) and is the map in play.
 - A **map editor** is on the wishlist.
 
 ## 5. Match start
@@ -580,7 +588,7 @@ Interpretations used to build the ★ ideas (decided by Claude, easy to change):
 1. ~~**Starting woodchopper**~~: decided, it appears automatically once the first outpost is placed, on the forest
    hex closest to the outpost (ties broken by a fixed hex order) (§5).
 2. ~~**Water ratio**~~: decided, about 15% (§4.3).
-3. ~~**Region layout**~~: decided, 2×2 quadrants, every region gets river (§4.2).
+3. ~~**Region layout**~~: decided, 4 vertical strips on map02 (was 2×2 quadrants), every region gets river (§4.2).
 4. **Moving units and hexes:** ~~carriers~~: decided, they pass through everything except rocks and water (§6.4).
    ~~Catapults~~: decided, they **pass through units** (like carriers), not through rocks or water.
 5. **Bot strategy:** bots use the same rules as humans, but how they decide what to do is not designed yet.

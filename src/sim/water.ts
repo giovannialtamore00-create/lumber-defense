@@ -1,7 +1,8 @@
 // Live water (DESIGN §4.3, §8.4b–d): the map's rivers plus dug hexes that water has filled, and rocks that stone
 // cutters haven't broken yet. Gameplay code asks these functions instead of reading the map's fixed data.
 //
-// Water only flows down: a hex's downstream hexes are the two below it (south-west and south-east). A dug hex fills
+// Map rivers follow the flow stored in the map (south, or sideways along a row on map02). Dug water only flows down:
+// a dug hex's downstream hexes are the two below it (south-west and south-east). A dug hex fills
 // when the hex above it (north-west or north-east) is water. A natural river forks into a filled dug hex below it.
 import type { SimContext } from './context';
 import type { GameState } from './types';

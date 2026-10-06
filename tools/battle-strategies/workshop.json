@@ -1,0 +1,63 @@
+[
+ {
+  "name": "W1",
+  "millsEarly": 2,
+  "docksPerMill": 3,
+  "choppersPerOutpost": 4,
+  "carriersPerChopper": 1,
+  "guardsPerOutpost": 1,
+  "workshopAt": 10,
+  "catapultsFromMin": 14,
+  "catapultsPerConflict": 3,
+  "catapultsIdle": 1,
+  "focusFromMin": 16,
+  "leadRatio": 1.2,
+  "upgrades": [["woodchopper", 0], ["dock", 0], ["workshop", 0], ["dock", 0], ["factory", 0], ["woodchopper", 0], ["dock", 1], ["factory", 1], ["catapult", 0], ["catapult", 1], ["factory", 0], ["factory", 1]]
+ },
+ {
+  "name": "W2",
+  "millsEarly": 2,
+  "docksPerMill": 3,
+  "choppersPerOutpost": 4,
+  "carriersPerChopper": 1,
+  "guardsPerOutpost": 1,
+  "workshopAt": 8,
+  "catapultsFromMin": 12,
+  "catapultsPerConflict": 3,
+  "catapultsIdle": 1,
+  "focusFromMin": 15,
+  "leadRatio": 1.2,
+  "upgrades": [["workshop", 0], ["workshop", 1], ["woodchopper", 0], ["dock", 0], ["factory", 0], ["factory", 1], ["dock", 1], ["woodchopper", 0], ["catapult", 0], ["catapult", 1], ["dock", 0], ["factory", 0]]
+ },
+ {
+  "name": "W3",
+  "millsEarly": 3,
+  "docksPerMill": 3,
+  "choppersPerOutpost": 4,
+  "carriersPerChopper": 2,
+  "guardsPerOutpost": 1,
+  "workshopAt": 12,
+  "catapultsFromMin": 16,
+  "catapultsPerConflict": 3,
+  "catapultsIdle": 2,
+  "focusFromMin": 18,
+  "leadRatio": 1.2,
+  "upgrades": [["dock", 0], ["dock", 1], ["woodchopper", 0], ["workshop", 0], ["dock", 0], ["factory", 0], ["woodchopper", 0], ["factory", 1], ["catapult", 0], ["dock", 1], ["catapult", 1], ["factory", 0]]
+ },
+ {
+  "name": "W4",
+  "millsEarly": 2,
+  "docksPerMill": 3,
+  "choppersPerOutpost": 3,
+  "carriersPerChopper": 1,
+  "guardsPerOutpost": 2,
+  "workshopAt": 10,
+  "aggressionFromMin": 18,
+  "catapultsFromMin": 15,
+  "catapultsPerConflict": 4,
+  "catapultsIdle": 2,
+  "focusFromMin": 17,
+  "leadRatio": 1.0,
+  "upgrades": [["woodchopper", 0], ["workshop", 0], ["factory", 0], ["factory", 1], ["dock", 0], ["catapult", 0], ["woodchopper", 0], ["catapult", 1], ["dock", 1], ["catapult", 0], ["factory", 0], ["factory", 1]]
+ }
+]

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import config from '../src/data/config.json';
-import map01 from '../src/data/maps/map01.json';
+import map02 from '../src/data/maps/map02.json';
 import { type SimContext, createContext } from '../src/sim/context';
 import { hashState } from '../src/sim/hash';
 import type { MapData } from '../src/sim/map';
@@ -40,7 +40,7 @@ function scriptedCommands(state: GameState, ctx: SimContext): Command[] {
 
 describe('determinism (ARCHITECTURE §5)', () => {
   it('two sims with the same seed and commands have equal hashes every tick', () => {
-    const ctx = createContext(map01 as MapData, config as Config);
+    const ctx = createContext(map02 as MapData, config as Config);
     const a = createInitialState(ctx, 4, 12345);
     const b = createInitialState(ctx, 4, 12345);
     let sawPile = false;
@@ -60,7 +60,7 @@ describe('determinism (ARCHITECTURE §5)', () => {
   });
 
   it('a different seed gives a different match', () => {
-    const ctx = createContext(map01 as MapData, config as Config);
+    const ctx = createContext(map02 as MapData, config as Config);
     expect(hashState(createInitialState(ctx, 4, 1))).not.toBe(hashState(createInitialState(ctx, 4, 2)));
   });
 });

@@ -5,7 +5,7 @@
 // win before the cap counts as a win.
 import { readFileSync, writeFileSync } from 'node:fs';
 import config from '../src/data/config.json';
-import map01 from '../src/data/maps/map01.json';
+import map02 from '../src/data/maps/map02.json';
 import { createContext } from '../src/sim/context';
 import { distance, hexesInRadius } from '../src/sim/hex';
 import type { MapData } from '../src/sim/map';
@@ -113,7 +113,7 @@ export interface MatchResult {
 }
 
 export function runMatch(strategies: Strategy[], seed: number, minutes: number, playtest: boolean, cfg: Config = config as Config): MatchResult {
-  const ctx = createContext(map01 as MapData, cfg);
+  const ctx = createContext(map02 as MapData, cfg);
   const state: GameState = createInitialState(ctx, 4, seed, [false, false, false, false]);
   const notes: string[] = [];
   const hexes = ctx.map.hexes;
