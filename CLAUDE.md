@@ -3,9 +3,11 @@
 Browser tower-defense / territory game (2–4 players, wood floating down rivers), published on itch.io.
 
 ## Status
-- Current milestone: (fill in at the next commit; see ARCHITECTURE.md §11)
-- Last commit: b4df293 "Catapult cost and craft time +50%". Uncommitted changes in the tree are the designer's work in progress; never commit them unasked.
-- Known issues / next step: (fill in)
+- Current milestone: M8 Playtest build. Live at https://giovannialtamore00-create.github.io/lumber-defense/ (public repo
+  giovannialtamore00-create/lumber-defense; every push to main tests, builds and deploys via `.github/workflows/deploy.yml`).
+  Linked from the Platypus site card.
+- Uncommitted changes in the tree are the designer's work in progress; never commit them unasked.
+- Known issues / next step: map02 is still work in progress (published as-is at the designer's request).
 
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.
