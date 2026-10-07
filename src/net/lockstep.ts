@@ -47,8 +47,8 @@ export class LockstepSession {
     transport.onMessage((from, msg) => {
       switch (msg.t) {
         case 'cmd':
-          // Only the host schedules commands, and only for the sender's own slot.
-          if (this.isHost && this.peerSlots.get(from) === msg.command.player) this.queue.push(msg.command);
+          // Only the host schedules commands, and only for the sender's own slot (bot commands come from the host only).
+          if (this.isHost && this.peerSlots.get(from) === msg.command.player && !msg.command.bot) this.queue.push(msg.command);
           break;
         case 'bundle':
           if (!this.isHost) this.bundles.set(msg.tick, msg.commands);

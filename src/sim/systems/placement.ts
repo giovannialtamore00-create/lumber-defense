@@ -16,8 +16,11 @@ function isOpenLand(state: GameState, ctx: SimContext, i: number): boolean {
   return !isWater(state, ctx, i) && !isRock(state, ctx, i) && !isForest(state, i) && !structureAt(state, h.q, h.r);
 }
 
-/** Why `player` can't place `item` on hex (q, r), or null if they can. Carriers use `carrierRouteError`. */
-export function placementError(state: GameState, ctx: SimContext, player: number, item: ItemKind, q: number, r: number): string | null {
+/**
+ * Why `player` can't place `item` on hex (q, r), or null if they can. Carriers use `carrierRouteError`. `asBot`: asked
+ * for the bot playing the slot (M7), so a bot-held slot isn't an error.
+ */
+export function placementError(state: GameState, ctx: SimContext, player: number, item: ItemKind, q: number, r: number, asBot = false): string | null {
   const p = state.players[player];
   if (!p) return 'no such player';
   const i = idx(ctx, { q, r });
@@ -26,7 +29,7 @@ export function placementError(state: GameState, ctx: SimContext, player: number
 
   if (!p.started) {
     if (item !== 'outpost') return 'place your first outpost first';
-    return firstOutpostError(state, ctx, player, i);
+    return firstOutpostError(state, ctx, player, i, asBot);
   }
   if (item === 'carrier') return 'carriers are placed with a route';
   if (!isCoveredBy(state, i, player)) return 'outside your territory';
@@ -146,9 +149,9 @@ export function canCollectAt(state: GameState, ctx: SimContext, i: number, playe
  * First outpost (DESIGN §5): anywhere in the player's own region, and only a valid start if its territory contains a
  * forest and a free riverside hex (somewhere to put the factory-mill).
  */
-function firstOutpostError(state: GameState, ctx: SimContext, player: number, i: number): string | null {
+function firstOutpostError(state: GameState, ctx: SimContext, player: number, i: number, asBot: boolean): string | null {
   const hex = ctx.map.hexes[i]!;
-  if (state.players[player]!.bot) return 'a bot has your slot';
+  if (state.players[player]!.bot && !asBot) return 'a bot has your slot';
   if (state.phase === 'start' && currentTurnPlayer(state) !== player) return 'wait for your turn';
   if (hex.region !== state.players[player]!.region) return 'outside your region';
   if (!isOpenLand(state, ctx, i)) return isWater(state, ctx, i) ? 'water' : isRock(state, ctx, i) ? 'rock' : isForest(state, i) ? 'trees' : 'already taken';

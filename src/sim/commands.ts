@@ -18,7 +18,7 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
     player.bot = false; // step back in, at whatever progress the bot has reached (DESIGN §5)
     return;
   }
-  if (player.bot) return; // the bot has this slot
+  if (player.bot !== (cmd.bot === true)) return; // the bot has this slot, or the player has it back
   if (player.defeated || state.phase === 'over') return; // out of the game, or the match has ended (DESIGN §11)
   if (cmd.type === 'setPlaytest') {
     state.playtest = cmd.on === true; // any player, any time (DESIGN §7.5)
@@ -28,7 +28,7 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
 
   switch (cmd.type) {
     case 'placeOutpost': {
-      if (player.started || placementError(state, ctx, cmd.player, 'outpost', cmd.q, cmd.r)) return;
+      if (player.started || placementError(state, ctx, cmd.player, 'outpost', cmd.q, cmd.r, cmd.bot === true)) return;
       addStructure(state, ctx, 'outpost', cmd.player, cmd.q, cmd.r).radius = ctx.config.outpost.firstTerritoryRadius;
       territoryChanged(state, ctx);
       player.started = true;

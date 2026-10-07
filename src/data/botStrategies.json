@@ -1,0 +1,75 @@
+{
+  "defaults": {
+    "name": "default",
+    "millsEarly": 2,
+    "docksPerMill": 1,
+    "choppersPerOutpost": 3,
+    "carriersPerChopper": 1,
+    "guardsPerOutpost": 0,
+    "expandBelowForest": 400,
+    "expandEveryBuildings": 8,
+    "maxOutposts": 12,
+    "workshopAt": 8,
+    "upgrades": [],
+    "aggressionFromMin": 999,
+    "catapultsFromMin": 15,
+    "catapultsPerConflict": 2,
+    "catapultsIdle": 0,
+    "focusFromMin": 999,
+    "leadRatio": 1.2,
+    "conquest": true
+  },
+  "inGame": [
+    {
+      "name": "B",
+      "millsEarly": 2,
+      "docksPerMill": 2,
+      "choppersPerOutpost": 4,
+      "guardsPerOutpost": 2,
+      "workshopAt": 8,
+      "aggressionFromMin": 23,
+      "catapultsFromMin": 20,
+      "catapultsPerConflict": 4,
+      "upgrades": [["forestGuard", 1], ["woodchopper", 0], ["factory", 0], ["forestGuard", 1], ["dock", 1], ["outpost", 1], ["outpost", 1], ["forestGuard", 1]]
+    },
+    {
+      "name": "O",
+      "millsEarly": 2,
+      "docksPerMill": 2,
+      "choppersPerOutpost": 3,
+      "guardsPerOutpost": 1,
+      "workshopAt": 6,
+      "catapultsFromMin": 9,
+      "catapultsPerConflict": 4,
+      "focusFromMin": 10,
+      "leadRatio": 1,
+      "upgrades": [["catapult", 1], ["woodchopper", 0], ["catapult", 0], ["forestGuard", 1]]
+    },
+    {
+      "name": "P",
+      "millsEarly": 2,
+      "docksPerMill": 2,
+      "choppersPerOutpost": 4,
+      "guardsPerOutpost": 2,
+      "workshopAt": 6,
+      "catapultsFromMin": 12,
+      "catapultsPerConflict": 4,
+      "focusFromMin": 13,
+      "leadRatio": 1.5,
+      "upgrades": [["woodchopper", 0], ["forestGuard", 1], ["factory", 0], ["outpost", 1], ["catapult", 1], ["catapult", 0]]
+    },
+    {
+      "name": "S",
+      "millsEarly": 2,
+      "docksPerMill": 2,
+      "choppersPerOutpost": 4,
+      "guardsPerOutpost": 1,
+      "workshopAt": 6,
+      "catapultsFromMin": 9,
+      "catapultsPerConflict": 4,
+      "focusFromMin": 11,
+      "leadRatio": 1.2,
+      "upgrades": [["woodchopper", 0], ["forestGuard", 1], ["factory", 0], ["catapult", 1], ["catapult", 0], ["catapult", 1]]
+    }
+  ]
+}

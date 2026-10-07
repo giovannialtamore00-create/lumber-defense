@@ -315,7 +315,13 @@ export interface GameState {
   debrisFire: (Fire | null)[];
 }
 
-export type Command =
+/**
+ * A player's command. `bot` marks commands from the host's bot for a slot a bot plays (M7): the sim takes those only
+ * while a bot has the slot, and the player's own commands only while it doesn't.
+ */
+export type Command = CommandBody & { bot?: true };
+
+type CommandBody =
   | { type: 'placeOutpost'; player: number; q: number; r: number }
   | { type: 'place'; player: number; item: StructureKind; q: number; r: number }
   | { type: 'placeCarrier'; player: number; aQ: number; bQ: number; r: number }
