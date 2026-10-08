@@ -1,5 +1,6 @@
 // Runs the sim for the game layer through a lockstep session: the host's clock closes one bundle per tick, and every
 // client steps each tick once its bundle has arrived. Remembers previous positions for smooth rendering.
+import { type Bot, IN_GAME_STRATEGIES, THINK_EVERY_TICKS, createBot } from '../bots/bot';
 import type { LockstepSession } from '../net/lockstep';
 import { HASH_EVERY_TICKS } from '../net/lockstep';
 import { type SimContext, createContext } from '../sim/context';
@@ -17,6 +18,8 @@ export class SimRunner {
   readonly state: GameState;
   /** Carrier q positions (milli-hex) before the last tick, by entity id, for interpolation. */
   readonly prevCarrierQ = new Map<number, number>();
+  /** Host only: the brain of each slot a bot plays, by player id. */
+  private readonly bots = new Map<number, Bot>();
   private clock = 0;
   private lastNow: number | null = null;
   private sinceStep = 0;
@@ -114,6 +117,21 @@ export class SimRunner {
       if (this.state.tick % LOG_SNAPSHOT_TICKS === 0 || this.state.phase === 'over') this.snapshot();
       this.sinceStep = 0;
       if (this.state.tick % HASH_EVERY_TICKS === 0) this.session.reportHash(this.state.tick, hashState(this.state));
+      if (this.session.isHost && this.state.tick % THINK_EVERY_TICKS === 0) this.runBots();
+    }
+  }
+
+  /** Host only: every slot a bot plays (empty at the start, or a player whose timer ran out) gets a brain. */
+  private runBots(): void {
+    for (const p of this.state.players) {
+      if (!p.bot || p.defeated) continue;
+      let bot = this.bots.get(p.id);
+      if (!bot) {
+        const strategy = IN_GAME_STRATEGIES[this.bots.size % IN_GAME_STRATEGIES.length]!;
+        bot = createBot(this.ctx, this.state, p.id, strategy, { asBot: true });
+        this.bots.set(p.id, bot);
+      }
+      for (const c of bot.think()) this.session.submit(c);
     }
   }
 

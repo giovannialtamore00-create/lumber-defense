@@ -1,4 +1,5 @@
 {
+  "thinkEveryTicks": 20,
   "defaults": {
     "name": "default",
     "millsEarly": 2,

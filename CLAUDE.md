@@ -63,4 +63,4 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 TypeScript (strict), Phaser 3, Vite, Vitest, PeerJS. Node scripts run with `tsx`.
 
 ## Known mistakes (one line each time Claude gets something wrong)
-- (none yet)
+- Ran `battle-sim` for 30 minutes unasked (its own default is 30): always pass `--minutes 10` unless the designer asks for more.

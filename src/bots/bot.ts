@@ -39,6 +39,9 @@ export interface Strategy {
 
 export const DEFAULTS = strategies.defaults as Strategy;
 
+/** How often a bot looks at the match and acts. */
+export const THINK_EVERY_TICKS = strategies.thinkEveryTicks;
+
 /** The strategies in-game bots play, in slot order (designer's pick: the round 3 mix). */
 export const IN_GAME_STRATEGIES: Strategy[] = strategies.inGame.map((s) => ({ ...DEFAULTS, ...s }) as Strategy);
 
