@@ -11,5 +11,7 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',
+    // Match-length sims run past Vitest's 5 s default on GitHub's slower runners.
+    testTimeout: 30_000,
   },
 });
