@@ -8,6 +8,10 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
   Linked from the Platypus site card.
 - Uncommitted changes in the tree are the designer's work in progress; never commit them unasked.
 - Known issues / next step: map02 is still work in progress (published as-is at the designer's request).
+- M9 UI rework (wood theme, no IKEA references in the visuals; the name changes later): U1 menu + lobby done
+  (scorched plywood panel, branded title, pine forest, river with logs, embers, synthesized river/forest ambience in
+  `src/game/ui/ambience.ts`). Next: U2 in-game Phaser HUD (`UIScene.ts`), then U3 workshop/trade panels, tooltips,
+  end screen. Open: in-game forest/river sounds in U2?
 
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.

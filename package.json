@@ -16,6 +16,7 @@
     "share": "vite build && node tools/share.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
     "peerjs": "^1.5.5",
     "phaser": "^3.90.0"
   },
