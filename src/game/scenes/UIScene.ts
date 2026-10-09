@@ -13,18 +13,30 @@ import { openTradePanel } from '../ui/tradePanel';
 import { canDismantle, describe, kindOf, refundOf } from '../ui/describe';
 import { WORKSHOP_W, WorkshopPanel } from '../ui/workshopPanel';
 import { ownsWorkshop } from '../../sim/upgrades';
+import { toggleVolumePanel } from '../ui/volume';
 
+/** The wood look shared with the main menu: dark charred-wood panels, birch text, ember for what's active. */
+export const FONT = "'Archivo Variable', sans-serif";
+const CHAR = 0x24160d;
+const BIRCH = '#e6cfa0';
+const MUTED = '#b8996c';
+const EMBER = 0xe8742a;
 const TEXT_STYLE = {
-  fontFamily: 'sans-serif',
+  fontFamily: FONT,
   fontSize: '13px',
-  color: '#e8dcc4',
-  backgroundColor: '#000000aa',
+  color: BIRCH,
+  backgroundColor: '#24160ddd',
   padding: { x: 6, y: 4 },
 };
 const PANEL_W = 320;
 const ROW_H = 46;
+/** Height of the top strip (menu, players, clock, stone, wood). */
+const BAR_H = 52;
 /** The big buttons (Build, Workshop, Hammer, Trade, warehouse): twice the normal size (DESIGN §12). */
-const BIG = { fontFamily: 'sans-serif', fontSize: '26px', fontStyle: 'bold', color: '#f3e3c3', padding: { x: 12, y: 8 } };
+const BIG = { fontFamily: FONT, fontSize: '26px', fontStyle: 'bold', color: BIRCH, padding: { x: 12, y: 8 } };
+/** Button backgrounds: dark wood, ember when switched on. */
+const BTN = '#3a2516';
+const BTN_ON = '#b8541c';
 
 /** Screen-fixed UI drawn above GameScene, unaffected by the map camera's pan and zoom. */
 export class UIScene extends Phaser.Scene {
@@ -39,10 +51,12 @@ export class UIScene extends Phaser.Scene {
   private warehouseAt = { x: 0, y: 0 };
   private statusText!: Phaser.GameObjects.Text;
   private clockText!: Phaser.GameObjects.Text;
-  private pauseButton!: Phaser.GameObjects.Text;
   private pausedBanner!: Phaser.GameObjects.Text;
-  private playtestButton!: Phaser.GameObjects.Text;
   private stanceButton!: Phaser.GameObjects.Text;
+  private menu!: Phaser.GameObjects.Container;
+  private menuItems: { text: Phaser.GameObjects.Text; label: () => string }[] = [];
+  private playerDots!: Phaser.GameObjects.Graphics;
+  private playersRight = 0;
   private debugText!: Phaser.GameObjects.Text;
   private tutorial!: Phaser.GameObjects.Container;
   private tutorialTitle!: Phaser.GameObjects.Text;
@@ -82,11 +96,12 @@ export class UIScene extends Phaser.Scene {
     this.craftButton = undefined;
     this.workshop = undefined;
     const { width, height } = this.scale;
-    this.add.text(10, 8, '▲ NORTH (uphill) — rivers flow south   ·   drag / WASD: pan   ·   wheel: zoom   ·   C: coordinates', TEXT_STYLE);
-    // The river legend sits under the player list; the bottom left holds the tools and the warehouse.
-    this.drawRiverLegend(10, 40 + this.runner.state.players.length * 24 + 8);
+    // Top strip: Menu, players, the clock (click it to pause), stone, and wood large at the top right (DESIGN §7.1).
+    const bar = this.add.graphics();
+    bar.fillStyle(CHAR, 0.94).fillRect(0, 0, width, BAR_H);
+    for (let i = 0; i < 3; i++) bar.fillStyle(i % 2 ? 0xd9bd8a : 0xb98a55, 1).fillRect(0, BAR_H + i * 2, width, 2); // plywood edge
+    this.add.text(12, BAR_H + 14, 'N ▲', { ...TEXT_STYLE, fontStyle: 'bold' }); // north is uphill: rivers flow south
 
-    // Top right: wood count, large, with a wood icon, and the build dropdown under it (DESIGN §7.1).
     const icon = this.add.graphics();
     const ix = width - 150;
     icon.fillStyle(0x8a5a2b, 1);
@@ -95,9 +110,9 @@ export class UIScene extends Phaser.Scene {
     icon.fillStyle(0xd9b77e, 1);
     icon.fillCircle(ix + 32, 28, 5.5);
     icon.fillCircle(ix + 32, 18, 5.5);
-    this.woodText = this.add.text(width - 105, 8, '', { fontFamily: 'sans-serif', fontSize: '34px', fontStyle: 'bold', color: '#f3e3c3' });
+    this.woodText = this.add.text(width - 105, 6, '', { fontFamily: FONT, fontSize: '34px', fontStyle: 'bold', color: BIRCH });
     // Stone (DESIGN §7.3a), left of the wood count.
-    const sx = width - 270;
+    const sx = width - 250;
     icon.fillStyle(0x8a8d91, 1).fillPoints(
       [
         { x: sx, y: 34 },
@@ -109,75 +124,28 @@ export class UIScene extends Phaser.Scene {
       true,
     );
     icon.fillStyle(0xb3b6ba, 1).fillTriangle(sx + 6, 20, sx + 16, 14, sx + 14, 28);
-    this.stoneText = this.add.text(sx + 40, 8, '', { fontFamily: 'sans-serif', fontSize: '34px', fontStyle: 'bold', color: '#d9dbe0' });
+    this.stoneText = this.add.text(sx + 40, 10, '', { fontFamily: FONT, fontSize: '26px', fontStyle: 'bold', color: '#d9dbe0' });
 
-    // Time played (match ticks, so it stops while paused) and the pause button, left of the stone count.
-    this.clockText = this.add.text(sx - 16, 12, '', { ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', fixedWidth: 92, align: 'center' }).setOrigin(1, 0);
-    this.pauseButton = this.add
-      .text(this.clockText.getBounds().left - 8, 12, '', { ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', fixedWidth: 110, align: 'center' })
+    // Time played (match ticks, so it stops while paused); clicking it pauses and resumes.
+    this.clockText = this.add
+      .text(sx - 24, 11, '', { fontFamily: FONT, fontSize: '20px', fontStyle: 'bold', color: BIRCH, padding: { x: 10, y: 4 } })
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.runner.setPaused(!this.runner.paused));
-    // Surrender (DESIGN §11): a white flag and text, with a confirmation.
-    const surrender = this.add
-      .text(this.pauseButton.getBounds().left - 8, 12, 'Surrender', {
-        ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', color: '#ffffff', backgroundColor: '#5a5048', padding: { left: 30, right: 6, top: 4, bottom: 4 },
-      })
-      .setOrigin(1, 0);
-    const fb = surrender.getBounds();
-    this.add
-      .graphics()
-      .fillStyle(0xd9c7a3, 1)
-      .fillRect(fb.left + 9, fb.top + 5, 2, fb.height - 10)
-      .fillStyle(0xffffff, 1)
-      .fillTriangle(fb.left + 11, fb.top + 6, fb.left + 25, fb.top + 11, fb.left + 11, fb.top + 16);
-    surrender
+
+    const menuButton = this.add
+      .text(8, 11, '≡  Menu', { fontFamily: FONT, fontSize: '20px', fontStyle: 'bold', color: BIRCH, padding: { x: 10, y: 4 } })
       .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
-        const { state } = this.runner;
-        if (state.phase !== 'running' || state.players[this.local]!.defeated) return;
-        this.ask(
-          'Surrender?\nYour outposts and catapults are dismantled (half their cost left as wood) and everything else you own turns neutral. You are out of the match.',
-          'Surrender',
-          () => this.runner.submit({ type: 'surrender', player: this.local }),
-        );
-      });
-    // Playtest mode (DESIGN §7.5): under Surrender, anyone can switch it for the whole match.
-    this.playtestButton = this.add
-      .text(fb.left, 50, '', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold' })
-      .setOrigin(0, 0)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => this.runner.submit({ type: 'setPlaytest', player: this.local, on: !this.runner.state.playtest }));
-    // Main menu: leave this match (with a confirmation) and go back to the start screen to begin a new one.
-    this.add
-      .text(fb.left - 8, 12, 'Menu', { ...TEXT_STYLE, fontSize: '20px', fontStyle: 'bold', color: '#ffffff', backgroundColor: '#3a4a6b' })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
-        const host = this.runner.session.isHost && this.runner.session.info.slots.filter((x) => x.name !== null).length > 1;
-        this.ask(
-          'Leave this match and go back to the main menu?\n' +
-            (host ? 'You are the host: the match ends for everyone.' : 'You can rejoin later with the same room code and name.'),
-          'Leave',
-          () => (window.location.href = window.location.pathname),
-        );
-      });
-    // Offensive stance (DESIGN §8.6): what your catapults go for.
-    this.stanceButton = this.add
-      .text(fb.left, 84, '', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold' })
-      .setOrigin(0, 0)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
-        const now = this.runner.state.players[this.local]!.stance;
-        this.runner.submit({ type: 'setStance', player: this.local, stance: now === 'conquest' ? 'destruction' : 'conquest' });
-      });
+      .on('pointerdown', () => this.menu.setVisible(!this.menu.visible));
+    this.playersRight = menuButton.getBounds().right + 18;
+    this.createMenu();
     this.defeatText = this.add
       .text((width - PANEL_W) / 2, 142, 'You are out of the match: watching until it ends.', { ...TEXT_STYLE, fontSize: '16px', fontStyle: 'bold', backgroundColor: '#8a2a1ecc' })
       .setOrigin(0.5, 0)
       .setVisible(false);
     this.endShown = false;
     this.pausedBanner = this.add
-      .text((width - PANEL_W) / 2, height / 2, '', { ...BIG, fontSize: '40px', align: 'center', backgroundColor: '#000000cc' })
+      .text((width - PANEL_W) / 2, height / 2, '', { ...BIG, fontSize: '40px', align: 'center', backgroundColor: '#24160dee', padding: { x: 24, y: 14 } })
       .setOrigin(0.5)
       .setDepth(400);
 
@@ -187,10 +155,11 @@ export class UIScene extends Phaser.Scene {
     const tab = (this.registry.get('tab') as string | undefined) ?? 'build';
     const tabButton = (x: number, label: string, id: string, enabled: boolean) =>
       this.add
-        .text(x, 54, `${label} ${tab === id ? '▴' : '▾'}`, {
+        .text(x, BAR_H + 12, `${label} ${tab === id ? '▴' : '▾'}`, {
           ...BIG,
-          color: enabled ? '#f3e3c3' : '#7d7060',
-          backgroundColor: tab === id ? '#6b4a22ee' : '#3a2a16ee',
+          // The open tab is bare birch plywood; closed ones are dark wood.
+          color: tab === id ? '#24160d' : enabled ? BIRCH : '#7d6a52',
+          backgroundColor: tab === id ? BIRCH : '#24160dee',
         })
         .setOrigin(1, 0)
         .setInteractive({ useHandCursor: enabled })
@@ -203,7 +172,7 @@ export class UIScene extends Phaser.Scene {
     tabButton(wsTab.getBounds().left - 6, 'Build', 'build', true);
     const open = tab === 'build';
 
-    let y = 114;
+    let y = BAR_H + 70;
     if (tab === 'workshop' && this.hadWorkshop) {
       this.workshop = new WorkshopPanel(this, this.runner, width - WORKSHOP_W - 12, y);
       this.workshop.update();
@@ -211,24 +180,25 @@ export class UIScene extends Phaser.Scene {
     }
     if (open) {
       const g = this.add.graphics();
-      g.fillStyle(0x1b1712, 0.92);
-      g.fillRoundedRect(left, y, PANEL_W, CRAFTABLE.length * ROW_H + 52, 6);
+      g.fillStyle(CHAR, 0.94);
+      g.fillRoundedRect(left, y, PANEL_W, CRAFTABLE.length * ROW_H + 52, 3);
       CRAFTABLE.forEach((item, k) => {
         const ry = y + 6 + k * ROW_H;
+        if (k > 0) g.fillStyle(0xe6cfa0, 0.08).fillRect(left + 12, ry - 1, PANEL_W - 24, 1); // thin divider
         const bg = this.add
-          .rectangle(left + 4, ry, PANEL_W - 8, ROW_H - 4, 0xffffff, 0)
+          .rectangle(left + 4, ry, PANEL_W - 8, ROW_H - 4, EMBER, 0)
           .setOrigin(0, 0)
           .setInteractive({ useHandCursor: true })
           .on('pointerdown', () => this.registry.set('buildSel', item));
         drawItemIcon(g, item, left + 24, ry + ROW_H / 2 - 2, 26, 0xd9c7a3);
-        this.add.text(left + 44, ry + 3, ITEM_NAMES[item], { fontFamily: 'sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#f3e3c3' });
-        this.add.text(left + 44, ry + 21, ITEM_DESCRIPTIONS[item], { fontFamily: 'sans-serif', fontSize: '10px', color: '#b8a98c', wordWrap: { width: PANEL_W - 120 } });
-        const price = this.add.text(left + PANEL_W - 10, ry + 4, '', { fontFamily: 'sans-serif', fontSize: '12px', color: '#f3e3c3', align: 'right' }).setOrigin(1, 0);
+        this.add.text(left + 44, ry + 3, ITEM_NAMES[item], { fontFamily: FONT, fontSize: '14px', fontStyle: 'bold', color: BIRCH });
+        this.add.text(left + 44, ry + 21, ITEM_DESCRIPTIONS[item], { fontFamily: FONT, fontSize: '10px', color: MUTED, wordWrap: { width: PANEL_W - 120 } });
+        const price = this.add.text(left + PANEL_W - 10, ry + 4, '', { fontFamily: FONT, fontSize: '12px', color: BIRCH, align: 'right' }).setOrigin(1, 0);
         this.rows.push({ item, bg, price });
       });
       y += CRAFTABLE.length * ROW_H + 10;
       this.craftButton = this.add
-        .text(left + PANEL_W / 2, y + 4, '', { ...TEXT_STYLE, fontSize: '14px', fontStyle: 'bold', backgroundColor: '#2f6b34' })
+        .text(left + PANEL_W / 2, y + 4, '', { ...TEXT_STYLE, fontSize: '14px', fontStyle: 'bold', padding: { x: 12, y: 6 } })
         .setOrigin(0.5, 0)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => {
@@ -243,55 +213,63 @@ export class UIScene extends Phaser.Scene {
     this.queueText = this.add.text(left, y, '', { ...TEXT_STYLE, fixedWidth: PANEL_W });
     this.handText = this.add.text(width - 12, y + 70, '', TEXT_STYLE).setOrigin(1, 0);
 
-    // Tools at the bottom left: hammer, trade, and binning the item in hand (DESIGN §7.3b–d). Big buttons.
-    const toolsY = height - 168;
+    // Tools at the bottom left: hammer, trade, catapult stance, and binning the item in hand (DESIGN §7.3b–d, §8.6).
+    const toolsY = height - 150;
     const button = (x: number, label: string, bg: string, onClick: () => void, fixedWidth = 0) =>
       this.add
         .text(x, toolsY, label, { ...BIG, backgroundColor: bg, fixedWidth, align: 'center' })
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', onClick);
-    this.hammerButton = button(10, 'Hammer', '#6b3a2f', () => {
+    this.hammerButton = button(10, 'Hammer', BTN, () => {
       const hand = this.registry.get('hand') as PlacementHand | undefined;
       if (!hand) return;
       const on = !hand.hammer;
       hand.cancel();
       hand.hammer = on;
     }, 210); // fixed width: the label changes to 'Hammer (on)'
-    const trade = button(this.hammerButton.getBounds().right + 10, 'Trade', '#3a4a6b', () => openTradePanel(this.runner));
-    this.storeButton = button(trade.getBounds().right + 10, 'Put in warehouse', '#4a4038', () =>
+    const trade = button(this.hammerButton.getBounds().right + 10, 'Trade', BTN, () => openTradePanel(this.runner));
+    // Offensive stance (DESIGN §8.6): what your catapults go for.
+    this.stanceButton = button(trade.getBounds().right + 10, '', BTN, () => {
+      const now = this.runner.state.players[this.local]!.stance;
+      this.runner.submit({ type: 'setStance', player: this.local, stance: now === 'conquest' ? 'destruction' : 'conquest' });
+    }, 330);
+    this.storeButton = button(this.stanceButton.getBounds().right + 10, 'Put in warehouse', BTN, () =>
       this.runner.submit({ type: 'store', player: this.local }),
     );
     // The warehouse, always shown (DESIGN §7.3b): click an item to pick it up.
-    this.warehouseTitle = this.add.text(10, toolsY + 62, 'Warehouse', { ...BIG, fontSize: '20px', padding: { x: 8, y: 4 }, backgroundColor: '#000000aa' });
-    this.warehouseAt = { x: this.warehouseTitle.getBounds().right + 8, y: toolsY + 62 };
+    this.warehouseTitle = this.add.text(10, toolsY + 66, 'Warehouse', { ...BIG, fontSize: '20px', padding: { x: 8, y: 4 }, backgroundColor: '#24160ddd' });
+    this.warehouseAt = { x: this.warehouseTitle.getBounds().right + 8, y: toolsY + 66 };
     this.warehouseChips = [];
     this.warehouseKey = '';
 
     this.statusText = this.add.text(width / 2, height - 16, '', { ...TEXT_STYLE, fontSize: '15px' }).setOrigin(0.5, 1);
-    this.debugText = this.add.text(width - 12, height - 12, '', { fontFamily: 'monospace', fontSize: '10px', color: '#8a8a8a' }).setOrigin(1, 1);
+    // Tick, seed and state hash, for bug reports: only with ?debug in the address.
+    this.debugText = this.add
+      .text(12, height - 8, '', { fontFamily: 'monospace', fontSize: '10px', color: '#8a8a8a' })
+      .setOrigin(0, 1)
+      .setVisible(new URLSearchParams(location.search).has('debug'));
 
     // Tutorial pop-up for the first steps of a match, at the top centre.
     const tw = Math.min(460, width - PANEL_W - 60);
     const box = this.add.graphics();
-    box.fillStyle(0x1b1712, 0.94).fillRoundedRect(-tw / 2, 0, tw, 92, 8);
-    box.lineStyle(2, PLAYER_COLORS[this.local]!, 1).strokeRoundedRect(-tw / 2, 0, tw, 92, 8);
-    this.tutorialTitle = this.add.text(0, 10, '', { fontFamily: 'sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#f3e3c3' }).setOrigin(0.5, 0);
+    box.fillStyle(CHAR, 0.95).fillRoundedRect(-tw / 2, 0, tw, 92, 3);
+    box.fillStyle(PLAYER_COLORS[this.local]!, 1).fillRect(-tw / 2, 0, 4, 92); // your colour down the left edge
+    this.tutorialTitle = this.add.text(0, 10, '', { fontFamily: FONT, fontSize: '20px', fontStyle: 'bold', color: BIRCH }).setOrigin(0.5, 0);
     this.tutorialBody = this.add
-      .text(0, 40, '', { fontFamily: 'sans-serif', fontSize: '12px', color: '#cdbd9c', align: 'center', wordWrap: { width: tw - 28 } })
+      .text(0, 40, '', { fontFamily: FONT, fontSize: '12px', color: MUTED, align: 'center', wordWrap: { width: tw - 28 } })
       .setOrigin(0.5, 0);
-    this.tutorial = this.add.container((width - PANEL_W) / 2, 44, [box, this.tutorialTitle, this.tutorialBody]);
+    this.tutorial = this.add.container((width - PANEL_W) / 2, BAR_H + 14, [box, this.tutorialTitle, this.tutorialBody]);
     this.rejoinButton = this.add
-      .text((width - PANEL_W) / 2, 142, 'Take back control', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold', backgroundColor: '#2f6b34' })
+      .text((width - PANEL_W) / 2, BAR_H + 114, 'Take back control', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold', backgroundColor: BTN_ON, padding: { x: 12, y: 6 } })
       .setOrigin(0.5, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.runner.submit({ type: 'takeControl', player: this.local }));
 
-    // Players (top left) and alerts (desync, disconnects, host gone).
-    this.playerTexts = this.runner.state.players.map((p, i) =>
-      this.add.text(10, 40 + i * 24, '', { ...TEXT_STYLE, color: `#${(PLAYER_COLORS[p.id] ?? 0xffffff).toString(16).padStart(6, '0')}` }),
-    );
+    // Players, in the top strip after Menu: a colour dot and a name each. Alerts (desync, disconnects, host gone).
+    this.playerDots = this.add.graphics();
+    this.playerTexts = this.runner.state.players.map(() => this.add.text(0, 16, '', { fontFamily: FONT, fontSize: '15px', color: BIRCH }));
     this.alertText = this.add
-      .text((width - PANEL_W) / 2, height - 60, '', { ...TEXT_STYLE, fontSize: '14px', fontStyle: 'bold', color: '#ffffff', backgroundColor: '#8a2a1ecc' })
+      .text((width - PANEL_W) / 2, height - 190, '', { ...TEXT_STYLE, fontSize: '14px', fontStyle: 'bold', color: '#ffffff', backgroundColor: '#8a2a1ecc' })
       .setOrigin(0.5, 1);
 
     this.createTooltip();
@@ -315,19 +293,16 @@ export class UIScene extends Phaser.Scene {
     const secs = Math.floor(state.tick / ctx.config.tickRate);
     const mm = String(Math.floor(secs / 60) % 60).padStart(2, '0');
     const ss = String(secs % 60).padStart(2, '0');
-    this.clockText.setText(secs >= 3600 ? `${Math.floor(secs / 3600)}:${mm}:${ss}` : `${mm}:${ss}`);
+    const paused = this.runner.paused;
+    const clock = secs >= 3600 ? `${Math.floor(secs / 3600)}:${mm}:${ss}` : `${mm}:${ss}`;
+    this.clockText.setText(`${paused ? '▶' : '⏸'}  ${clock}`).setBackgroundColor(paused ? BTN_ON : '#00000000');
     this.defeatText.setVisible(me.defeated && state.phase !== 'over');
     if (state.phase === 'over' && !this.endShown) this.showEndScreen();
-    const paused = this.runner.paused;
-    this.pauseButton.setText(paused ? '▶ Resume' : '⏸ Pause').setBackgroundColor(paused ? '#2f6b34' : '#000000aa');
     const conquest = me.stance === 'conquest';
     this.stanceButton
-      .setText(conquest ? 'Catapults: Conquest (outposts only)' : 'Catapults: Destruction (closest target)')
-      .setBackgroundColor(conquest ? '#2f5d8a' : '#8a2a1e');
-    const pm = ctx.config.playtestMode;
-    this.playtestButton
-      .setText(state.playtest ? `Playtest ON: costs ${pm.costPct}%, times ${pm.timePct}%` : 'Playtest mode: off')
-      .setBackgroundColor(state.playtest ? '#7a5a12' : '#000000aa');
+      .setText(conquest ? 'Catapults: Conquest' : 'Catapults: Destruction')
+      .setBackgroundColor(conquest ? '#2c5a5c' : '#7a2e1c');
+    for (const m of this.menuItems) m.text.setText(m.label());
     const by = this.runner.session.pausedBy;
     this.pausedBanner
       .setText(`PAUSED\n${by === null || by === this.local ? 'by you' : `by ${this.slotName(by)}`}`)
@@ -340,13 +315,14 @@ export class UIScene extends Phaser.Scene {
       const secs = craftTicks(state, ctx, this.local, row.item) / ctx.config.tickRate;
       const cost = craftCost(state, ctx, this.local, row.item);
       row.price.setText(`${wholeUnits(cost)} wood\n${secs.toFixed(1)} s`);
-      row.price.setColor(me.wood >= cost ? '#f3e3c3' : '#e06a5a');
-      row.bg.setFillStyle(0xffffff, row.item === sel ? 0.12 : 0);
+      row.price.setColor(me.wood >= cost ? BIRCH : '#e0745a');
+      row.bg.setFillStyle(EMBER, row.item === sel ? 0.22 : 0);
     }
     if (this.craftButton) {
       const err = sel ? craftError(state, ctx, this.local, sel) : 'pick an item above';
       this.craftButton.setText(sel ? (err ? `Can't craft ${ITEM_NAMES[sel]}: ${err}` : `Craft ${ITEM_NAMES[sel]}`) : 'Pick an item above');
-      this.craftButton.setBackgroundColor(sel && !err ? '#2f6b34' : '#4a4038');
+      const ready = sel && !err;
+      this.craftButton.setBackgroundColor(ready ? BIRCH : BTN).setColor(ready ? '#24160d' : MUTED);
     }
 
     // Queue: the item in production with its progress, then the waiting ones; slots = factory-mills.
@@ -361,7 +337,7 @@ export class UIScene extends Phaser.Scene {
     this.queueGfx.clear();
     if (job && job.totalTicks > 0) {
       const b = this.queueText.getBounds();
-      this.queueGfx.fillStyle(0x000000, 0.6).fillRect(b.x + 6, b.bottom + 2, PANEL_W - 12, 6);
+      this.queueGfx.fillStyle(CHAR, 0.9).fillRect(b.x + 6, b.bottom + 2, PANEL_W - 12, 6);
       this.queueGfx.fillStyle(PLAYER_COLORS[this.local]!, 1).fillRect(b.x + 6, b.bottom + 2, ((PANEL_W - 12) * job.doneTicks) / job.totalTicks, 6);
     }
 
@@ -374,7 +350,7 @@ export class UIScene extends Phaser.Scene {
     this.workshop?.update();
     if (ownsWorkshop(state, this.local) !== this.hadWorkshop) this.scene.restart(); // the Workshop tab (un)locks
     const hand = this.registry.get('hand') as PlacementHand | undefined;
-    this.hammerButton.setText(hand?.hammer ? 'Hammer (on)' : 'Hammer').setBackgroundColor(hand?.hammer ? '#b0473a' : '#6b3a2f');
+    this.hammerButton.setText(hand?.hammer ? 'Hammer (on)' : 'Hammer').setBackgroundColor(hand?.hammer ? BTN_ON : BTN);
     this.updateTooltip();
     this.updatePlayers();
     this.debugText.setText(`tick ${state.tick}  seed ${this.registry.get('seed')}  hash ${hashState(state).toString(16)}`);
@@ -440,11 +416,11 @@ export class UIScene extends Phaser.Scene {
     if (key !== this.tipKey) {
       this.tipKey = key;
       this.tip.removeAll(true);
-      const t1 = this.add.text(10, 6, title, { fontFamily: 'sans-serif', fontSize: '13px', fontStyle: 'bold', color: '#f3e3c3' });
-      const t2 = this.add.text(10, 24, action, { fontFamily: 'sans-serif', fontSize: '11px', color: '#cdbd9c' });
+      const t1 = this.add.text(10, 6, title, { fontFamily: FONT, fontSize: '13px', fontStyle: 'bold', color: BIRCH });
+      const t2 = this.add.text(10, 24, action, { fontFamily: FONT, fontSize: '11px', color: MUTED });
       const w = Math.max(t1.width, t2.width) + 20 + (mine ? 34 : 0);
       const bg = this.add.graphics();
-      bg.fillStyle(0x1b1712, 0.95).fillRoundedRect(0, 0, w, 44, 6);
+      bg.fillStyle(CHAR, 0.95).fillRoundedRect(0, 0, w, 44, 6);
       bg.lineStyle(2, PLAYER_COLORS[thing.owner] ?? 0xffffff, 1).strokeRoundedRect(0, 0, w, 44, 6);
       // The pop-up blocks the map under it, so moving onto its hammer icon keeps it open.
       const hit = this.add.rectangle(0, 0, w, 44, 0x000000, 0).setOrigin(0, 0).setInteractive();
@@ -470,10 +446,10 @@ export class UIScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const shade = this.add.rectangle(0, 0, width, height, 0x000000, 0.45).setOrigin(0, 0).setInteractive();
     const box = this.add.graphics();
-    box.fillStyle(0x26211a, 1).fillRoundedRect(width / 2 - 170, height / 2 - 70, 340, 140, 10);
+    box.fillStyle(CHAR, 1).fillRoundedRect(width / 2 - 170, height / 2 - 70, 340, 140, 10);
     box.lineStyle(2, 0x6b3a2f, 1).strokeRoundedRect(width / 2 - 170, height / 2 - 70, 340, 140, 10);
     this.confirmText = this.add
-      .text(width / 2, height / 2 - 40, '', { fontFamily: 'sans-serif', fontSize: '15px', color: '#f3e3c3', align: 'center', wordWrap: { width: 300 } })
+      .text(width / 2, height / 2 - 40, '', { fontFamily: FONT, fontSize: '15px', color: BIRCH, align: 'center', wordWrap: { width: 300 } })
       .setOrigin(0.5, 0);
     const yes = (this.confirmYes = this.add
       .text(width / 2 - 70, height / 2 + 30, 'Dismantle', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold', backgroundColor: '#b0473a' })
@@ -484,7 +460,7 @@ export class UIScene extends Phaser.Scene {
         this.closeConfirm();
       }));
     const no = this.add
-      .text(width / 2 + 70, height / 2 + 30, 'Cancel', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold', backgroundColor: '#4a4038' })
+      .text(width / 2 + 70, height / 2 + 30, 'Cancel', { ...TEXT_STYLE, fontSize: '15px', fontStyle: 'bold', backgroundColor: BTN })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => this.closeConfirm());
@@ -543,16 +519,16 @@ export class UIScene extends Phaser.Scene {
     const y = Math.max(20, (height - h) / 2);
     const shade = this.add.rectangle(0, 0, width, height, 0x000000, 0.55).setOrigin(0, 0).setInteractive();
     const box = this.add.graphics();
-    box.fillStyle(0x1b1712, 0.97).fillRoundedRect(x, y, w, h, 12);
+    box.fillStyle(CHAR, 0.97).fillRoundedRect(x, y, w, h, 12);
     box.lineStyle(3, PLAYER_COLORS[state.winner ?? -1] ?? 0x8a7d68, 1).strokeRoundedRect(x, y, w, h, 12);
     const parts: Phaser.GameObjects.GameObject[] = [shade, box];
     parts.push(this.add.text(width / 2, y + 18, title, { ...BIG, fontSize: '40px' }).setOrigin(0.5, 0));
-    if (sub) parts.push(this.add.text(width / 2, y + 76, sub, { fontFamily: 'sans-serif', fontSize: '16px', color: '#cdbd9c' }).setOrigin(0.5, 0));
+    if (sub) parts.push(this.add.text(width / 2, y + 76, sub, { fontFamily: FONT, fontSize: '16px', color: MUTED }).setOrigin(0.5, 0));
     const colW = (w - 40) / rows[0]!.length;
     rows.forEach((row, ri) =>
       row.forEach((cell, ci) => {
-        const color = ri === 0 ? '#b8a98c' : `#${(PLAYER_COLORS[ri - 1] ?? 0xffffff).toString(16).padStart(6, '0')}`;
-        const style = { fontFamily: 'sans-serif', fontSize: ri === 0 ? '12px' : '15px', fontStyle: ri === 0 ? 'normal' : 'bold', color, align: 'center', wordWrap: { width: colW - 6 } };
+        const color = ri === 0 ? MUTED : `#${(PLAYER_COLORS[ri - 1] ?? 0xffffff).toString(16).padStart(6, '0')}`;
+        const style = { fontFamily: FONT, fontSize: ri === 0 ? '12px' : '15px', fontStyle: ri === 0 ? 'normal' : 'bold', color, align: 'center', wordWrap: { width: colW - 6 } };
         parts.push(this.add.text(x + 20 + ci * colW + (ci === 0 ? 0 : colW / 2), y + 110 + ri * 34, cell, style).setOrigin(ci === 0 ? 0 : 0.5, 0));
       }),
     );
@@ -562,8 +538,8 @@ export class UIScene extends Phaser.Scene {
         .setOrigin(0.5, 0)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', onClick);
-    parts.push(button(width / 2 - 140, 'Download match log', '#3a4a6b', () => this.runner.downloadLog()));
-    parts.push(button(width / 2 + 140, 'Back to lobby', '#2f6b34', () => (window.location.href = window.location.pathname)));
+    parts.push(button(width / 2 - 140, 'Download match log', BTN, () => this.runner.downloadLog()));
+    parts.push(button(width / 2 + 140, 'Back to lobby', BTN_ON, () => (window.location.href = window.location.pathname)));
     this.add.container(0, 0, parts).setDepth(2000);
   }
 
@@ -577,12 +553,12 @@ export class UIScene extends Phaser.Scene {
     let x = this.warehouseAt.x;
     let y = this.warehouseAt.y;
     if (items.length === 0) {
-      this.warehouseChips = [this.add.text(x, y, '(empty)', { ...BIG, fontSize: '20px', padding: { x: 8, y: 4 }, color: '#8a7d68', backgroundColor: '#000000aa' })];
+      this.warehouseChips = [this.add.text(x, y, '(empty)', { ...BIG, fontSize: '20px', padding: { x: 8, y: 4 }, color: '#8a7d68', backgroundColor: '#24160ddd' })];
       return;
     }
     this.warehouseChips = items.map((item, index) => {
       const chip = this.add
-        .text(x, y, ITEM_NAMES[item], { ...BIG, fontSize: '20px', padding: { x: 8, y: 4 }, backgroundColor: '#3a2a16ee' })
+        .text(x, y, ITEM_NAMES[item], { ...BIG, fontSize: '20px', padding: { x: 8, y: 4 }, backgroundColor: '#3a2516ee' })
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => this.runner.submit({ type: 'retrieve', player: this.local, index }));
       x = chip.getBounds().right + 6;
@@ -594,19 +570,111 @@ export class UIScene extends Phaser.Scene {
     });
   }
 
-  /** The player list, and alerts for desyncs, disconnects and the host leaving. */
+  /**
+   * The Menu list under the Menu button, for what's used rarely: pause, playtest mode (DESIGN §7.5), the river
+   * strength legend, controls, surrender (DESIGN §11) and leaving the match. Labels refresh every frame.
+   */
+  private createMenu(): void {
+    const legend = this.drawRiverLegend(12, BAR_H + 50).setVisible(this.registry.get('legend') === true);
+    const help = this.add
+      .text(12, 0, 'North is uphill: rivers flow south.\nDrag or WASD: move the map\nMouse wheel: zoom\nC: show hex coordinates', {
+        ...TEXT_STYLE,
+        lineSpacing: 4,
+        padding: { x: 10, y: 8 },
+      })
+      .setVisible(this.registry.get('help') === true);
+    const placeHelp = () => help.setY(BAR_H + 50 + (legend.visible ? 80 : 0));
+    placeHelp();
+
+    const surrender = () => {
+      const { state } = this.runner;
+      if (state.phase !== 'running' || state.players[this.local]!.defeated) return;
+      this.ask(
+        'Surrender?\nYour outposts and catapults are dismantled (half their cost left as wood) and everything else you own turns neutral. You are out of the match.',
+        'Surrender',
+        () => this.runner.submit({ type: 'surrender', player: this.local }),
+      );
+    };
+    const leave = () => {
+      const host = this.runner.session.isHost && this.runner.session.info.slots.filter((x) => x.name !== null).length > 1;
+      this.ask(
+        'Leave this match and go back to the main menu?\n' +
+          (host ? 'You are the host: the match ends for everyone.' : 'You can rejoin later with the same room code and name.'),
+        'Leave',
+        () => (window.location.href = window.location.pathname),
+      );
+    };
+    const pm = this.runner.ctx.config.playtestMode;
+    const items: [() => string, () => void][] = [
+      [() => (this.runner.paused ? 'Resume' : 'Pause'), () => this.runner.setPaused(!this.runner.paused)],
+      [
+        () => (this.runner.state.playtest ? `Playtest mode: on (costs ${pm.costPct}%, times ${pm.timePct}%)` : 'Playtest mode: off'),
+        () => this.runner.submit({ type: 'setPlaytest', player: this.local, on: !this.runner.state.playtest }),
+      ],
+      [
+        () => `River strength: ${legend.visible ? 'shown' : 'hidden'}`,
+        () => {
+          legend.setVisible(!legend.visible);
+          this.registry.set('legend', legend.visible);
+          placeHelp();
+        },
+      ],
+      [
+        () => `Controls: ${help.visible ? 'shown' : 'hidden'}`,
+        () => {
+          help.setVisible(!help.visible);
+          this.registry.set('help', help.visible);
+        },
+      ],
+      [() => 'Sound…', toggleVolumePanel],
+      [() => 'Surrender…', surrender],
+      [() => 'Leave match…', leave],
+    ];
+    const W = 330;
+    const H = 36;
+    const box = this.add.graphics();
+    box.fillStyle(CHAR, 0.97).fillRect(0, 0, W, items.length * H + 8);
+    box.fillStyle(0xb98a55, 1).fillRect(0, items.length * H + 8, W, 3); // plywood edge
+    this.menu = this.add.container(8, BAR_H + 4, [box]).setDepth(600).setVisible(false);
+    this.menuItems = items.map(([label, run], i) => {
+      const text = this.add
+        .text(4, 4 + i * H, label(), { fontFamily: FONT, fontSize: '16px', fontStyle: 'bold', color: BIRCH, fixedWidth: W - 8, padding: { x: 12, y: 8 } })
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => text.setBackgroundColor(BTN))
+        .on('pointerout', () => text.setBackgroundColor('#00000000'))
+        .on('pointerdown', () => {
+          run();
+          this.menu.setVisible(false);
+        });
+      if (i >= items.length - 2) text.setColor('#f0a080'); // surrender and leave end your match
+      this.menu.add(text);
+      return { text, label };
+    });
+  }
+
+  /** The players in the top strip, and alerts for desyncs, disconnects and the host leaving. */
   private updatePlayers(): void {
     const { state, session } = this.runner;
     const lines = state.players.map((p) => {
       const name = session.info.slots[p.id]?.name;
       const tags = [
         p.id === this.local ? 'you' : '',
-        name === null ? 'bot' : p.bot ? 'bot playing' : '',
+        name !== null && p.bot ? 'bot playing' : '', // an empty slot is already called "Bot"
         session.left.has(p.id) ? 'disconnected' : '',
       ].filter(Boolean);
-      return `● ${name ?? 'Bot'}${tags.length ? ` (${tags.join(', ')})` : ''}`;
+      return `${name ?? 'Bot'}${tags.length ? ` (${tags.join(', ')})` : ''}`;
     });
-    lines.forEach((line, i) => this.playerTexts[i]?.setText(line));
+    // One after another: a colour dot (a log end, as in the lobby), then the name.
+    this.playerDots.clear();
+    let x = this.playersRight;
+    lines.forEach((line, i) => {
+      const t = this.playerTexts[i];
+      if (!t) return;
+      this.playerDots.fillStyle(0x5a3a1e, 1).fillCircle(x + 8, 26, 8);
+      this.playerDots.fillStyle(PLAYER_COLORS[i]!, 1).fillCircle(x + 8, 26, 6);
+      t.setText(line).setX(x + 22).setAlpha(state.players[i]!.defeated ? 0.45 : 1);
+      x = t.getBounds().right + 18;
+    });
 
     const alerts: string[] = [];
     if (session.hostGone) alerts.push('The host left: the match has ended.');
@@ -615,17 +683,17 @@ export class UIScene extends Phaser.Scene {
   }
 
   /** Explains river strength: weakest at the top of each half, strongest right above the waterfall / southern edge. */
-  private drawRiverLegend(x: number, y: number): void {
+  private drawRiverLegend(x: number, y: number): Phaser.GameObjects.Container {
     const w = 330;
     const h = 70;
     const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.67);
-    g.fillRect(x, y, w, h);
+    g.fillStyle(CHAR, 0.87);
+    g.fillRect(0, 0, w, h);
 
-    this.add.text(x + 8, y + 5, 'River strength (water speed)', { fontFamily: 'sans-serif', fontSize: '13px', color: '#e8dcc4', fontStyle: 'bold' });
+    const title = this.add.text(8, 5, 'River strength (water speed)', { fontFamily: FONT, fontSize: '13px', color: BIRCH, fontStyle: 'bold' });
 
-    const barX = x + 8;
-    const barY = y + 26;
+    const barX = 8;
+    const barY = 26;
     const barW = w - 16;
     const weak = Phaser.Display.Color.IntegerToColor(0x8fc8f0);
     const strong = Phaser.Display.Color.IntegerToColor(0x1d4f9c);
@@ -635,8 +703,9 @@ export class UIScene extends Phaser.Scene {
       g.fillRect(barX + i, barY, 1, 12);
     }
 
-    const small = { fontFamily: 'sans-serif', fontSize: '11px', color: '#e8dcc4' };
-    this.add.text(barX, barY + 16, 'weak: top of each half', small);
-    this.add.text(barX + barW, barY + 16, 'strong: above waterfall / south edge', small).setOrigin(1, 0);
+    const small = { fontFamily: FONT, fontSize: '11px', color: MUTED };
+    const weakText = this.add.text(barX, barY + 16, 'weak: top of each half', small);
+    const strongText = this.add.text(barX + barW, barY + 16, 'strong: above waterfall / south edge', small).setOrigin(1, 0);
+    return this.add.container(x, y, [g, title, weakText, strongText]);
   }
 }

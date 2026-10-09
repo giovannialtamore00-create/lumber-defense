@@ -72,9 +72,13 @@ export class SimRunner {
     return true;
   }
 
+  /** Called for each command the local player sends (the game plays a sound for it). */
+  onSubmit: ((command: Command) => void) | null = null;
+
   submit(command: Command): void {
     if (this.session.paused) return; // nothing happens while paused
     this.session.submit(command);
+    this.onSubmit?.(command);
   }
 
   get paused(): boolean {

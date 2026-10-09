@@ -6,7 +6,7 @@ import type { SimRunner } from '../simRunner';
 const CSS = `
 #trade { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; width: min(320px, calc(100vw - 32px));
   box-sizing: border-box; background: #26211a; border: 1px solid #4a3d2c; border-radius: 10px; padding: 18px;
-  color: #e8dcc4; font-family: sans-serif; }
+  color: #e8dcc4; font-family: 'Archivo Variable', sans-serif; }
 #trade h2 { margin: 0 0 12px; font-size: 18px; color: #f3e3c3; }
 #trade label { display: block; font-size: 12px; color: #b8a98c; margin: 10px 0 4px; }
 #trade select, #trade input { width: 100%; box-sizing: border-box; padding: 8px; font-size: 15px; border-radius: 6px;

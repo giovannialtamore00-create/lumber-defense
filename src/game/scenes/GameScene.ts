@@ -45,6 +45,7 @@ import { drawItemIcon } from '../render/icons';
 import { hexOf, thingAt } from '../ui/describe';
 import { bonusRow, downstream, isRock, isWater, riverIdAt } from '../../sim/water';
 import type { SimRunner } from '../simRunner';
+import { playCatapultHit } from '../sfx';
 
 export const MAP = map02 as MapData;
 const ORDERED = [...MAP.hexes].sort((a, b) => a.r - b.r || a.q - b.q);
@@ -119,7 +120,7 @@ export class GameScene extends Phaser.Scene {
   /** Combat feedback, render-only: last HP seen per item, health bar timers, shots in the air, effects. */
   private hpSeen = new Map<number, number>();
   private barUntil = new Map<number, number>();
-  private shotsSeen = new Map<number, { at: Point; targetId: number; damage: number }>();
+  private shotsSeen = new Map<number, { at: Point; targetId: number; damage: number; stone: boolean }>();
   private impacts: { at: Point; t0: number }[] = [];
   private numbers: { text: Phaser.GameObjects.Text; at: Point; t0: number }[] = [];
   private decorKey = '';
@@ -664,11 +665,13 @@ export class GameScene extends Phaser.Scene {
    */
   private drawCombatFeedback(g: Phaser.GameObjects.Graphics, time: number, alpha: number): void {
     const { state, ctx } = this.runner;
-    const shots = new Map<number, { at: Point; targetId: number; damage: number }>();
-    for (const e of state.entities) if (e.type === 'shot') shots.set(e.id, { at: hexToScreen({ q: e.toQ, r: e.toR }), targetId: e.targetId, damage: e.damage });
+    const shots = new Map<number, { at: Point; targetId: number; damage: number; stone: boolean }>();
+    for (const e of state.entities) if (e.type === 'shot') shots.set(e.id, { at: hexToScreen({ q: e.toQ, r: e.toR }), targetId: e.targetId, damage: e.damage, stone: e.kind === 'stone' });
+    let stoneLanded = false;
     for (const [id, shot] of this.shotsSeen) {
       if (shots.has(id)) continue;
       this.impacts.push({ at: shot.at, t0: time });
+      if (shot.stone && this.cameras.main.worldView.contains(shot.at.x, shot.at.y)) stoneLanded = true;
       // A killing blow: the target is gone, so its HP change can't be seen below.
       const target = state.entities.find((e) => e.id === shot.targetId);
       if (this.hpSeen.has(shot.targetId) && !target) this.floatNumber(shot.at, shot.damage, time);
@@ -676,6 +679,7 @@ export class GameScene extends Phaser.Scene {
       else if (target && isOwnable(target) && target.fire && this.hpSeen.get(target.id) !== target.hp) this.floatNumber(shot.at, shot.damage, time);
     }
     this.shotsSeen = shots;
+    if (stoneLanded) playCatapultHit(); // once, even if several land together
 
     const seen = new Map<number, number>();
     for (const e of state.entities) {

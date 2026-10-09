@@ -10,8 +10,8 @@ import type { SimRunner } from '../simRunner';
 
 export const WORKSHOP_W = 440;
 const ROW_H = 30;
-const SMALL = { fontFamily: 'sans-serif', fontSize: '11px', color: '#cdbd9c', wordWrap: { width: WORKSHOP_W / 2 - 24 } };
-const BOLD = { fontFamily: 'sans-serif', fontSize: '13px', fontStyle: 'bold', color: '#f3e3c3' };
+const SMALL = { fontFamily: "'Archivo Variable', sans-serif", fontSize: '11px', color: '#cdbd9c', wordWrap: { width: WORKSHOP_W / 2 - 24 } };
+const BOLD = { fontFamily: "'Archivo Variable', sans-serif", fontSize: '13px', fontStyle: 'bold', color: '#f3e3c3' };
 
 export class WorkshopPanel {
   private container: Phaser.GameObjects.Container;
@@ -129,7 +129,7 @@ export class WorkshopPanel {
         const label = !price ? 'Fully upgraded' : err ? `L${price.level}: ${err}` : `Buy L${price.level} · ${price.cost} wood · ${price.ticks / ctx.config.tickRate} s`;
         const btn = add(
           this.scene.add.text(x, py + 2, label, {
-            fontFamily: 'sans-serif',
+            fontFamily: "'Archivo Variable', sans-serif",
             fontSize: '12px',
             fontStyle: 'bold',
             color: '#ffffff',

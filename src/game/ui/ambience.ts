@@ -1,22 +1,9 @@
 // Menu ambience, made in the browser with Web Audio (no sound files): a river (filtered noise that swells and
-// babbles), wind in the trees, and the odd bird. The on/off choice is remembered.
+// babbles), wind in the trees, and the odd bird. Loudness follows the "Forest and river" slider (volume.ts).
+import { onVolumeChange, volume } from './volume';
 
-const KEY = 'ild-sound';
-
-export function soundWanted(): boolean {
-  try {
-    return localStorage.getItem(KEY) !== 'off';
-  } catch {
-    return true;
-  }
-}
-function saveSoundWanted(on: boolean): void {
-  try {
-    localStorage.setItem(KEY, on ? 'on' : 'off');
-  } catch {
-    /* private mode: fine */
-  }
-}
+/** Loudness at 100% on the slider. */
+const FULL = 0.5;
 
 /** Noise through a filter whose volume drifts with a slow wobble. */
 function noiseLayer(ctx: AudioContext, out: AudioNode, noise: AudioBuffer, type: BiquadFilterType, freq: number,
@@ -65,14 +52,12 @@ function chirp(ctx: AudioContext, out: AudioNode): void {
   }
 }
 
-/** Starts the ambience on the first click or key press. Returns a function that fades it out and shuts it down. */
-export function startAmbience(button: HTMLButtonElement): () => void {
+/** Starts the ambience 2 s after the menu opens. Returns a function that fades it out and shuts it down. */
+export function startAmbience(): () => void {
   let ctx: AudioContext | null = null;
   let master: GainNode | null = null;
   let birds = 0;
-  let on = soundWanted();
 
-  const label = () => (button.textContent = on ? 'Sound on' : 'Sound off');
   const fadeTo = (v: number, secs: number) => {
     if (!ctx || !master) return;
     master.gain.cancelScheduledValues(ctx.currentTime);
@@ -81,7 +66,7 @@ export function startAmbience(button: HTMLButtonElement): () => void {
   };
   const scheduleBird = () => {
     birds = window.setTimeout(() => {
-      if (ctx && master && on) chirp(ctx, master);
+      if (ctx && master && volume('ambience') > 0) chirp(ctx, master);
       scheduleBird();
     }, 3000 + Math.random() * 6000);
   };
@@ -100,11 +85,11 @@ export function startAmbience(button: HTMLButtonElement): () => void {
     scheduleBird();
   };
 
-  const wake = () => {
-    if (!on) return;
+  const wake = (secs = 2.5) => {
+    if (volume('ambience') === 0) return fadeTo(0, 0.3);
     if (!ctx) build();
     void ctx!.resume();
-    fadeTo(0.5, 2.5);
+    fadeTo(FULL * volume('ambience'), secs);
   };
   // Starts 2 s after the page opens. If the browser still blocks sound then (no click yet), the first click does it.
   let due = false;
@@ -121,18 +106,14 @@ export function startAmbience(button: HTMLButtonElement): () => void {
     wake();
   }, 2000);
 
-  button.onclick = () => {
-    on = !on;
-    saveSoundWanted(on);
-    label();
-    if (on) wake();
-    else fadeTo(0, 0.4);
-  };
-  label();
+  const stopListening = onVolumeChange(() => {
+    if (due) wake(0.2);
+  });
 
   return () => {
     window.removeEventListener('pointerdown', firstTouch);
     window.removeEventListener('keydown', firstTouch);
+    stopListening();
     clearTimeout(birds);
     clearTimeout(delay);
     fadeTo(0, 1.2);

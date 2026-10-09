@@ -9,6 +9,9 @@ import { BootScene } from './game/scenes/BootScene';
 import { GameScene, MAP } from './game/scenes/GameScene';
 import { UIScene } from './game/scenes/UIScene';
 import { SimRunner } from './game/simRunner';
+import { playCommandSound } from './game/sfx';
+import { addVolumeButton, hideVolumeButton } from './game/ui/volume';
+import '@fontsource-variable/archivo/wdth.css';
 import { runLobby } from './game/ui/lobbyScreen';
 
 /** Everyone in a room must run the same rules and map, or lockstep would desync. */
@@ -26,16 +29,26 @@ function startGame(runner: SimRunner): void {
   // Keep the match going even when the tab is in the background and stops drawing frames (browsers still run
   // timers there, if less often; the runner catches up on real time).
   setInterval(() => runner.update(), 100);
+  runner.onSubmit = playCommandSound;
+  // The game's text is drawn once into images, so the font must be loaded first (a short wait at most).
+  const fonts = Promise.all(['400 12px', '700 12px'].map((w) => document.fonts.load(`${w} 'Archivo Variable'`)));
+  void Promise.race([fonts, new Promise((r) => setTimeout(r, 2000))]).then(() => launch(runner));
+}
+
+function launch(runner: SimRunner): void {
+  hideVolumeButton(); // in a match, Sound lives in the Menu
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    backgroundColor: '#1b1f24',
+    backgroundColor: '#1a120d',
     scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
     scene: [BootScene, GameScene, UIScene],
     callbacks: { preBoot: (g) => g.registry.set('runner', runner) },
   });
   if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;
 }
+
+addVolumeButton(); // menu and match alike
 
 const params = new URLSearchParams(location.search);
 if (import.meta.env.DEV && params.has('demo')) {

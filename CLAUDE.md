@@ -10,9 +10,11 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 - Known issues / next step: map02 is still work in progress (published as-is at the designer's request).
 - M9 UI rework (wood theme, no IKEA references in the visuals; the name changes later): U1 menu + lobby done
   (scorched plywood panel, branded title, pine forest, river with logs, embers, synthesized river/forest ambience in
-  `src/game/ui/ambience.ts`). Next: U2 in-game Phaser HUD (`UIScene.ts`), then U3 workshop/trade panels, tooltips,
-  end screen. Open: in-game forest/river sounds in U2? U1 is committed but NOT pushed (pushing deploys the live
-  site): ask the designer whether to push now or after U2.
+  `src/game/ui/ambience.ts`). U2 done: decluttered match HUD (top strip with Menu, players, click-to-pause clock,
+  stone, wood; rarely used buttons in the Menu list; debug line only with `?debug`), action sound effects
+  (`src/game/sfx.ts`) and a volume panel (`src/game/ui/volume.ts`). Next: U3 workshop/trade panels, map labels,
+  tooltips, end screen. Open: in-game river sound (ambience stops in a match)? Catapult hit sound not yet heard in a
+  test. U1+U2 are committed but NOT pushed (pushing deploys the live site): ask the designer before pushing.
 
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.

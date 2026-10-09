@@ -45,8 +45,6 @@ const CSS = `
   50% { transform: translate(55vw, 0) rotate(-1deg); }
   75% { transform: translate(82vw, 3px) rotate(2deg); }
   100% { transform: translate(calc(100vw + 120px), 0) rotate(-2deg); } }
-#lobby .sound { position: absolute; right: 14px; bottom: 14px; z-index: 3; padding: 7px 12px; font-size: 13px;
-  color: var(--birch); background: rgba(20, 14, 9, 0.75); box-shadow: inset 0 0 0 1px rgba(230, 207, 160, 0.35); }
 #lobby .panel { position: relative; width: min(420px, calc(100vw - 32px)); box-sizing: border-box; padding: 30px 30px 26px;
   border-radius: 3px; margin-bottom: 10px;
   background:
@@ -202,9 +200,8 @@ export function runLobby(version: string, auto: AutoLobby = {}): Promise<LobbyRe
     EMBERS.map(
       ([left, secs, delay, drift]) =>
         `<i class="ember" style="left:${left}%;animation-duration:${secs}s;animation-delay:${delay}s;--drift:${drift}px"></i>`,
-    ).join('') +
-    '<button class="sound" type="button"></button>';
-  const stopAmbience = startAmbience(root.querySelector<HTMLButtonElement>('.sound')!);
+    ).join('');
+  const stopAmbience = startAmbience();
   const view = document.createElement('div');
   root.appendChild(view);
   document.body.appendChild(root);
