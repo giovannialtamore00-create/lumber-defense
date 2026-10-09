@@ -5,16 +5,20 @@ import type { SimRunner } from '../simRunner';
 
 const CSS = `
 #trade { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; width: min(320px, calc(100vw - 32px));
-  box-sizing: border-box; background: #26211a; border: 1px solid #4a3d2c; border-radius: 10px; padding: 18px;
-  color: #e8dcc4; font-family: 'Archivo Variable', sans-serif; }
-#trade h2 { margin: 0 0 12px; font-size: 18px; color: #f3e3c3; }
-#trade label { display: block; font-size: 12px; color: #b8a98c; margin: 10px 0 4px; }
-#trade select, #trade input { width: 100%; box-sizing: border-box; padding: 8px; font-size: 15px; border-radius: 6px;
-  border: 1px solid #5a4a36; background: #1b1712; color: #f3e3c3; }
+  box-sizing: border-box; background: #24160d; border-radius: 3px; padding: 18px;
+  box-shadow: 0 2px 0 #b98a55, 0 4px 0 #d9bd8a, 0 6px 0 #b98a55, 0 10px 24px #000a; /* plywood edge */
+  color: #e6cfa0; font-family: 'Archivo Variable', sans-serif; }
+#trade h2 { margin: 0 0 12px; font-size: 20px; color: #e6cfa0; }
+#trade label { display: block; font-size: 12px; color: #b8996c; margin: 10px 0 4px; }
+#trade select, #trade input { width: 100%; box-sizing: border-box; padding: 8px; font-size: 15px; border-radius: 3px;
+  border: 1px solid #5a3a1e; background: #170d07; color: #e6cfa0; }
+#trade select:focus, #trade input:focus { outline: 2px solid #e8742a; outline-offset: -1px; }
 #trade .row { display: flex; gap: 8px; margin-top: 14px; }
-#trade button { flex: 1; padding: 9px; font-size: 15px; font-weight: bold; border: 0; border-radius: 6px; cursor: pointer;
-  background: #2f6b34; color: #fff; }
-#trade button.secondary { background: #4a4038; }
+#trade button { flex: 1; padding: 9px; font-size: 15px; font-weight: bold; border: 0; border-radius: 3px; cursor: pointer;
+  background: #b8541c; color: #fff; font-family: inherit; }
+#trade button:hover { background: #d0652a; }
+#trade button.secondary { background: #3a2516; color: #e6cfa0; }
+#trade button.secondary:hover { background: #4a3020; }
 #trade .err { color: #e06a5a; min-height: 16px; font-size: 12px; margin-top: 8px; }
 `;
 

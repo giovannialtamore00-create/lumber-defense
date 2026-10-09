@@ -7,11 +7,14 @@ import { MAX_LEVEL, levelData, ownsWorkshop, researchPoolBp, upgradeError, upgra
 import { drawItemIcon } from '../render/icons';
 import { PLAYER_COLORS } from '../render/entities';
 import type { SimRunner } from '../simRunner';
+import { BIRCH, BTN, BTN_ON, CHAR, DONE, EMBER, FONT, MUTED, plywoodEdge } from './theme';
 
 export const WORKSHOP_W = 440;
 const ROW_H = 30;
-const SMALL = { fontFamily: "'Archivo Variable', sans-serif", fontSize: '11px', color: '#cdbd9c', wordWrap: { width: WORKSHOP_W / 2 - 24 } };
-const BOLD = { fontFamily: "'Archivo Variable', sans-serif", fontSize: '13px', fontStyle: 'bold', color: '#f3e3c3' };
+const SMALL = { fontFamily: FONT, fontSize: '11px', color: MUTED, wordWrap: { width: WORKSHOP_W / 2 - 24 } };
+const BOLD = { fontFamily: FONT, fontSize: '13px', fontStyle: 'bold', color: BIRCH };
+/** Greyed-out text: locked levels, nothing bought yet. */
+const DIM = '#7d6a52';
 
 export class WorkshopPanel {
   private container: Phaser.GameObjects.Container;
@@ -58,7 +61,7 @@ export class WorkshopPanel {
     this.bar.clear();
     const r = me.research[0];
     if (r && r.totalTicks > 0) {
-      this.bar.fillStyle(0x000000, 0.6).fillRect(10, 30, WORKSHOP_W - 20, 6);
+      this.bar.fillStyle(0x000000, 0.6).fillRect(10, 30, WORKSHOP_W - 20, 6).lineStyle(1, EMBER, 0.8).strokeRect(9.5, 29.5, WORKSHOP_W - 19, 7);
       this.bar.fillStyle(PLAYER_COLORS[this.player]!, 1).fillRect(10, 30, ((WORKSHOP_W - 20) * r.doneTicks) / r.totalTicks, 6);
     }
   }
@@ -92,7 +95,7 @@ export class WorkshopPanel {
       const prog = me.upgrades[t]!;
       const isOpen = this.open === t;
       // Row: icon, name, current levels, ▾/▴.
-      const row = add(this.scene.add.rectangle(4, y, WORKSHOP_W - 8, ROW_H - 2, 0xffffff, isOpen ? 0.1 : 0.03).setOrigin(0, 0));
+      const row = add(this.scene.add.rectangle(4, y, WORKSHOP_W - 8, ROW_H - 2, isOpen ? EMBER : 0xe6cfa0, isOpen ? 0.25 : 0.04).setOrigin(0, 0));
       row.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
         this.scene.registry.set('workshopOpen', isOpen ? -1 : t);
         this.scene.scene.restart(); // re-layout: the panel's height changed
@@ -100,7 +103,7 @@ export class WorkshopPanel {
       drawItemIcon(g, type.type as ItemKind, 20, y + ROW_H / 2 - 1, 18, 0xd9c7a3);
       add(this.scene.add.text(36, y + 7, type.name, BOLD));
       const tags = type.paths.map((p, k) => (prog.levels[k as 0 | 1] ? `${p.name} ${prog.levels[k as 0 | 1]}` : '')).filter(Boolean).join(' · ');
-      add(this.scene.add.text(WORKSHOP_W - 30, y + 8, tags || 'no upgrades', { ...SMALL, color: tags ? '#9fd8a8' : '#8a7d68' }).setOrigin(1, 0));
+      add(this.scene.add.text(WORKSHOP_W - 30, y + 8, tags || 'no upgrades', { ...SMALL, color: tags ? DONE : DIM }).setOrigin(1, 0));
       add(this.scene.add.text(WORKSHOP_W - 18, y + 6, isOpen ? '▴' : '▾', BOLD));
       y += ROW_H;
       if (!isOpen) return;
@@ -119,7 +122,7 @@ export class WorkshopPanel {
         for (let L = 1; L <= MAX_LEVEL; L++) {
           const d = levelData(ctx, t, k, L)!;
           const mark = L <= lvl ? '✓' : d.locked ? '🔒' : L === lvl + 1 ? '→' : '·';
-          const color = L <= lvl ? '#9fd8a8' : d.locked ? '#8a7d68' : L === lvl + 1 ? '#f3e3c3' : '#a89a80';
+          const color = L <= lvl ? DONE : d.locked ? DIM : L === lvl + 1 ? BIRCH : MUTED;
           const text = add(this.scene.add.text(x, py, `${mark} L${L}  ${d.desc}${d.locked ? ' (locked)' : ''}`, { ...SMALL, color }));
           py += text.height + 4;
         }
@@ -129,11 +132,11 @@ export class WorkshopPanel {
         const label = !price ? 'Fully upgraded' : err ? `L${price.level}: ${err}` : `Buy L${price.level} · ${price.cost} wood · ${price.ticks / ctx.config.tickRate} s`;
         const btn = add(
           this.scene.add.text(x, py + 2, label, {
-            fontFamily: "'Archivo Variable', sans-serif",
+            fontFamily: FONT,
             fontSize: '12px',
             fontStyle: 'bold',
-            color: '#ffffff',
-            backgroundColor: !err && price ? '#2f6b34' : '#4a4038',
+            color: !err && price ? '#ffffff' : MUTED,
+            backgroundColor: !err && price ? BTN_ON : BTN,
             padding: { x: 6, y: 4 },
             wordWrap: { width: colW - 24 },
           }),
@@ -145,12 +148,13 @@ export class WorkshopPanel {
         }
         maxY = Math.max(maxY, py + btn.height + 10);
       });
-      g.lineStyle(1, 0x5a4a36, 1).lineBetween(WORKSHOP_W / 2, y + 4, WORKSHOP_W / 2, maxY - 6);
+      g.lineStyle(1, 0xe6cfa0, 0.15).lineBetween(WORKSHOP_W / 2, y + 4, WORKSHOP_W / 2, maxY - 6);
       y = maxY;
     });
 
-    bg.fillStyle(0x1b1712, 0.94).fillRoundedRect(0, 0, WORKSHOP_W, y + 6, 6);
-    this.height = y + 6;
+    bg.fillStyle(CHAR, 0.94).fillRoundedRect(0, 0, WORKSHOP_W, y + 6, 3);
+    plywoodEdge(bg, 0, y + 6, WORKSHOP_W);
+    this.height = y + 12;
   }
 
   destroy(): void {

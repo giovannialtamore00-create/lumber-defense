@@ -12,9 +12,11 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
   (scorched plywood panel, branded title, pine forest, river with logs, embers, synthesized river/forest ambience in
   `src/game/ui/ambience.ts`). U2 done: decluttered match HUD (top strip with Menu, players, click-to-pause clock,
   stone, wood; rarely used buttons in the Menu list; debug line only with `?debug`), action sound effects
-  (`src/game/sfx.ts`) and a volume panel (`src/game/ui/volume.ts`). Next: U3 workshop/trade panels, map labels,
-  tooltips, end screen. Open: in-game river sound (ambience stops in a match)? Catapult hit sound not yet heard in a
-  test. U1+U2 are committed but NOT pushed (pushing deploys the live site): ask the designer before pushing.
+  (`src/game/sfx.ts`) and a volume panel (`src/game/ui/volume.ts`). U3 done: workshop/trade panels, map labels,
+  tooltip and end screen in the wood theme (shared colours in `src/game/ui/theme.ts`). U1–U3 pushed (live).
+  Open: in-game river sound (ambience stops in a match)? Catapult hit sound not yet heard in a test. Region labels
+  small when zoomed out? End screen showed 19 hexes territory for every player early on (check the count).
+  Next: the designer's new patch.
 
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.

@@ -14,13 +14,8 @@ import { canDismantle, describe, kindOf, refundOf } from '../ui/describe';
 import { WORKSHOP_W, WorkshopPanel } from '../ui/workshopPanel';
 import { ownsWorkshop } from '../../sim/upgrades';
 import { toggleVolumePanel } from '../ui/volume';
+import { BIRCH, BTN, BTN_ON, CHAR, EMBER, FONT, MUTED, plywoodEdge } from '../ui/theme';
 
-/** The wood look shared with the main menu: dark charred-wood panels, birch text, ember for what's active. */
-export const FONT = "'Archivo Variable', sans-serif";
-const CHAR = 0x24160d;
-const BIRCH = '#e6cfa0';
-const MUTED = '#b8996c';
-const EMBER = 0xe8742a;
 const TEXT_STYLE = {
   fontFamily: FONT,
   fontSize: '13px',
@@ -34,9 +29,6 @@ const ROW_H = 46;
 const BAR_H = 52;
 /** The big buttons (Build, Workshop, Hammer, Trade, warehouse): twice the normal size (DESIGN §12). */
 const BIG = { fontFamily: FONT, fontSize: '26px', fontStyle: 'bold', color: BIRCH, padding: { x: 12, y: 8 } };
-/** Button backgrounds: dark wood, ember when switched on. */
-const BTN = '#3a2516';
-const BTN_ON = '#b8541c';
 
 /** Screen-fixed UI drawn above GameScene, unaffected by the map camera's pan and zoom. */
 export class UIScene extends Phaser.Scene {
@@ -99,7 +91,7 @@ export class UIScene extends Phaser.Scene {
     // Top strip: Menu, players, the clock (click it to pause), stone, and wood large at the top right (DESIGN §7.1).
     const bar = this.add.graphics();
     bar.fillStyle(CHAR, 0.94).fillRect(0, 0, width, BAR_H);
-    for (let i = 0; i < 3; i++) bar.fillStyle(i % 2 ? 0xd9bd8a : 0xb98a55, 1).fillRect(0, BAR_H + i * 2, width, 2); // plywood edge
+    plywoodEdge(bar, 0, BAR_H, width);
     this.add.text(12, BAR_H + 14, 'N ▲', { ...TEXT_STYLE, fontStyle: 'bold' }); // north is uphill: rivers flow south
 
     const icon = this.add.graphics();
@@ -420,8 +412,9 @@ export class UIScene extends Phaser.Scene {
       const t2 = this.add.text(10, 24, action, { fontFamily: FONT, fontSize: '11px', color: MUTED });
       const w = Math.max(t1.width, t2.width) + 20 + (mine ? 34 : 0);
       const bg = this.add.graphics();
-      bg.fillStyle(CHAR, 0.95).fillRoundedRect(0, 0, w, 44, 6);
-      bg.lineStyle(2, PLAYER_COLORS[thing.owner] ?? 0xffffff, 1).strokeRoundedRect(0, 0, w, 44, 6);
+      bg.fillStyle(CHAR, 0.95).fillRoundedRect(0, 0, w, 44, 3);
+      bg.lineStyle(2, PLAYER_COLORS[thing.owner] ?? 0xffffff, 1).strokeRoundedRect(0, 0, w, 44, 3);
+      plywoodEdge(bg, 0, 45, w);
       // The pop-up blocks the map under it, so moving onto its hammer icon keeps it open.
       const hit = this.add.rectangle(0, 0, w, 44, 0x000000, 0).setOrigin(0, 0).setInteractive();
       this.tip.add([bg, hit, t1, t2]);
@@ -519,10 +512,15 @@ export class UIScene extends Phaser.Scene {
     const y = Math.max(20, (height - h) / 2);
     const shade = this.add.rectangle(0, 0, width, height, 0x000000, 0.55).setOrigin(0, 0).setInteractive();
     const box = this.add.graphics();
-    box.fillStyle(CHAR, 0.97).fillRoundedRect(x, y, w, h, 12);
-    box.lineStyle(3, PLAYER_COLORS[state.winner ?? -1] ?? 0x8a7d68, 1).strokeRoundedRect(x, y, w, h, 12);
+    box.fillStyle(CHAR, 0.97).fillRoundedRect(x, y, w, h, 3);
+    box.fillStyle(PLAYER_COLORS[state.winner ?? -1] ?? 0x8a7d68, 1).fillRect(x, y, w, 5); // winner's colour along the top
+    plywoodEdge(box, x, y + h, w);
+    // Header divider, then a faint band on every other player row.
+    box.fillStyle(0xe6cfa0, 0.2).fillRect(x + 20, y + 140, w - 40, 1);
+    for (let ri = 2; ri < rows.length; ri += 2) box.fillStyle(0xe6cfa0, 0.05).fillRect(x + 12, y + 106 + ri * 34, w - 24, 34);
     const parts: Phaser.GameObjects.GameObject[] = [shade, box];
-    parts.push(this.add.text(width / 2, y + 18, title, { ...BIG, fontSize: '40px' }).setOrigin(0.5, 0));
+    const titleColor = state.winner === this.local ? '#f0a060' : BIRCH;
+    parts.push(this.add.text(width / 2, y + 18, title, { ...BIG, fontSize: '40px', color: titleColor }).setOrigin(0.5, 0));
     if (sub) parts.push(this.add.text(width / 2, y + 76, sub, { fontFamily: FONT, fontSize: '16px', color: MUTED }).setOrigin(0.5, 0));
     const colW = (w - 40) / rows[0]!.length;
     rows.forEach((row, ri) =>

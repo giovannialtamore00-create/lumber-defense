@@ -38,6 +38,7 @@ import { craftTicks } from '../../sim/systems/crafting';
 import { fireStrength } from '../../sim/systems/fire';
 import { kindOf } from '../../sim/state';
 import { MILLI } from '../../sim/fixed';
+import { BIRCH, FONT } from '../ui/theme';
 import { stackStage } from '../../sim/stack';
 import { typeIndex, upgradeLevel } from '../../sim/upgrades';
 import { type WaterFlow, SpritePool, addPackSprite, addWaterSprite, createGreyPack, packLoaded, packScale, usePixelFiltering } from '../render/sprites';
@@ -449,7 +450,7 @@ export class GameScene extends Phaser.Scene {
 
     const piles = entities.filter((e) => e.type === 'pile');
     while (this.pileLabels.length < piles.length)
-      this.pileLabels.push(this.add.text(0, 0, '', { fontFamily: 'sans-serif', fontSize: '10px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 1).setDepth(3));
+      this.pileLabels.push(this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '10px', color: '#ffffff', fontStyle: 'bold', stroke: '#24160d', strokeThickness: 3 }).setOrigin(0, 1).setDepth(3));
     this.pileLabels.forEach((t, k) => {
       const p = piles[k];
       if (!p || p.type !== 'pile') return t.setVisible(false);
@@ -714,7 +715,7 @@ export class GameScene extends Phaser.Scene {
 
   private floatNumber(at: Point, amount: number, time: number): void {
     const text = this.add
-      .text(at.x, at.y - 56, `-${amount}`, { fontFamily: 'sans-serif', fontSize: '15px', fontStyle: 'bold', color: '#ff4d3d', stroke: '#000000', strokeThickness: 3 })
+      .text(at.x, at.y - 56, `-${amount}`, { fontFamily: FONT, fontSize: '15px', fontStyle: 'bold', color: '#ff4d3d', stroke: '#24160d', strokeThickness: 3 })
       .setOrigin(0.5, 1)
       .setDepth(1000);
     this.numbers.push({ text, at, t0: time });
@@ -883,7 +884,7 @@ export class GameScene extends Phaser.Scene {
       const y = rowHexes[0]!.y + HEX_SIZE * 0.75 * ISO_SQUASH;
       this.add
         .text(east + HEX_SIZE * 1.2, y, ['≈ Waterfall', 'river slope resets'], {
-          fontFamily: 'sans-serif',
+          fontFamily: FONT,
           fontSize: '12px',
           color: '#ffffff',
           backgroundColor: '#1d4f9ccc',
@@ -915,12 +916,12 @@ export class GameScene extends Phaser.Scene {
       const cy = Math.min(...MAP.hexes.map((h) => hexToScreen(h).y)) - HEX_SIZE * 1.3;
       this.add
         .text(cx, cy, REGION_NAMES[r]!, {
-          fontFamily: 'sans-serif',
+          fontFamily: FONT,
           fontSize: '15px',
           fontStyle: 'bold',
-          color: '#fff3c4',
-          backgroundColor: '#00000088',
-          padding: { x: 6, y: 3 },
+          color: BIRCH,
+          backgroundColor: '#24160ddd',
+          padding: { x: 10, y: 4 },
         })
         .setOrigin(0.5)
         .setAlpha(0.9);
