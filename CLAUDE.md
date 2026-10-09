@@ -11,7 +11,8 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 - M9 UI rework (wood theme, no IKEA references in the visuals; the name changes later): U1 menu + lobby done
   (scorched plywood panel, branded title, pine forest, river with logs, embers, synthesized river/forest ambience in
   `src/game/ui/ambience.ts`). Next: U2 in-game Phaser HUD (`UIScene.ts`), then U3 workshop/trade panels, tooltips,
-  end screen. Open: in-game forest/river sounds in U2?
+  end screen. Open: in-game forest/river sounds in U2? U1 is committed but NOT pushed (pushing deploys the live
+  site): ask the designer whether to push now or after U2.
 
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.
