@@ -45,7 +45,8 @@
   },
   "outpost": {
     "territoryRadius": 3,
-    "firstTerritoryRadius": 2
+    "firstTerritoryRadius": 2,
+    "startHand": ["factory", "dock", "carrier"]
   },
   "woodchopper": {
     "woodPerSecond": 0.25

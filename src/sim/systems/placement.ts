@@ -147,7 +147,7 @@ export function canCollectAt(state: GameState, ctx: SimContext, i: number, playe
 
 /**
  * First outpost (DESIGN §5): anywhere in the player's own region, and only a valid start if its territory contains a
- * forest and a free riverside hex (somewhere to put the factory-mill).
+ * forest, two adjacent free riverside hexes (factory-mill and dock) and two adjacent river hexes.
  */
 function firstOutpostError(state: GameState, ctx: SimContext, player: number, i: number, asBot: boolean): string | null {
   const hex = ctx.map.hexes[i]!;
@@ -157,7 +157,12 @@ function firstOutpostError(state: GameState, ctx: SimContext, player: number, i:
   if (!isOpenLand(state, ctx, i)) return isWater(state, ctx, i) ? 'water' : isRock(state, ctx, i) ? 'rock' : isForest(state, i) ? 'trees' : 'already taken';
   const territory = territoryIndices(ctx, hex.q, hex.r, ctx.config.outpost.firstTerritoryRadius);
   if (!territory.some((t) => isForest(state, t))) return 'no forest in this territory';
-  if (!territory.some((t) => t !== i && isRiverside(state, ctx, t) && isOpenLand(state, ctx, t))) return 'no free riverside in this territory';
+  // Room for the free factory-mill and the free dock next to it: two adjacent free riverside hexes.
+  const freeBank = (t: number) => t !== i && isRiverside(state, ctx, t) && isOpenLand(state, ctx, t);
+  if (!territory.some((t) => freeBank(t) && ctx.neighbourIdx[t]!.some((n) => territory.includes(n) && freeBank(n)))) return 'no 2 free riverside hexes side by side in this territory';
+  // Two free river hexes side by side: room for the free dock and the carrier's drop-off.
+  if (!territory.some((t) => isWater(state, ctx, t) && ctx.neighbourIdx[t]!.some((n) => territory.includes(n) && isWater(state, ctx, n))))
+    return 'needs 2 adjacent river hexes in this territory';
   return null;
 }
 
@@ -253,5 +258,9 @@ export function canPlaceAnywhere(state: GameState, ctx: SimContext, player: numb
 export function carrierRouteError(state: GameState, ctx: SimContext, player: number, aQ: number, bQ: number, r: number): string | null {
   const e = pickupError(state, ctx, player, aQ, r);
   if (e) return e;
+  if (state.players[player]!.startCarrierPending) {
+    const first = structures(state).find((s) => s.kind === 'woodchopper' && s.owner === player);
+    if (first && (first.q !== aQ || first.r !== r)) return 'your first carrier starts at your first woodchopper';
+  }
   return dropOffs(state, ctx, player, aQ, r).some((d) => d.q === bQ) ? null : 'not a drop-off for this pickup';
 }

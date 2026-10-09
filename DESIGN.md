@@ -81,7 +81,7 @@ Game design for a 2–4 player browser tower-defense / territory game built arou
 1. Each player is **randomly assigned one of the 4 regions**.
 2. The player places their **first outpost anywhere inside their region**. This creates the starting territory
    (radius **2** = 19 hexes, 5 hexes across; designer decision, smaller than a normal outpost's radius 3).
-   **Valid start (decided):** the starting territory must contain **a forest and a riverside**, otherwise the
+   **Valid start (decided):** the starting territory must contain **a forest, a riverside and two adjacent free river hexes**, otherwise the
    outpost can't be placed there.
    **Turns (decided):** players place their starting outposts **in turns**, one after another, and have to adapt
    to the placements of the other players. **Once everyone has placed, the game runs in real time.** Turn order and
@@ -92,7 +92,7 @@ Game design for a 2–4 player browser tower-defense / territory game built arou
    outside the turn order.
    **Overlap (decided):** starting territories may cross region borders. Where they overlap another player's
    territory they form a **conflict zone**, under the normal rules (§9).
-3. The player receives a **factory in hand** (already crafted) and places it **anywhere in their territory**.
+3. The player receives a **factory, a dock and a carrier in hand** (free, already crafted). The factory goes **anywhere in their territory**; the dock goes next to it (so production can start); the carrier connects the starting woodchopper to the river.
 4. The player has a **starting woodchopper**. It **appears automatically** on a forest hex in the starting territory
    as soon as the first outpost is placed in a valid location, on the **forest hex closest to the outpost** (ties
    broken by a fixed hex order) (decided).

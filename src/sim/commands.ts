@@ -9,7 +9,7 @@ import { craftCost, craftError } from './systems/crafting';
 import { maxHp, startDismantle, surrender } from './systems/combat';
 import { carrierRouteError, dropOffs, isForest, placementError, territoryIndices } from './systems/placement';
 import { territoryChanged } from './systems/territory';
-import type { Carrier, Catapult, Command, ForestGuard, GameState, StoneCutter, Structure, StructureKind } from './types';
+import type { Carrier, Catapult, Command, ForestGuard, GameState, ItemKind, StoneCutter, Structure, StructureKind } from './types';
 
 export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): void {
   const player = state.players[cmd.player];
@@ -32,8 +32,9 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
       addStructure(state, ctx, 'outpost', cmd.player, cmd.q, cmd.r).radius = ctx.config.outpost.firstTerritoryRadius;
       territoryChanged(state, ctx);
       player.started = true;
+      player.startCarrierPending = true;
       placeStartingWoodchopper(state, ctx, cmd.player, cmd.q, cmd.r);
-      player.hand.push('factory'); // factory in hand, already crafted (DESIGN §5)
+      player.hand.push(...(ctx.config.outpost.startHand as ItemKind[])); // factory, dock and carrier in hand, free (DESIGN §5)
       return;
     }
     case 'place': {
@@ -52,6 +53,7 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
       if (h < 0 || carrierRouteError(state, ctx, cmd.player, cmd.aQ, cmd.bQ, cmd.r)) return;
       const drop = dropOffs(state, ctx, cmd.player, cmd.aQ, cmd.r).find((d) => d.q === cmd.bQ)!;
       player.hand.splice(h, 1);
+      player.startCarrierPending = false;
       addEntity<Carrier>(state, {
         type: 'carrier',
         owner: cmd.player,

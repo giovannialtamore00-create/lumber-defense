@@ -39,6 +39,7 @@ export function createInitialState(ctx: SimContext, playerCount: number, seed: n
       hand: [],
       warehouse: [],
       queue: [],
+      startCarrierPending: false,
       started: false,
       bot: bots[id] ?? false,
       upgrades: ctx.upgrades.types.map(() => ({ levels: [0, 0] as [number, number], first: -1 })),

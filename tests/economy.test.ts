@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import baseConfig from '../src/data/config.json';
 import { idx } from '../src/sim/context';
 import { stackStage } from '../src/sim/stack';
-import { dropOffs, isForest, placementError } from '../src/sim/systems/placement';
+import { carrierRouteError, dropOffs, isForest, placementError } from '../src/sim/systems/placement';
 import { spawnPile } from '../src/sim/systems/river';
 import { step } from '../src/sim/tick';
 import type { Carrier, Config, GameState, Pile } from '../src/sim/types';
@@ -194,7 +194,7 @@ describe('match start (DESIGN §5)', () => {
 
   it('the first outpost needs a forest and a free riverside in its territory', () => {
     const { ctx, state } = setup(START);
-    expect(placementError(state, ctx, 0, 'outpost', cell(1, 1).q, 1)).toBe('no free riverside in this territory');
+    expect(placementError(state, ctx, 0, 'outpost', cell(1, 1).q, 1)).toBe('no 2 free riverside hexes side by side in this territory');
     expect(placementError(state, ctx, 0, 'outpost', cell(6, 3).q, 3)).toBe('water');
     expect(placementError(state, ctx, 0, 'outpost', cell(4, 1).q, 1)).toBeNull();
   });
@@ -210,7 +210,7 @@ describe('match start (DESIGN §5)', () => {
     step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
     const kinds = state.entities.map((e) => (e.type === 'structure' ? `${e.kind}@${e.q},${e.r}` : e.type));
     expect(kinds).toEqual([`outpost@${cell(4, 1).q},1`, `woodchopper@${cell(3, 0).q},0`]);
-    expect(state.players[0]!.hand).toEqual(['factory']);
+    expect(state.players[0]!.hand).toEqual(['factory', 'dock', 'carrier']); // the free start kit
     expect(wood(state)).toBe(50);
   });
 
@@ -220,7 +220,24 @@ describe('match start (DESIGN §5)', () => {
     expect(placementError(state, ctx, 0, 'factory', cell(3, 2).q, 2)).toBe('factory-mills must be on the riverside');
     expect(placementError(state, ctx, 0, 'factory', cell(5, 2).q, 2)).toBeNull();
     step(state, ctx, [{ type: 'place', player: 0, item: 'factory', q: cell(5, 2).q, r: 2 }]);
-    expect(state.players[0]!.hand).toEqual([]);
+    expect(state.players[0]!.hand).toEqual(['dock', 'carrier']);
+  });
+
+  it('the free start carrier must start at the first woodchopper', () => {
+    const { ctx, state } = setup(START);
+    step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
+    const chopper = state.entities.find((e) => e.type === 'structure' && e.kind === 'woodchopper')! as { q: number; r: number };
+    const other = cell(4, 1);
+    setStack(state, ctx, other, 5);
+    expect(carrierRouteError(state, ctx, 0, other.q, other.q + 1, other.r)).toBe('your first carrier starts at your first woodchopper');
+    expect(state.players[0]!.startCarrierPending).toBe(true);
+    const b = dropOffs(state, ctx, 0, chopper.q, chopper.r)[0]!;
+    expect(carrierRouteError(state, ctx, 0, chopper.q, b.q, chopper.r)).toBeNull();
+  });
+
+  it('the first outpost needs two adjacent river hexes in its territory', () => {
+    const { ctx, state } = setup(['. . T . . .', '. . . ~ . .', '. . . . . .', '. . . . . .']);
+    expect(placementError(state, ctx, 0, 'outpost', cell(2, 1).q, 1)).toBe('needs 2 adjacent river hexes in this territory');
   });
 
   it('a second first-outpost command is ignored', () => {

@@ -63,6 +63,8 @@ export interface Player {
   warehouse: ItemKind[];
   /** Paid items being crafted, one at a time, oldest first (DESIGN §7.2). */
   queue: CraftJob[];
+  /** The free start-kit carrier is still in hand: it must start at the starting woodchopper (DESIGN §5). */
+  startCarrierPending: boolean;
   /** True once the first outpost is placed. */
   started: boolean;
   /** Controlled by a bot: an empty slot, or a player who ran out of time on their starting turn (DESIGN §5). */
