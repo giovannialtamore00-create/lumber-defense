@@ -2,7 +2,7 @@
 // what it does right now, with live numbers (upgrades included). Read-only: everything comes from the sim.
 import { wholeUnits } from '../../sim/fixed';
 import type { Hex } from '../../sim/hex';
-import { hexOf, kindOf } from '../../sim/state';
+import { hexOf, isOutpostLike, kindOf } from '../../sim/state';
 import { isCoveredBy } from '../../sim/systems/territory';
 import { maxHp } from '../../sim/systems/combat';
 import { fireStrength } from '../../sim/systems/fire';
@@ -36,7 +36,7 @@ export function thingAt(runner: SimRunner, hex: Hex): Thing | null {
 
 /** Can `player` dismantle this (their own, and not an outpost)? */
 export function canDismantle(e: Thing, player: number): boolean {
-  return e.owner === player && !(e.type === 'structure' && e.kind === 'outpost') && e.dismantleTicks === undefined;
+  return e.owner === player && !(e.type === 'structure' && isOutpostLike(e.kind)) && e.dismantleTicks === undefined;
 }
 
 export function refundOf(runner: SimRunner, e: Thing): number {
@@ -69,9 +69,11 @@ export function describe(runner: SimRunner, e: Thing): { title: string; action: 
     case 'outpost':
       action = `claims territory, radius ${(e.type === 'structure' ? (e.radius ?? ctx.config.outpost.territoryRadius) : 0) + up('reach', 'radiusBonus', 0)}`;
       break;
+    case 'castle':
     case 'factory': {
       const mills = e.type === 'structure' ? watermills(state, ctx, e).length : 0;
-      action = `makes wood yours · ${mills} watermill${mills === 1 ? '' : 's'} · all crafting −${(craftReductionBp(state, ctx, e.owner) / 100).toFixed(1)}%`;
+      const claims = kind === 'castle' ? `claims territory, radius ${(e.type === 'structure' ? (e.radius ?? ctx.config.castle.territoryRadius) : 0) + upgradeValue(state, ctx, e.owner, 'outpost', 'reach', 'radiusBonus', 0)} · ` : '';
+      action = `${claims}makes wood yours · ${mills} watermill${mills === 1 ? '' : 's'} · all crafting −${(craftReductionBp(state, ctx, e.owner) / 100).toFixed(1)}%`;
       break;
     }
     case 'dock':

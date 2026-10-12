@@ -4,6 +4,8 @@
 import strategies from '../data/botStrategies.json';
 import type { SimContext } from '../sim/context';
 import { distance, hexesInRadius } from '../sim/hex';
+import { isOutpostLike, structureAt } from '../sim/state';
+import { isRiverside, isWater } from '../sim/water';
 import { isConflictFor } from '../sim/systems/combat';
 import { craftError } from '../sim/systems/crafting';
 import { canPlaceAnywhere, dropOffs, pickupError, placementError } from '../sim/systems/placement';
@@ -78,15 +80,18 @@ export function createBot(ctx: SimContext, state: GameState, me: number, st: Str
   };
 
   const p = () => state.players[me]!;
-  const mine = (k: StructureKind) => state.entities.filter((e): e is Structure => e.type === 'structure' && e.kind === k && e.owner === me);
+  // The castle counts as an outpost. Factories stay factory-mills only, so the bot still builds its own mill with a dock beside it.
+  const mine = (k: StructureKind) =>
+    state.entities.filter((e): e is Structure => e.type === 'structure' && (k === 'outpost' ? isOutpostLike(e.kind) : e.kind === k) && e.owner === me);
   const count = (t: string) => state.entities.filter((e) => e.type === t && 'owner' in e && e.owner === me).length;
   const buildings = () => state.entities.filter((e) => e.type === 'structure' && e.owner === me).length;
   const covered = (i: number) => isCoveredBy(state, i, me);
   const legal = (item: ItemKind) => hexes.filter((h) => !placementError(state, ctx, me, item, h.q, h.r, opts.asBot));
   const territoryForest = () => state.forestPool.reduce((s, w, i) => s + (covered(i) ? w : 0), 0) / 1000;
-  const millNear = (h: { q: number; r: number }) => mine('factory').some((f) => distance(f, h) === 1);
+  // A dock feeds a factory-mill or the castle (which works as one) on an adjacent hex.
+  const millNear = (h: { q: number; r: number }) => [...mine('factory'), ...mine('castle')].some((f) => distance(f, h) === 1);
   const minute = () => state.tick / 600;
-  const enemyOutposts = () => state.entities.filter((e): e is Structure => e.type === 'structure' && e.kind === 'outpost' && e.owner >= 0 && e.owner !== me);
+  const enemyOutposts = () => state.entities.filter((e): e is Structure => e.type === 'structure' && isOutpostLike(e.kind) && e.owner >= 0 && e.owner !== me);
   const conflictHexes = () => hexes.map((_, i) => i).filter((i) => isConflictFor(state, i, me));
   const aggressive = () => minute() >= st.aggressionFromMin;
   /**
@@ -143,30 +148,52 @@ export function createBot(ctx: SimContext, state: GameState, me: number, st: Str
     return mine('woodchopper').filter((w) => !dropOffs(state, ctx, me, w.q, w.r).some((d) => d.riverQ === null));
   }
 
+  /** Factory-mill spot: strong river (craft speed), forest on its row, and best of all a chopper it can serve. */
+  function factoryScore(h: { q: number; r: number }): number {
+    const i = idxOf(h)!;
+    const river = Math.max(0, ...ctx.neighbourIdx[i]!.map((n) => ctx.riverRow[n]!));
+    const forest = hexesInRadius(h, 3).filter((n) => {
+      const j = idxOf(n);
+      return j !== undefined && state.forestPool[j]! > 0 && n.r === h.r;
+    }).length;
+    const serves = unservedChoppers().some((w) => w.r === h.r && Math.abs(w.q - h.q) <= ctx.config.carrier.maxRouteDistance);
+    return river + forest * 2 + (serves ? 100 : 0);
+  }
+
   function spot(item: ItemKind): { q: number; r: number } | null {
     const spots = legal(item);
     if (!spots.length) return null;
     const byScore = (f: (h: { q: number; r: number }) => number) => spots.reduce((a, b) => (f(b) > f(a) ? b : a));
     switch (item) {
+      case 'castle': {
+        // On or next to the river with a free riverside hex beside it, so the castle can run a loop with a dock even
+        // if the neighbours take the other riverside hexes.
+        // Free riverside land close by: the closer to the castle, the less likely a neighbour's territory also reaches it.
+        const freeBank = (n: { q: number; r: number }) => {
+          const j = idxOf(n);
+          return j !== undefined && isRiverside(state, ctx, j) && !isWater(state, ctx, j) && state.forestPool[j] === 0 && !structureAt(state, n.q, n.r);
+        };
+        const nearBank = (h: { q: number; r: number }) => hexesInRadius(h, 2).filter((n) => !(n.q === h.q && n.r === h.r) && freeBank(n)).length;
+        // A castle on the riverside with a free bank hex beside it is a whole loop on its own (castle + dock).
+        const beside = (h: { q: number; r: number }) => hexesInRadius(h, 1).filter((n) => !(n.q === h.q && n.r === h.r) && freeBank(n)).length;
+        return byScore(
+          (h) => expansionScore(h, ctx.config.castle.territoryRadius) + Math.min(nearBank(h), 4) * 2 + (isRiverside(state, ctx, idxOf(h)!) ? 6 + Math.min(beside(h), 2) * 3 : 0),
+        );
+      }
       case 'outpost':
-        if (!p().started) return byScore((h) => expansionScore(h, ctx.config.outpost.firstTerritoryRadius));
         {
           // Focus: as close as possible to the target outpost, so our territory covers it.
           const t = focusTarget();
           if (t && !targetCovered(t)) return byScore((h) => -distance(h, t));
         }
         return aggressive() ? byScore(pushScore) : byScore((h) => expansionScore(h, ctx.config.outpost.territoryRadius));
-      case 'factory':
-        return byScore((h) => {
-          const i = idxOf(h)!;
-          const river = Math.max(0, ...ctx.neighbourIdx[i]!.map((n) => ctx.riverRow[n]!));
-          const forest = hexesInRadius(h, 3).filter((n) => {
-            const j = idxOf(n);
-            return j !== undefined && state.forestPool[j]! > 0 && n.r === h.r;
-          }).length;
-          const serves = unservedChoppers().some((w) => w.r === h.r && Math.abs(w.q - h.q) <= ctx.config.carrier.maxRouteDistance);
-          return river + forest * 2 + (serves ? 100 : 0);
-        });
+      case 'factory': {
+        // The loop needs a dock beside the mill: prefer spots with a free dock-legal hex next to them.
+        const dockHexes = new Set(legal('dock').map((d) => idxOf(d)!));
+        const withDock = spots.filter((h) => ctx.neighbourIdx[idxOf(h)!]!.some((n) => dockHexes.has(n)));
+        const pool = withDock.length ? withDock : spots;
+        return pool.reduce((a, b) => (factoryScore(b) > factoryScore(a) ? b : a));
+      }
       case 'dock':
         return spots.find(millNear) ?? null;
       case 'woodchopper':
@@ -228,7 +255,7 @@ export function createBot(ctx: SimContext, state: GameState, me: number, st: Str
     if (opts.asBot && !p().bot) return []; // the player took their slot back
     if (p().bot && !opts.asBot) send({ type: 'takeControl', player: me });
     else if (!p().started) {
-      const h = spot('outpost');
+      const h = spot('castle');
       if (h) send({ type: 'placeOutpost', player: me, q: h.q, r: h.r });
     } else {
       if (opts.debugNotes && state.tick % 3000 === 0) {
@@ -260,6 +287,9 @@ export function createBot(ctx: SimContext, state: GameState, me: number, st: Str
       }
       return send({ type: 'place', player: me, item: item as StructureKind, q: h.q, r: h.r });
     }
+    // A factory or dock that was binned for lack of a spot goes back in hand as soon as one opens up (cut forest, etc.).
+    const binned = p().warehouse.findIndex((k) => (k === 'dock' || k === 'factory') && spot(k) !== null);
+    if (binned >= 0) return send({ type: 'retrieve', player: me, index: binned });
     const useless = mine('dock').find((d) => !millNear(d) && d.dismantleTicks === undefined);
     if (useless) return send({ type: 'dismantle', player: me, id: useless.id });
     // Defence: once any enemy catapult exists, get Archer L1 first (archers only shoot catapults).

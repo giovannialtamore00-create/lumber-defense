@@ -79,8 +79,11 @@ Game design for a 2–4 player browser tower-defense / territory game built arou
 ## 5. Match start
 
 1. Each player is **randomly assigned one of the 4 regions**.
-2. The player places their **first outpost anywhere inside their region**. This creates the starting territory
-   (radius **2** = 19 hexes, 5 hexes across; designer decision, smaller than a normal outpost's radius 3).
+2. The player places their **castle anywhere inside their region** (it may stand on the riverside, but doesn't have to).
+   The castle is the first outpost with **+1 range** (radius **3** in `config.json` `castle.territoryRadius`; the old
+   starting radius 2 plus 1) and it **also works as a factory-mill**: docks feed it, carriers deliver to it, it crafts.
+   Placing the free factory, dock and carrier below is therefore **optional** (a tutorial-like start, not a requirement).
+   It counts as an outpost for everything else (Reach, Archer, conquest target, defeat) and can't be dismantled.
    **Valid start (decided):** the starting territory must contain **a forest, a riverside and two adjacent free river hexes**, otherwise the
    outpost can't be placed there.
    **Turns (decided):** players place their starting outposts **in turns**, one after another, and have to adapt

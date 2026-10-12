@@ -4,7 +4,7 @@
 import { type SimContext, idx } from '../context';
 import { MILLI } from '../fixed';
 import { type Hex, distance } from '../hex';
-import { addEntity, hexOf, isOwnable, kindOf, removeEntity, structures } from '../state';
+import { addEntity, hexOf, isOutpostLike, isOwnable, kindOf, removeEntity, structures } from '../state';
 import { upgradeValue } from '../upgrades';
 import { isRock, isWater } from '../water';
 import { type Catapult, type Entity, type GameState, NEUTRAL, type Ownable, type Shot } from '../types';
@@ -44,7 +44,7 @@ export function isLegalTarget(state: GameState, ctx: SimContext, attacker: numbe
 type Aim = 'any' | 'catapults' | 'outposts';
 function aimable(e: Ownable, aim: Aim): boolean {
   if (aim === 'catapults') return e.type === 'catapult';
-  if (aim === 'outposts') return e.type === 'structure' && e.kind === 'outpost';
+  if (aim === 'outposts') return e.type === 'structure' && isOutpostLike(e.kind);
   return true;
 }
 const catapultAim = (state: GameState, owner: number): Aim => (state.players[owner]?.stance === 'conquest' ? 'outposts' : 'any');
@@ -119,7 +119,7 @@ export function destroy(state: GameState, ctx: SimContext, e: Ownable, by: numbe
     state.debrisBurnt[i] = burnt;
     state.debrisFire[i] = null;
   }
-  if (e.kind === 'outpost') {
+  if (isOutpostLike(e.kind)) {
     const p = state.players[by];
     if (p) p.stats.outpostsDestroyed++;
     territoryChanged(state, ctx);
@@ -142,7 +142,7 @@ export function dismantle(state: GameState, ctx: SimContext, e: Ownable): void {
 export function surrender(state: GameState, ctx: SimContext, player: number): void {
   for (const e of [...state.entities]) {
     if (!isOwnable(e) || e.owner !== player) continue;
-    if (e.type === 'catapult' || (e.type === 'structure' && e.kind === 'outpost')) dismantle(state, ctx, e);
+    if (e.type === 'catapult' || (e.type === 'structure' && isOutpostLike(e.kind))) dismantle(state, ctx, e);
   }
   territoryChanged(state, ctx);
 }
@@ -152,7 +152,7 @@ export function checkDefeats(state: GameState, ctx: SimContext): void {
   if (state.phase !== 'running') return;
   for (const p of state.players) {
     if (!p.started || p.defeated) continue;
-    if (structures(state).some((s) => s.kind === 'outpost' && s.owner === p.id)) continue;
+    if (structures(state).some((s) => isOutpostLike(s.kind) && s.owner === p.id)) continue;
     p.defeated = true;
     for (const e of [...state.entities]) if (e.type === 'catapult' && e.owner === p.id) dismantle(state, ctx, e);
   }
@@ -174,7 +174,7 @@ function checkVictory(state: GameState): void {
 function archersSystem(state: GameState, ctx: SimContext): void {
   for (const s of structures(state)) {
     if (s.owner === NEUTRAL) continue;
-    const [type, path] = s.kind === 'outpost' ? ['outpost', 'archer'] : s.kind === 'bridge' ? ['bridge', 'drawbridge'] : [null, null];
+    const [type, path] = isOutpostLike(s.kind) ? ['outpost', 'archer'] : s.kind === 'bridge' ? ['bridge', 'drawbridge'] : [null, null];
     if (!type || !path) continue;
     const range = upgradeValue(state, ctx, s.owner, type, path, 'range', 0);
     if (range === 0) continue;

@@ -13,14 +13,15 @@ import type { Command, Config, GameState } from '../src/sim/types';
 function scriptedCommands(state: GameState, ctx: SimContext): Command[] {
   const cmds: Command[] = [];
   for (const p of state.players) {
-    const legal = (item: 'outpost' | 'factory' | 'dock') =>
+    const legal = (item: 'castle' | 'factory' | 'dock') =>
       ctx.map.hexes.find((h) => placementError(state, ctx, p.id, item, h.q, h.r) === null);
     if (!p.started) {
-      const h = legal('outpost'); // only the player whose starting turn it is gets a legal spot
+      const h = legal('castle'); // only the player whose starting turn it is gets a legal spot
       if (h) cmds.push({ type: 'placeOutpost', player: p.id, q: h.q, r: h.r });
     } else if (p.hand[0] === 'factory' || p.hand[0] === 'dock') {
       const h = legal(p.hand[0]);
-      if (h) cmds.push({ type: 'place', player: p.id, item: p.hand[0], q: h.q, r: h.r });
+      // No free riverside left (starting territories overlap): bin it so the carrier behind it can be placed.
+      cmds.push(h ? { type: 'place', player: p.id, item: p.hand[0], q: h.q, r: h.r } : { type: 'store', player: p.id });
     } else if (p.hand[0] === 'carrier') {
       const chopper = state.entities.find((e) => e.type === 'structure' && e.kind === 'woodchopper' && e.owner === p.id);
       if (chopper && chopper.type === 'structure') {

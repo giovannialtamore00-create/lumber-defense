@@ -140,6 +140,7 @@ export function drawStructure(g: G, s: Structure, timeMs: number, look: Structur
       g.fillStyle(0x8a5a2b, 1).fillRect(c.x - 14, c.y + 6, 28 * f, 4);
       break;
     }
+    case 'castle':
     case 'outpost': {
       g.fillStyle(PLANK, 1);
       g.fillRect(c.x - 7, c.y - 22, 14, 24);

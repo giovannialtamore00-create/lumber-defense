@@ -80,6 +80,11 @@ export function removeEntity(state: GameState, id: number): void {
   if (i >= 0) state.entities.splice(i, 1);
 }
 
+/** Claims territory: an outpost, or the castle (the first outpost, DESIGN §5). */
+export const isOutpostLike = (kind: string) => kind === 'outpost' || kind === 'castle';
+/** Takes wood and crafts: a factory-mill, or the castle. */
+export const isFactoryLike = (kind: string) => kind === 'factory' || kind === 'castle';
+
 export function structures(state: GameState): Structure[] {
   return state.entities.filter((e): e is Structure => e.type === 'structure');
 }

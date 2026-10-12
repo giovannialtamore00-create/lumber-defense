@@ -35,7 +35,7 @@ export class PlacementHand {
   /** The item being placed: the first outpost before the start, then the oldest item in hand. */
   current(): ItemKind | null {
     const p = this.runner.state.players[this.player]!;
-    if (!p.started) return 'outpost';
+    if (!p.started) return 'castle';
     return p.hand[0] ?? null;
   }
 
@@ -90,7 +90,7 @@ export class PlacementHand {
     }
 
     const err = onMap ? placementError(state, ctx, this.player, item, onMap.q, onMap.r) : null;
-    const what = started ? `${ITEM_NAMES[item]} in hand` : 'Place your first outpost in your region';
+    const what = started ? `${ITEM_NAMES[item]} in hand` : 'Place your castle in your region';
     // A forest guard shows the hexes it will look after.
     const area =
       item === 'forestGuard' && onMap && !err
@@ -115,7 +115,7 @@ export class PlacementHand {
     if (!item) return;
 
     if (!p.started) {
-      if (!placementError(state, ctx, this.player, 'outpost', hex.q, hex.r))
+      if (!placementError(state, ctx, this.player, 'castle', hex.q, hex.r))
         this.runner.submit({ type: 'placeOutpost', player: this.player, q: hex.q, r: hex.r });
       return;
     }

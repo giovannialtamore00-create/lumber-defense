@@ -2,7 +2,7 @@
 // time, craft time reduced by the player's factory-mills and the rivers they stand on. Integer math only.
 import { playtestCost, playtestTicks } from '../playtest';
 import { type SimContext, idx } from '../context';
-import { structures } from '../state';
+import { isFactoryLike, structures } from '../state';
 import type { GameState, ItemKind, Structure } from '../types';
 import { canPlaceAnywhere } from './placement';
 import { upgradeValue } from '../upgrades';
@@ -32,7 +32,7 @@ export function watermills(state: GameState, ctx: SimContext, factory: Structure
 }
 
 export function ownFactories(state: GameState, player: number): Structure[] {
-  return structures(state).filter((s) => s.kind === 'factory' && s.owner === player);
+  return structures(state).filter((s) => isFactoryLike(s.kind) && s.owner === player);
 }
 
 /**

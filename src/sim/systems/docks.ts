@@ -1,6 +1,6 @@
 // Docks catch floating wood and dispense it into an adjacent factory (DESIGN §6.6). A dock's wood is its hex's stack.
 import { type SimContext, idx } from '../context';
-import { structures } from '../state';
+import { isFactoryLike, structures } from '../state';
 import type { GameState, Pile, Structure } from '../types';
 import { MILLI, perTick, toMilli } from '../fixed';
 import { distance } from '../hex';
@@ -47,7 +47,7 @@ export function docksSystem(state: GameState, ctx: SimContext): void {
     const d = idx(ctx, dock)!;
     if (state.stacks[d] === 0) continue;
     const range = upgradeValue(state, ctx, dock.owner, 'dock', 'dispense', 'feedRange', 1);
-    const factory = all.find((s) => s.kind === 'factory' && distance(s, dock) <= range);
+    const factory = all.find((s) => isFactoryLike(s.kind) && distance(s, dock) <= range);
     if (!factory) continue;
     const rate = perTick(upgradeValue(state, ctx, dock.owner, 'dock', 'dispense', 'dispensePerS', ctx.config.dock.dispensePerSecond), ctx.config.tickRate);
     const amount = Math.min(rate, state.stacks[d]!);

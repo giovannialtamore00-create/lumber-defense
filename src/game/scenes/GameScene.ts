@@ -32,7 +32,7 @@ import {
 import { ownFactories, watermills } from '../../sim/systems/crafting';
 import { isWorkingBridge } from '../../sim/systems/placement';
 import type { Catapult, ItemKind, Ownable, StoneCutter, Structure } from '../../sim/types';
-import { isOwnable } from '../../sim/state';
+import { isOutpostLike, isOwnable } from '../../sim/state';
 import { maxHp } from '../../sim/systems/combat';
 import { craftTicks } from '../../sim/systems/crafting';
 import { fireStrength } from '../../sim/systems/fire';
@@ -516,6 +516,8 @@ export class GameScene extends Phaser.Scene {
     switch (e.kind) {
       case 'outpost':
         return this.sprites.put(`outpost.s${this.stage(owner, 'outpost')}`, c.x, c.y, { owner, size });
+      case 'castle': // the outpost sprite, larger, until the castle has its own art
+        return this.sprites.put(`outpost.s${this.stage(owner, 'outpost')}`, c.x, c.y, { owner, size: size * 1.4 });
       case 'factory': {
         // The wheel is drawn on the south-west side: mirror it when the river is east. The building stands at the
         // edge of its hex, with the wheel in the water.
@@ -965,7 +967,7 @@ export class GameScene extends Phaser.Scene {
 
     // Dev: `?zoom=2.5` zooms onto the local player's first outpost (close-up screenshots with `?demo`).
     const zoomParam = new URLSearchParams(window.location.search).get('zoom');
-    const outpost = this.runner.state.entities.find((e) => e.type === 'structure' && e.kind === 'outpost' && e.owner === this.local);
+    const outpost = this.runner.state.entities.find((e) => e.type === 'structure' && isOutpostLike(e.kind) && e.owner === this.local);
     if (import.meta.env.DEV && zoomParam && outpost?.type === 'structure') {
       const c = hexToScreen(outpost);
       cam.setZoom(Number(zoomParam));

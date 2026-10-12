@@ -3,7 +3,7 @@ import type { SimContext } from './context';
 import { MILLI } from './fixed';
 import { distance } from './hex';
 import { idx } from './context';
-import { addEntity, isOwnable, structureAt } from './state';
+import { addEntity, isOutpostLike, isOwnable, structureAt } from './state';
 import { startResearch, upgradeError } from './upgrades';
 import { craftCost, craftError } from './systems/crafting';
 import { maxHp, startDismantle, surrender } from './systems/combat';
@@ -28,13 +28,13 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
 
   switch (cmd.type) {
     case 'placeOutpost': {
-      if (player.started || placementError(state, ctx, cmd.player, 'outpost', cmd.q, cmd.r, cmd.bot === true)) return;
-      addStructure(state, ctx, 'outpost', cmd.player, cmd.q, cmd.r).radius = ctx.config.outpost.firstTerritoryRadius;
+      if (player.started || placementError(state, ctx, cmd.player, 'castle', cmd.q, cmd.r, cmd.bot === true)) return;
+      addStructure(state, ctx, 'castle', cmd.player, cmd.q, cmd.r).radius = ctx.config.castle.territoryRadius;
       territoryChanged(state, ctx);
       player.started = true;
       player.startCarrierPending = true;
       placeStartingWoodchopper(state, ctx, cmd.player, cmd.q, cmd.r);
-      player.hand.push(...(ctx.config.outpost.startHand as ItemKind[])); // factory, dock and carrier in hand, free (DESIGN §5)
+      player.hand.push(...(ctx.config.castle.startHand as ItemKind[])); // factory, dock and carrier in hand, free and optional (DESIGN §5)
       return;
     }
     case 'place': {
@@ -141,7 +141,7 @@ export function applyCommand(state: GameState, ctx: SimContext, cmd: Command): v
       // whatever a carrier was carrying (DESIGN §7.3c).
       const e = state.entities.find((x) => x.id === cmd.id);
       if (!e || !isOwnable(e) || e.owner !== cmd.player) return;
-      if (e.type === 'structure' && e.kind === 'outpost') return;
+      if (e.type === 'structure' && isOutpostLike(e.kind)) return;
       startDismantle(state, ctx, e); // takes as long as crafting it (DESIGN §7.3c)
       return;
     }
@@ -182,7 +182,7 @@ function addStructure(state: GameState, ctx: SimContext, kind: StructureKind, ow
  */
 function placeStartingWoodchopper(state: GameState, ctx: SimContext, player: number, q: number, r: number): void {
   let best: { i: number; d: number } | null = null;
-  for (const i of territoryIndices(ctx, q, r, ctx.config.outpost.firstTerritoryRadius).sort((a, b) => a - b)) {
+  for (const i of territoryIndices(ctx, q, r, ctx.config.castle.territoryRadius).sort((a, b) => a - b)) {
     const h = ctx.map.hexes[i]!;
     if (!isForest(state, i) || structureAt(state, h.q, h.r)) continue;
     const d = distance(h, { q, r });

@@ -3,6 +3,7 @@ import type { ItemKind } from '../../sim/types';
 
 export const ITEM_NAMES: Record<ItemKind, string> = {
   outpost: 'Outpost',
+  castle: 'Castle',
   factory: 'Factory-mill',
   dock: 'Dock',
   carrier: 'Carrier',
@@ -18,6 +19,7 @@ export const ITEM_NAMES: Record<ItemKind, string> = {
 
 export const ITEM_DESCRIPTIONS: Record<ItemKind, string> = {
   outpost: 'Claims territory around it',
+  castle: 'Your starting stronghold: claims territory and turns wood into yours like a factory-mill',
   factory: 'Riverside. Turns wood into yours, speeds up crafting, adds a queue slot',
   dock: 'Riverside. Catches floating wood, feeds an adjacent factory-mill',
   carrier: 'Carries wood along its row, A → B, forever',

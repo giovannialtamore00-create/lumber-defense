@@ -366,15 +366,15 @@ export class UIScene extends Phaser.Scene {
     if (me.bot) {
       step = ['A bot has your slot', 'You ran out of time on your starting turn. You can step back in whenever you like, at the point the bot has reached.'];
     } else if (!me.started && turn !== null && turn !== this.local) {
-      step = [`Waiting for ${this.slotName(turn)} (${secs} s)`, 'Players place their first outpost one after another, in a random order. Plan around what the others choose.'];
+      step = [`Waiting for ${this.slotName(turn)} (${secs} s)`, 'Players place their castle one after another, in a random order. Plan around what the others choose.'];
     } else if (!me.started) {
       step = [
-        turn === this.local ? `Your turn: place your first outpost (${secs} s)` : 'Place your first outpost',
-        'Click a green hex inside your highlighted region. Its territory (5 hexes across) must hold a forest and a free riverside hex. A woodchopper starts cutting the nearest forest right away.',
+        turn === this.local ? `Your turn: place your castle (${secs} s)` : 'Place your castle',
+        'Click a green hex inside your highlighted region. The castle claims territory (7 hexes across) and works as a factory-mill. Its territory must hold a forest and a free riverside hex. A woodchopper starts cutting the nearest forest right away.',
       ];
     } else if (state.phase === 'start' && turn !== null) {
-      step = [`Waiting for ${this.slotName(turn)} (${secs} s)`, 'The game starts once every player has placed their first outpost.'];
-    } else if (me.hand.includes('factory') && ownFactories(state, this.local).length === 0) {
+      step = [`Waiting for ${this.slotName(turn)} (${secs} s)`, 'The game starts once every player has placed their castle.'];
+    } else if (me.hand.includes('factory') && ownFactories(state, this.local).every((f) => f.kind === 'castle')) {
       step = [
         'Place your first factory-mill',
         'Click a riverside hex inside your territory. Wood that reaches it becomes yours, and it lets you craft. Lower down the river crafts faster.',

@@ -33,7 +33,7 @@ describe('starting turns (DESIGN §5)', () => {
 
     const { ctx, state } = match(3);
     const [first, second] = state.startTurns.order as [number, number];
-    expect(placementError(state, ctx, second, 'outpost', SPOTS[0]!.q, SPOTS[0]!.r)).toBe('wait for your turn');
+    expect(placementError(state, ctx, second, 'castle', SPOTS[0]!.q, SPOTS[0]!.r)).toBe('wait for your turn');
     step(state, ctx, [{ type: 'placeOutpost', player: second, q: SPOTS[0]!.q, r: SPOTS[0]!.r }]);
     expect(state.players[second]!.started).toBe(false);
 

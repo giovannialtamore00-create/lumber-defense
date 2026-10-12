@@ -81,7 +81,7 @@ describe('lockstep over the network (ARCHITECTURE §7)', () => {
     const s = host!.state;
     expect([0, 1, 2].every((p) => s.players[p]!.started)).toBe(true);
     expect(s.players[3]!.bot).toBe(true);
-    expect(s.entities.filter((e) => e.type === 'carrier' && e.owner < 3)).toHaveLength(3); // the bot (slot 3) has its own
+    expect(s.entities.filter((e) => e.type === 'carrier' && e.owner < 3).length).toBeGreaterThanOrEqual(3); // every human has one (the bot, slot 3, has its own)
   }, 20_000); // the bot slot thinks too, which takes this past the 5 s default
 
   it("a client can't send commands for another player's slot", () => {

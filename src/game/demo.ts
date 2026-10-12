@@ -10,7 +10,7 @@ export function demoCommands(runner: SimRunner, player: number): Command[] {
   const p = state.players[player]!;
   const legal = (item: StructureKind) => ctx.map.hexes.find((h) => placementError(state, ctx, player, item, h.q, h.r) === null);
   if (!p.started) {
-    const h = legal('outpost');
+    const h = legal('castle');
     return h ? [{ type: 'placeOutpost', player, q: h.q, r: h.r }] : [];
   }
   const item = p.hand[0];
@@ -22,7 +22,8 @@ export function demoCommands(runner: SimRunner, player: number): Command[] {
   }
   if (item && item !== 'forestGuard' && item !== 'stoneCutter' && item !== 'catapult') {
     const h = legal(item);
-    return h ? [{ type: 'place', player, item, q: h.q, r: h.r }] : [];
+    // No free spot (crowded start): bin it so the carrier behind it can be placed; the castle already works as a factory.
+    return h ? [{ type: 'place', player, item, q: h.q, r: h.r }] : [{ type: 'store', player }];
   }
   // Craft a carrier, then a dock.
   const owns = (kind: 'carrier' | 'dock') =>

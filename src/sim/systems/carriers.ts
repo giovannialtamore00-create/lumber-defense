@@ -5,7 +5,7 @@
 import { MILLI, toMilli } from '../fixed';
 import { upgradeValue } from '../upgrades';
 import { type SimContext, idx } from '../context';
-import { structureAt } from '../state';
+import { isFactoryLike, structureAt } from '../state';
 import type { Carrier, GameState } from '../types';
 import { deliverToFactory } from './economy';
 import { bridgeAt, canCollectAt, rowPassable } from './placement';
@@ -86,7 +86,7 @@ export function carriersSystem(state: GameState, ctx: SimContext): void {
         spawnPile(state, ctx, c.riverQ, c.r, c.load);
       } else {
         const factory = structureAt(state, c.bQ, c.r);
-        if (factory?.kind !== 'factory') continue; // factory gone: wait with the load
+        if (!factory || !isFactoryLike(factory.kind)) continue; // factory gone: wait with the load
         deliverToFactory(state, ctx, factory, c.load);
       }
       c.load = 0;

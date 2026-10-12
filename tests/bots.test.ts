@@ -6,7 +6,10 @@ import { SimRunner } from '../src/game/simRunner';
 import { LocalNetwork } from '../src/net/localTransport';
 import { LockstepSession, type MatchInfo } from '../src/net/lockstep';
 import { hashState } from '../src/sim/hash';
+import { distance } from '../src/sim/hex';
+import { placementError } from '../src/sim/systems/placement';
 import type { MapData } from '../src/sim/map';
+import type { Structure } from '../src/sim/types';
 import type { Config } from '../src/sim/types';
 
 const MAP = map02 as MapData;
@@ -46,9 +49,18 @@ describe('bots in a real match (M7)', () => {
         const p = host.state.players[id]!;
         const kinds = host.state.entities.filter((e) => e.type === 'structure' && e.owner === id).map((e) => (e.type === 'structure' ? e.kind : ''));
         expect(p.bot).toBe(true);
-        expect(kinds, `seed ${seed} bot ${id}`).toContain('outpost');
+        expect(kinds, `seed ${seed} bot ${id}`).toContain('castle');
         expect(kinds, `seed ${seed} bot ${id}`).toContain('factory');
         expect(kinds.length, `seed ${seed} bot ${id}`).toBeGreaterThanOrEqual(4);
+        // The production loop: a dock right next to a factory-mill or the castle.
+        const mine = host.state.entities.filter((e): e is Structure => e.type === 'structure' && e.owner === id);
+        const feeders = mine.filter((s) => s.kind === 'factory' || s.kind === 'castle');
+        // Unless a neighbouring bot's castle took the last free riverside hexes at the same moment: then no dock spot exists.
+        const loop = mine.some((d) => d.kind === 'dock' && feeders.some((f) => distance(f, d) === 1));
+        const spotLeft = host.ctx.map.hexes.some(
+          (h) => feeders.some((f) => distance(f, h) === 1) && placementError(host.state, host.ctx, id, 'dock', h.q, h.r, true) === null,
+        );
+        expect(loop || !spotLeft, `seed ${seed} bot ${id} has a dock next to a mill`).toBe(true);
         expect(p.stats.woodChopped, `seed ${seed} bot ${id}`).toBeGreaterThan(100_000);
       }
       expect(host.state.tick).toBeGreaterThanOrEqual(5 * 600);

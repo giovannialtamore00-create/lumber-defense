@@ -18,6 +18,7 @@
   },
   "items": {
     "outpost": { "cost": 48, "craftTimeS": 40, "hp": 150 },
+    "castle": { "cost": 48, "craftTimeS": 40, "hp": 150 },
     "factory": { "cost": 57, "craftTimeS": 45, "hp": 200 },
     "dock": { "cost": 19, "craftTimeS": 20, "hp": 80 },
     "carrier": { "cost": 10, "craftTimeS": 10, "hp": 30 },
@@ -44,8 +45,10 @@
     "stage3From": 15
   },
   "outpost": {
+    "territoryRadius": 3
+  },
+  "castle": {
     "territoryRadius": 3,
-    "firstTerritoryRadius": 2,
     "startHand": ["factory", "dock", "carrier"]
   },
   "woodchopper": {

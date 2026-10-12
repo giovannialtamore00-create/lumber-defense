@@ -1,7 +1,7 @@
 // Placement legality (DESIGN §5, §6.4, §7.3). The UI calls these same functions for its green/red previews.
 import { type SimContext, idx } from '../context';
 import { hexesInRadius } from '../hex';
-import { structureAt, structures } from '../state';
+import { isFactoryLike, structureAt, structures } from '../state';
 import { upgradeValue } from '../upgrades';
 import { isDryDitch, isRiverside, isRock, isWater } from '../water';
 import type { GameState, ItemKind } from '../types';
@@ -28,7 +28,7 @@ export function placementError(state: GameState, ctx: SimContext, player: number
   const hex = ctx.map.hexes[i]!;
 
   if (!p.started) {
-    if (item !== 'outpost') return 'place your first outpost first';
+    if (item !== 'castle') return 'place your castle first';
     return firstOutpostError(state, ctx, player, i, asBot);
   }
   if (item === 'carrier') return 'carriers are placed with a route';
@@ -62,6 +62,8 @@ export function placementError(state: GameState, ctx: SimContext, player: number
     case 'dock':
       if (isForest(state, i)) return 'trees';
       return isRiverside(state, ctx, i) ? null : 'docks must be next to a river';
+    case 'castle':
+      return 'you only get one castle';
     case 'outpost':
     case 'workshop':
     case 'excavator':
@@ -155,7 +157,7 @@ function firstOutpostError(state: GameState, ctx: SimContext, player: number, i:
   if (state.phase === 'start' && currentTurnPlayer(state) !== player) return 'wait for your turn';
   if (hex.region !== state.players[player]!.region) return 'outside your region';
   if (!isOpenLand(state, ctx, i)) return isWater(state, ctx, i) ? 'water' : isRock(state, ctx, i) ? 'rock' : isForest(state, i) ? 'trees' : 'already taken';
-  const territory = territoryIndices(ctx, hex.q, hex.r, ctx.config.outpost.firstTerritoryRadius);
+  const territory = territoryIndices(ctx, hex.q, hex.r, ctx.config.castle.territoryRadius);
   if (!territory.some((t) => isForest(state, t))) return 'no forest in this territory';
   // Room for the free factory-mill and the free dock next to it: two adjacent free riverside hexes.
   const freeBank = (t: number) => t !== i && isRiverside(state, ctx, t) && isOpenLand(state, ctx, t);
@@ -223,7 +225,7 @@ export function dropOffs(state: GameState, ctx: SimContext, player: number, aQ: 
 
   // Factories first: if one stands on the river drop-off hex, the wood goes into the factory.
   for (const s of structures(state)) {
-    if (s.kind !== 'factory' || s.owner !== player || s.r !== r) continue;
+    if (!isFactoryLike(s.kind) || s.owner !== player || s.r !== r) continue;
     if (Math.abs(s.q - aQ) <= max && rowPassable(state, ctx, r, aQ, s.q, player)) out.push({ q: s.q, riverQ: null });
   }
 

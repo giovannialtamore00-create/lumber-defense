@@ -9,6 +9,7 @@ export function drawItemIcon(g: Phaser.GameObjects.Graphics, kind: ItemKind, x: 
   g.fillStyle(color, alpha);
   g.lineStyle(Math.max(1, 1.5 * u), color, alpha);
   switch (kind) {
+    case 'castle':
     case 'outpost':
       g.fillRect(x - 3 * u, y - 4 * u, 6 * u, 12 * u);
       g.fillTriangle(P(-5, -4).x, P(-5, -4).y, P(5, -4).x, P(5, -4).y, P(0, -9).x, P(0, -9).y);

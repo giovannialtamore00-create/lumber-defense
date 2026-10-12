@@ -12,7 +12,7 @@ import map02 from '../src/data/maps/map02.json';
 import { createContext } from '../src/sim/context';
 import { distance, hexesInRadius } from '../src/sim/hex';
 import type { MapData } from '../src/sim/map';
-import { createInitialState } from '../src/sim/state';
+import { createInitialState, isFactoryLike, isOutpostLike } from '../src/sim/state';
 import { craftError } from '../src/sim/systems/crafting';
 import { canPlaceAnywhere, dropOffs, pickupError, placementError } from '../src/sim/systems/placement';
 import { isCoveredBy } from '../src/sim/systems/territory';
@@ -105,7 +105,9 @@ function play(st: Strategy) {
   const queue: Command[] = [];
   const send = (c: Command) => queue.push(c);
   const p = () => state.players[ME]!;
-  const mine = (k: StructureKind) => state.entities.filter((e): e is Structure => e.type === 'structure' && e.kind === k && e.owner === ME);
+  // The castle counts as an outpost and as a factory.
+  const mine = (k: StructureKind) =>
+    state.entities.filter((e): e is Structure => e.type === 'structure' && (k === 'outpost' ? isOutpostLike(e.kind) : k === 'factory' ? isFactoryLike(e.kind) : e.kind === k) && e.owner === ME);
   const count = (t: string) => state.entities.filter((e) => e.type === t && 'owner' in e && e.owner === ME).length;
   const buildings = () => state.entities.filter((e) => e.type === 'structure' && e.owner === ME).length;
   const hexes = ctx.map.hexes;
@@ -128,8 +130,10 @@ function play(st: Strategy) {
     if (!spots.length) return null;
     const byScore = (f: (h: { q: number; r: number }) => number) => spots.reduce((a, b) => (f(b) > f(a) ? b : a));
     switch (item) {
+      case 'castle':
+        return byScore((h) => expansionScore(h, ctx.config.castle.territoryRadius));
       case 'outpost':
-        return byScore((h) => expansionScore(h, p().started ? ctx.config.outpost.territoryRadius : ctx.config.outpost.firstTerritoryRadius));
+        return byScore((h) => expansionScore(h, ctx.config.outpost.territoryRadius));
       case 'factory':
         // Strong river (craft speed) and forest nearby (short carrier routes).
         return byScore((h) => {
@@ -181,7 +185,7 @@ function play(st: Strategy) {
   function think() {
     if (p().bot) return send({ type: 'takeControl', player: ME });
     if (!p().started) {
-      const h = spot('outpost');
+      const h = spot('castle');
       if (h) send({ type: 'placeOutpost', player: ME, q: h.q, r: h.r });
       return;
     }

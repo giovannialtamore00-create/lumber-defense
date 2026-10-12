@@ -22,7 +22,7 @@ export interface MapRules {
 /** The parts of src/data/config.json the map checks read. */
 export interface MapCheckConfig {
   forest: { woodPool: number };
-  outpost: { territoryRadius: number; firstTerritoryRadius: number };
+  castle: { territoryRadius: number };
   carrier: { maxRouteDistance: number };
   mapRules: MapRules;
 }
@@ -129,7 +129,7 @@ export function checkMap(map: MapData, config: MapCheckConfig): CheckResult[] {
 
   // Designer decision (DESIGN §5): a first outpost is only valid if its territory contains a forest and a riverside.
   // Outposts go on land. Every region needs somewhere to start.
-  const tr = config.outpost.firstTerritoryRadius;
+  const tr = config.castle.territoryRadius;
   for (const r of regions) {
     const own = inRegion(r).filter((h) => h.terrain === 'land');
     const valid = own.filter((c) => {

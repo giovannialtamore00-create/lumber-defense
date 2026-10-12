@@ -194,22 +194,22 @@ describe('match start (DESIGN §5)', () => {
 
   it('the first outpost needs a forest and a free riverside in its territory', () => {
     const { ctx, state } = setup(START);
-    expect(placementError(state, ctx, 0, 'outpost', cell(1, 1).q, 1)).toBe('no 2 free riverside hexes side by side in this territory');
-    expect(placementError(state, ctx, 0, 'outpost', cell(6, 3).q, 3)).toBe('water');
-    expect(placementError(state, ctx, 0, 'outpost', cell(4, 1).q, 1)).toBeNull();
+    expect(placementError(state, ctx, 0, 'castle', cell(1, 1).q, 1)).toBe('no 2 free riverside hexes side by side in this territory');
+    expect(placementError(state, ctx, 0, 'castle', cell(6, 3).q, 3)).toBe('water');
+    expect(placementError(state, ctx, 0, 'castle', cell(4, 1).q, 1)).toBeNull();
   });
 
-  it('the first outpost has territory radius 2 (19 hexes)', () => {
+  it('the castle has territory radius 3 (37 hexes)', () => {
     const { ctx, state } = setup(START);
     step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
-    expect(state.coverage.filter((c) => c !== 0)).toHaveLength(ctx.map.hexes.filter((h) => Math.abs(h.q - cell(4, 1).q) + Math.abs(h.r - 1) + Math.abs(h.q - cell(4, 1).q + h.r - 1) <= 4).length);
+    expect(state.coverage.filter((c) => c !== 0)).toHaveLength(ctx.map.hexes.filter((h) => Math.abs(h.q - cell(4, 1).q) + Math.abs(h.r - 1) + Math.abs(h.q - cell(4, 1).q + h.r - 1) <= 6).length);
   });
 
   it('placing it gives territory, a woodchopper on the closest forest and a factory in hand', () => {
     const { ctx, state } = setup(START);
     step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
     const kinds = state.entities.map((e) => (e.type === 'structure' ? `${e.kind}@${e.q},${e.r}` : e.type));
-    expect(kinds).toEqual([`outpost@${cell(4, 1).q},1`, `woodchopper@${cell(3, 0).q},0`]);
+    expect(kinds).toEqual([`castle@${cell(4, 1).q},1`, `woodchopper@${cell(3, 0).q},0`]);
     expect(state.players[0]!.hand).toEqual(['factory', 'dock', 'carrier']); // the free start kit
     expect(wood(state)).toBe(50);
   });
@@ -237,13 +237,13 @@ describe('match start (DESIGN §5)', () => {
 
   it('the first outpost needs two adjacent river hexes in its territory', () => {
     const { ctx, state } = setup(['. . T . . .', '. . . ~ . .', '. . . . . .', '. . . . . .']);
-    expect(placementError(state, ctx, 0, 'outpost', cell(2, 1).q, 1)).toBe('needs 2 adjacent river hexes in this territory');
+    expect(placementError(state, ctx, 0, 'castle', cell(2, 1).q, 1)).toBe('needs 2 adjacent river hexes in this territory');
   });
 
   it('a second first-outpost command is ignored', () => {
     const { ctx, state } = setup(START);
     step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 1).q, r: 1 }]);
     step(state, ctx, [{ type: 'placeOutpost', player: 0, q: cell(4, 3).q, r: 3 }]);
-    expect(state.entities.filter((e) => e.type === 'structure' && e.kind === 'outpost')).toHaveLength(1);
+    expect(state.entities.filter((e) => e.type === 'structure' && e.kind === 'castle')).toHaveLength(1);
   });
 });

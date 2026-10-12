@@ -7,7 +7,7 @@ export type Config = typeof config;
 export type UpgradesData = typeof upgrades;
 
 /** The factory is the unified factory-mill (DESIGN §6.7): built on the riverside. */
-export type StructureKind = 'outpost' | 'factory' | 'dock' | 'woodchopper' | 'bridge' | 'dam' | 'workshop' | 'excavator';
+export type StructureKind = 'outpost' | 'castle' | 'factory' | 'dock' | 'woodchopper' | 'bridge' | 'dam' | 'workshop' | 'excavator';
 /** Moving units (don't occupy a hex): carrier, forest guard, stone cutter, catapult (DESIGN §6.4, §8.6, §8.7). */
 export type ItemKind = StructureKind | 'carrier' | 'forestGuard' | 'stoneCutter' | 'catapult';
 

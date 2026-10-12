@@ -2,7 +2,7 @@
 import type { SimContext } from '../context';
 import { hexesInRadius } from '../hex';
 import { idx } from '../context';
-import { isOwnable, structures } from '../state';
+import { isOutpostLike, isOwnable, structures } from '../state';
 import { NEUTRAL, type GameState, type Ownable } from '../types';
 import { upgradeValue } from '../upgrades';
 import { checkDefeats, maxHp } from './combat';
@@ -11,7 +11,7 @@ import { checkDefeats, maxHp } from './combat';
 export function recomputeCoverage(state: GameState, ctx: SimContext): void {
   state.coverage.fill(0);
   for (const s of structures(state)) {
-    if (s.kind !== 'outpost' || s.owner === NEUTRAL) continue;
+    if (!isOutpostLike(s.kind) || s.owner === NEUTRAL) continue;
     // Reach (DESIGN §10.3) grows every outpost of the owner.
     const reach = upgradeValue(state, ctx, s.owner, 'outpost', 'reach', 'radiusBonus', 0);
     for (const h of hexesInRadius(s, (s.radius ?? ctx.config.outpost.territoryRadius) + reach)) {

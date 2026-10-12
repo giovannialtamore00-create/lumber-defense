@@ -16,6 +16,10 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
   tooltip and end screen in the wood theme (shared colours in `src/game/ui/theme.ts`). U1–U3 pushed (live).
   Open: in-game river sound (ambience stops in a match)? Catapult hit sound not yet heard in a test. Region labels
   small when zoomed out? End screen showed 19 hexes territory for every player early on (check the count).
+  M10 patch step b (uncommitted, awaiting playtest): the first structure is now a `castle` (radius 3, also a factory);
+  free factory/dock/carrier stay in hand but are optional; bots place a castle and build a mill + dock loop (or castle + dock).
+  Castle uses the outpost sprite scaled 1.4 until it has art. Known: two bots placing castles in the same moment can take
+  each other's last free riverside hexes (seed 4 slot 2), then the dock stays binned until a spot opens.
   Next: the designer's new patch.
 
 ## Read first
