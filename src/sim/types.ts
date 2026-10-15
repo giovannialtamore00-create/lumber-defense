@@ -11,8 +11,11 @@ export type StructureKind = 'outpost' | 'castle' | 'factory' | 'dock' | 'woodcho
 /** Moving units (don't occupy a hex): carrier, forest guard, stone cutter, catapult (DESIGN §6.4, §8.6, §8.7). */
 export type ItemKind = StructureKind | 'carrier' | 'forestGuard' | 'stoneCutter' | 'catapult';
 
-/** Offensive stance (DESIGN §8.6): Destruction = closest target; Conquest = only outposts, to capture the rest. */
-export type Stance = 'destruction' | 'conquest';
+/**
+ * Offensive stance (DESIGN §8.6): Destruction = closest target; Conquest = only outposts, to capture the rest;
+ * Peaceful = catapults hold fire and stay put.
+ */
+export type Stance = 'destruction' | 'conquest' | 'peaceful';
 
 /** Owner of neutral items (DESIGN §9): nobody. */
 export const NEUTRAL = -1;
@@ -48,6 +51,16 @@ export interface CraftJob {
   item: ItemKind;
   totalTicks: number;
   doneTicks: number;
+  /** Wood paid (milli), refunded if the construction site is cancelled. */
+  paid: number;
+  /** Construction site: where the item appears when done (DESIGN §7.2). Carriers: pickup q, row r, drop-off bQ. */
+  site?: Site;
+}
+
+export interface Site {
+  q: number;
+  r: number;
+  bQ?: number;
 }
 
 export interface Player {
@@ -327,8 +340,10 @@ type CommandBody =
   | { type: 'placeOutpost'; player: number; q: number; r: number }
   | { type: 'place'; player: number; item: StructureKind; q: number; r: number }
   | { type: 'placeCarrier'; player: number; aQ: number; bQ: number; r: number }
-  /** Pay for an item and add it to the craft queue (DESIGN §7.2). */
-  | { type: 'craft'; player: number; item: ItemKind }
+  /** Pay for an item and add it to the craft queue (DESIGN §7.2); with `site` it is built there, else it goes to the hand. */
+  | { type: 'craft'; player: number; item: ItemKind; site?: Site }
+  /** Cancel construction site `index` in the queue for a full refund (DESIGN §7.2). */
+  | { type: 'cancelCraft'; player: number; index: number }
   /** A player whose slot a bot took over steps back in (DESIGN §5). */
   | { type: 'takeControl'; player: number }
   /** Put the item in hand into the warehouse (DESIGN §7.3b). */

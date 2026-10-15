@@ -232,6 +232,7 @@ export function createBot(ctx: SimContext, state: GameState, me: number, st: Str
   function carrierRoute(): { aQ: number; bQ: number; r: number } | null {
     const served = new Map<string, number>();
     for (const c of state.entities) if (c.type === 'carrier' && c.owner === me) served.set(`${c.aQ},${c.r}`, (served.get(`${c.aQ},${c.r}`) ?? 0) + 1);
+    for (const j of p().queue) if (j.item === 'carrier' && j.site) served.set(`${j.site.q},${j.site.r}`, (served.get(`${j.site.q},${j.site.r}`) ?? 0) + 1);
     for (const w of mine('woodchopper')) {
       if ((served.get(`${w.q},${w.r}`) ?? 0) >= st.carriersPerChopper || pickupError(state, ctx, me, w.q, w.r)) continue;
       const drops = dropOffs(state, ctx, me, w.q, w.r);
@@ -372,7 +373,12 @@ export function createBot(ctx: SimContext, state: GameState, me: number, st: Str
     const pick = wants.find(
       (k) => !craftError(state, ctx, me, k) && (k === 'carrier' ? !!carrierRoute() : canPlaceAnywhere(state, ctx, me, k) && spot(k) !== null),
     );
-    if (pick) send({ type: 'craft', player: me, item: pick });
+    if (!pick) return;
+    // Place first: the bot picks the spot when it pays, like a player (DESIGN §7.2).
+    const route = pick === 'carrier' ? carrierRoute()! : null;
+    const at = route ? { q: route.aQ, r: route.r, bQ: route.bQ } : spot(pick)!;
+    if (pick === 'catapult') catapultsBuilt++;
+    send({ type: 'craft', player: me, item: pick, site: at });
   }
 
   return {

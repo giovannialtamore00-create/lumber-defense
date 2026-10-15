@@ -7,7 +7,7 @@ import { type Hex, distance } from '../hex';
 import { addEntity, hexOf, isOutpostLike, isOwnable, kindOf, removeEntity, structures } from '../state';
 import { upgradeValue } from '../upgrades';
 import { isRock, isWater } from '../water';
-import { type Catapult, type Entity, type GameState, NEUTRAL, type Ownable, type Shot } from '../types';
+import { type Catapult, type Entity, type GameState, NEUTRAL, type Ownable, type Shot, type Stance } from '../types';
 import { craftTicks } from './crafting';
 import { dropWood } from './economy';
 import { fireSystem, newFire } from './fire';
@@ -39,15 +39,17 @@ export function isLegalTarget(state: GameState, ctx: SimContext, attacker: numbe
 
 /**
  * What a shooter may aim at, on top of the legal-target rule: archers only defend, so they only shoot catapults;
- * catapults in Conquest only shoot outposts (DESIGN §8.6, §10.1).
+ * catapults in Conquest only shoot outposts, in Peaceful nothing (DESIGN §8.6, §10.1).
  */
-type Aim = 'any' | 'catapults' | 'outposts';
+type Aim = 'any' | 'catapults' | 'outposts' | 'none';
 function aimable(e: Ownable, aim: Aim): boolean {
+  if (aim === 'none') return false;
   if (aim === 'catapults') return e.type === 'catapult';
   if (aim === 'outposts') return e.type === 'structure' && isOutpostLike(e.kind);
   return true;
 }
-const catapultAim = (state: GameState, owner: number): Aim => (state.players[owner]?.stance === 'conquest' ? 'outposts' : 'any');
+const STANCE_AIM: Record<Stance, Aim> = { destruction: 'any', conquest: 'outposts', peaceful: 'none' };
+const catapultAim = (state: GameState, owner: number): Aim => STANCE_AIM[state.players[owner]?.stance ?? 'destruction'];
 
 /** The closest legal target to `from` (ties: lowest id), optionally within `range`. */
 function closestTarget(state: GameState, ctx: SimContext, attacker: number, from: Hex, range = -1, aim: Aim = 'any'): Ownable | null {

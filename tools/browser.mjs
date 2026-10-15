@@ -11,7 +11,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function launch(port, profile) {
   mkdirSync(profile, { recursive: true });
   const proc = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
-    '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--hide-scrollbars', '--window-size=1400,900', ...(process.env.RESOLVE ? [`--host-resolver-rules=${process.env.RESOLVE}`] : []), 'about:blank'], { stdio: 'ignore' });
+    '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--hide-scrollbars', `--window-size=${process.env.WINDOW ?? '1400,900'}`, ...(process.env.RESOLVE ? [`--host-resolver-rules=${process.env.RESOLVE}`] : []), 'about:blank'], { stdio: 'ignore' });
   let targets;
   for (let i = 0; i < 50; i++) {
     try { targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); if (targets.length) break; } catch {}

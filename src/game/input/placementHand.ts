@@ -2,6 +2,7 @@
 // Legality always comes from the sim's own placement functions, so the preview can't disagree with the sim.
 import { idx } from '../../sim/context';
 import { type Hex, hexesInRadius } from '../../sim/hex';
+import { craftCost, craftError } from '../../sim/systems/crafting';
 import { carrierRouteError, dropOffs, pickupError, placementError } from '../../sim/systems/placement';
 import type { ItemKind } from '../../sim/types';
 import type { SimRunner } from '../simRunner';
@@ -20,10 +21,12 @@ export interface Preview {
 }
 
 export class PlacementHand {
-  /** Carrier pickup chosen, waiting for a drop-off. */
-  private carrierA: Hex | null = null;
+  /** Carrier pickup chosen, waiting for a drop-off (the UI's setup guide reads it). */
+  carrierA: Hex | null = null;
   /** Hammer tool active: clicking one of our items asks to dismantle it (DESIGN §7.3c). */
   hammer = false;
+  /** Item picked in the build menu, not paid yet: placing it pays and starts a construction site (DESIGN §7.2). */
+  blueprint: ItemKind | null = null;
   /** Called with an entity id when the player asks to dismantle it; the UI shows the confirmation. */
   onAskDismantle: (id: number) => void = () => {};
 
@@ -36,12 +39,26 @@ export class PlacementHand {
   current(): ItemKind | null {
     const p = this.runner.state.players[this.player]!;
     if (!p.started) return 'castle';
-    return p.hand[0] ?? null;
+    return this.blueprint ?? p.hand[0] ?? null;
   }
 
   cancel(): void {
     this.carrierA = null;
     this.hammer = false;
+    this.blueprint = null;
+  }
+
+  /** Our construction site on this hex, as its queue index, if any. Carrier sites sit on their pickup. */
+  siteIndexAt(hex: Hex): number {
+    return this.runner.state.players[this.player]!.queue.findIndex((j) => j.site && j.site.q === hex.q && j.site.r === hex.r);
+  }
+
+  /** What the hover message calls the item: a site to pay for, or one in hand. */
+  private label(item: ItemKind): string {
+    if (this.blueprint !== item) return `${ITEM_NAMES[item]} in hand`;
+    const { state, ctx } = this.runner;
+    const err = craftError(state, ctx, this.player, item);
+    return `Build ${ITEM_NAMES[item]} (${Math.ceil(craftCost(state, ctx, this.player, item) / 1000)} wood)${err ? ` - ${err}` : ''}`;
   }
 
   /** Our item on this hex that the hammer may dismantle (anything but outposts), if any. */
@@ -56,7 +73,13 @@ export class PlacementHand {
     const started = state.players[this.player]!.started;
     const onMap = hover && idx(ctx, hover) !== undefined ? hover : null;
     if (this.hammer) {
-      // Everything we can dismantle is highlighted; the hovered one in red.
+      // Everything we can dismantle is highlighted; the hovered one in red. Construction sites cancel for a full refund.
+      const site = onMap ? this.siteIndexAt(onMap) : -1;
+      if (site >= 0)
+        return {
+          cells: [{ hex: onMap!, ok: false }],
+          message: `Hammer: click to cancel this ${ITEM_NAMES[state.players[this.player]!.queue[site]!.item]} site (full refund). Right-click cancels.`,
+        };
       const target = onMap ? this.hammerTarget(onMap) : null;
       const all = state.entities.filter((e): e is Thing => e.type !== 'pile' && e.type !== 'shot' && canDismantle(e, this.player));
       return {
@@ -75,7 +98,7 @@ export class PlacementHand {
         return {
           ghost: onMap ? { hex: onMap, item, ok: !err } : undefined,
           cells: [...pickups.map((h): Preview['cells'][number] => ({ hex: h, ok: true })), ...(onMap && err ? [{ hex: onMap, ok: false }] : [])],
-          message: err ? `Carrier pickup: ${err}` : 'Carrier: click a pickup A (a wood pile, woodchopper or dock). Right-click cancels.',
+          message: err ? `${this.label(item)}: pickup ${err}` : `${this.label(item)}: click a pickup A (a wood pile, woodchopper or dock). Right-click cancels.`,
         };
       }
       const a = this.carrierA;
@@ -85,12 +108,12 @@ export class PlacementHand {
         ghost: onMap ? { hex: onMap, item, ok: !!target } : undefined,
         cells: [{ hex: a, ok: true }, ...options.map((d) => ({ hex: { q: d.q, r: a.r }, ok: true }))],
         route: target ? { a, b: target } : undefined,
-        message: options.length ? 'Carrier: click a drop-off B on the same row (green). Right-click cancels.' : 'Carrier: no drop-off on this row. Right-click cancels.',
+        message: options.length ? `${this.label(item)}: click a drop-off B on the same row (green). Right-click cancels.` : 'Carrier: no drop-off on this row. Right-click cancels.',
       };
     }
 
     const err = onMap ? placementError(state, ctx, this.player, item, onMap.q, onMap.r) : null;
-    const what = started ? `${ITEM_NAMES[item]} in hand` : 'Place your castle in your region';
+    const what = started ? this.label(item) : 'Place your castle in your region';
     // A forest guard shows the hexes it will look after.
     const area =
       item === 'forestGuard' && onMap && !err
@@ -109,7 +132,9 @@ export class PlacementHand {
     const p = state.players[this.player]!;
     if (this.hammer) {
       const target = this.hammerTarget(hex);
-      if (target) this.onAskDismantle(target.id); // the confirmation dialog does the rest
+      const site = this.siteIndexAt(hex);
+      if (site >= 0) this.runner.submit({ type: 'cancelCraft', player: this.player, index: site });
+      else if (target) this.onAskDismantle(target.id); // the confirmation dialog does the rest
       return;
     }
     if (!item) return;
@@ -126,15 +151,26 @@ export class PlacementHand {
       }
       const a = this.carrierA;
       if (hex.r === a.r && !carrierRouteError(state, ctx, this.player, a.q, hex.q, a.r)) {
-        this.runner.submit({ type: 'placeCarrier', player: this.player, aQ: a.q, bQ: hex.q, r: a.r });
+        if (this.blueprint) this.build({ q: a.q, r: a.r, bQ: hex.q });
+        else this.runner.submit({ type: 'placeCarrier', player: this.player, aQ: a.q, bQ: hex.q, r: a.r });
         this.carrierA = null;
       }
       return;
     }
     if (placementError(state, ctx, this.player, item, hex.q, hex.r)) return;
-    if (item === 'forestGuard') this.runner.submit({ type: 'placeGuard', player: this.player, q: hex.q, r: hex.r });
+    if (this.blueprint) this.build(hex);
+    else if (item === 'forestGuard') this.runner.submit({ type: 'placeGuard', player: this.player, q: hex.q, r: hex.r });
     else if (item === 'stoneCutter') this.runner.submit({ type: 'placeCutter', player: this.player, q: hex.q, r: hex.r });
     else if (item === 'catapult') this.runner.submit({ type: 'placeCatapult', player: this.player, q: hex.q, r: hex.r });
     else this.runner.submit({ type: 'place', player: this.player, item, q: hex.q, r: hex.r });
+  }
+
+  /** Pays for the blueprint and starts its construction site there. */
+  private build(site: { q: number; r: number; bQ?: number }): void {
+    const { state, ctx } = this.runner;
+    const item = this.blueprint!;
+    if (craftError(state, ctx, this.player, item)) return;
+    this.runner.submit({ type: 'craft', player: this.player, item, site });
+    this.blueprint = null;
   }
 }

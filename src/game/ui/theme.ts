@@ -19,3 +19,9 @@ export const PLY = [0xb98a55, 0xd9bd8a];
 export function plywoodEdge(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number): void {
   for (let i = 0; i < 3; i++) g.fillStyle(PLY[i % 2]!, 1).fillRect(x, y + i * 2, w, 2);
 }
+
+/**
+ * Screen space the match HUD covers (px): the top strip, the build column on the right and the tool dock at the
+ * bottom. The camera fits the playable map inside the rest; edge land fills what is under the panels.
+ */
+export const HUD = { top: 52, right: 232, bottom: 84, left: 6 };

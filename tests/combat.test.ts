@@ -215,6 +215,19 @@ describe('stance and defensive archers (§8.6, §10.1)', () => {
     expect(c.targetId).toBe(b.id); // Conquest: only outposts
   });
 
+  it('in Peaceful a catapult picks no target, stays put and never fires', () => {
+    const { ctx, state } = duel();
+    const dock = put(state, ctx, 'dock', 1, cell(4, 2));
+    dock.hp = 1000;
+    const c = catapult(state, 0, cell(3, 2));
+    const start = { q: c.q, r: c.r };
+    step(state, ctx, [{ type: 'setStance', player: 0, stance: 'peaceful' }]);
+    run(state, ctx, 100);
+    expect(c.targetId).toBeNull();
+    expect(dock.hp).toBe(1000);
+    expect({ q: c.q, r: c.r }).toEqual(start);
+  });
+
   it('outpost archers only shoot catapults, never buildings', () => {
     const { ctx, state, a } = duel();
     state.players[0]!.upgrades[ctx.upgrades.types.findIndex((t) => t.type === 'outpost')]!.levels = [0, 2];

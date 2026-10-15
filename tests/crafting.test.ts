@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import baseConfig from '../src/data/config.json';
 import { craftError, craftReductionBp, craftTicks, watermills } from '../src/sim/systems/crafting';
+import { placementError } from '../src/sim/systems/placement';
+import { structureAt } from '../src/sim/state';
 import { step } from '../src/sim/tick';
 import type { Config, GameState } from '../src/sim/types';
 import { cell, put, setup, withConfig } from './helpers';
@@ -95,6 +97,56 @@ describe('crafting (DESIGN §7.2)', () => {
     const q = state.players[0]!.queue;
     expect(q.map((j) => j.item)).toEqual(['carrier', 'dock']);
     expect(q[1]!.totalTicks).toBe(0); // waiting, not crafting
+  });
+
+  it('place first: a construction site takes its hex, then becomes the structure there', () => {
+    const { ctx, state } = setup(RIVER8);
+    put(state, ctx, 'outpost', 0, cell(1, 3));
+    put(state, ctx, 'factory', 0, cell(4, 7));
+    const at = cell(2, 3);
+    step(state, ctx, [{ type: 'craft', player: 0, item: 'dock', site: at }]);
+    const p = state.players[0]!;
+    expect(p.queue).toHaveLength(1);
+    expect(p.queue[0]!.site).toEqual({ q: at.q, r: at.r });
+    expect(placementError(state, ctx, 0, 'dock', at.q, at.r)).toBe('construction site there');
+    run(state, ctx, p.queue[0]!.totalTicks);
+    expect(p.queue).toEqual([]);
+    expect(p.hand).toEqual([]);
+    expect(structureAt(state, at.q, at.r)?.kind).toBe('dock');
+  });
+
+  it('an illegal site is refused and costs nothing', () => {
+    const { ctx, state } = setup(RIVER8);
+    put(state, ctx, 'outpost', 0, cell(1, 3));
+    put(state, ctx, 'factory', 0, cell(4, 7));
+    const wood = state.players[0]!.wood;
+    step(state, ctx, [{ type: 'craft', player: 0, item: 'dock', site: cell(0, 3) }]); // not next to the river
+    expect(state.players[0]!.queue).toEqual([]);
+    expect(state.players[0]!.wood).toBe(wood);
+  });
+
+  it('cancelling a construction site gives the full price back', () => {
+    const { ctx, state } = setup(RIVER8);
+    put(state, ctx, 'outpost', 0, cell(1, 3));
+    put(state, ctx, 'factory', 0, cell(4, 7));
+    const wood = state.players[0]!.wood;
+    step(state, ctx, [{ type: 'craft', player: 0, item: 'dock', site: cell(2, 3) }]);
+    expect(state.players[0]!.wood).toBeLessThan(wood);
+    run(state, ctx, 3);
+    step(state, ctx, [{ type: 'cancelCraft', player: 0, index: 0 }]);
+    expect(state.players[0]!.queue).toEqual([]);
+    expect(state.players[0]!.wood).toBe(wood);
+  });
+
+  it('a site that is no longer legal when done goes to the hand', () => {
+    const { ctx, state } = setup(RIVER8);
+    put(state, ctx, 'outpost', 0, cell(1, 3));
+    put(state, ctx, 'factory', 0, cell(4, 7));
+    const at = cell(2, 3);
+    step(state, ctx, [{ type: 'craft', player: 0, item: 'dock', site: at }]);
+    put(state, ctx, 'woodchopper', 0, at); // something else took the hex meanwhile
+    run(state, ctx, state.players[0]!.queue[0]!.totalTicks);
+    expect(state.players[0]!.hand).toEqual(['dock']);
   });
 
   it('needs enough wood', () => {

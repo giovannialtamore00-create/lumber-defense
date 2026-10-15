@@ -219,22 +219,33 @@ One icon that grows in 3 stages with the amount of wood:
 
 ### 7.1 Build menu (top right)
 - Your **wood count**, shown large with a wood icon.
-- A **dropdown** of all unlocked structures and machines, each with **icon, name, short description and price**.
+- A **dropdown** of all unlocked structures and machines. **Decided (M11): compact rows**, each with a small pixel
+  **icon, name and price** only. Clicking an item opens its full description under it, in larger text, with its
+  build time (§7.2).
 
 ### 7.2 Crafting flow
-1. Click an item. It must be unlocked and affordable (a "legal purchase").
-2. A **Craft/Build** button appears. Press it to confirm, and the cost is paid.
+**Decided (M10): place first, then build.** You choose the spot before the item is made, like most strategy games.
+1. Click an item in the build menu (decided, M11: no separate Build button). If it is unlocked and affordable (a
+   "legal purchase"), clicking it also picks it up; otherwise its description says why it can't be built.
+2. The item follows the mouse with the usual green/red preview (carriers: pick A, then B). Clicking a
+   legal spot pays the cost and puts a **construction site** there. Right-click or Esc before that cancels for free.
+   A structure's site takes its hex (nobody can build on it); unit sites don't.
+   - The site fills with the owner's colour while it is built; every player sees it.
+   - **Cancel:** the hammer on your own site cancels it for a **full refund**.
+   - When done, the item appears on its site. If the site is no longer legal (territory lost, hex taken), the item
+     goes to the hand instead, or the warehouse if it fits nowhere (§7.3b).
 3. Items can be **queued**. **Decided: the number of factory-mills limits the queue.** A single factory-mill can
    only craft one item; more factory-mills allow more items in production, on top of making crafting faster.
    Items are still **crafted one at a time globally** (the others wait in the queue).
    Confirmed details: an item's craft time is fixed when it **starts** crafting (so new factory-mills speed up
-   waiting items); crafting **pauses** while you have no factory-mill; crafted items are placed from the hand
-   **oldest first**.
+   waiting items); crafting **pauses** while you have no factory-mill; items in the hand (start kit, warehouse)
+   are placed **oldest first**.
 4. **Production is abstract and pooled.** Your factory-mills together set one craft speed (formula in §6.7).
    Where the item is "built" doesn't matter.
 5. **Every factory you own shows the grey icon** of the item currently being crafted, filling with color from the
    bottom as the timer finishes.
-6. When done, the item is **in your hand** (on the mouse). You deploy it "from the sky" onto the map.
+6. The hand still exists for items that are already made (the free start kit, warehouse items, sites that became
+   illegal): those are placed straight away, "from the sky", with no build time.
 
 ### 7.3 Placement
 - Legal area: **your territory or a conflict zone** (areas revealed by your outposts). This applies to every structure and machine.
@@ -253,7 +264,8 @@ One icon that grows in 3 stages with the amount of wood:
   free riverside in your territory), it goes to the **warehouse** instead.
 - While holding an item you can **put it in the warehouse** (like a bin), and later **click it in the warehouse**
   to pick it up and place it.
-- The warehouse panel is **always visible**, even when empty (decided, playtest 2).
+- The warehouse is **always visible**, even when empty (decided, playtest 2). **M11:** a warehouse button in the tool
+  dock with its items next to it as small icons; clicking the button while holding an item stores it.
 
 ### 7.3c Hammer (decided)
 - A tool that **destroys one of your own structures** (any except outposts) **or units** (carriers, forest guards;
@@ -266,7 +278,7 @@ One icon that grows in 3 stages with the amount of wood:
   working until it's gone. Dismantling a **burning** item leaves **no wood** (it burns). Surrender and defeat still
   dismantle at once.
 
-### 7.3d Trading (decided)
+### 7.3d Trading (decided; dormant since M11: no button, the panel and commands stay for later)
 - A **Trade** panel: pick another player, type an amount (up to your wood), press **Send**. The wood moves
   instantly from your count to theirs.
 
@@ -389,7 +401,9 @@ highest price level that met the target on all tested seeds; findings and method
     it gets as close as it can.
   - **Stance (decided, balance pass):** each player picks one for all their catapults, with a button: **Destruction**
     (default) = the closest legal target, as below; **Conquest** = **only enemy outposts**, so the buildings around a
-    destroyed outpost are captured instead of destroyed (ownership rule, §9).
+    destroyed outpost are captured instead of destroyed (ownership rule, §9); **Peaceful** (M11) = catapults pick no
+    target, don't move toward one and never fire (they still drive home if they end up outside your territory). The
+    button cycles Destruction → Conquest → Peaceful.
   - **Thinking:** every **1 s** it looks again and switches to the **closest legal target** (in Conquest: the closest
     legal outpost). A target that leaves
     the legal zone (e.g. a carrier driving out) is dropped then. If the next closest target is far away, the
@@ -575,6 +589,16 @@ Interpretations used to build the ★ ideas (decided by Claude, easy to change):
   0.5 wood/s"). For your own dismantlable items it also shows a **hammer icon** (§7.3c).
   When a unit stands on a structure, the pop-up is about the structure (carriers often wait on one); a unit gets the
   pop-up wherever it stands on a hex without a structure.
+- **M11 layout (decided, prototype for playtest):** the map fills the screen (PC sizes). Around the playable hexes
+  is non-playable land that darkens towards the screen edge: **mountains north, forest west and east, plains south**
+  (rivers carry on into it); the east strip is wider, so the build menu sits over it. At the furthest zoom the whole
+  playable map fits in the space the panels leave free; zoom in to see the corners.
+- **Tool dock (M11, replaces the twice-as-big text buttons):** hammer, catapult stance and warehouse are
+  large **pixel-art icon buttons** at the bottom left; the name shows when you hover one. (Trade is dormant, §7.3d.)
+- **Setup guide (M11):** while the free factory-mill, dock or carrier (§5.3) is the item in hand, a big box in the
+  middle of the screen says what it does (step 1, 2, 3 of 3) and an arrow points at a legal spot for it, with a
+  pulsing ring. The carrier gets two boxes: its pickup (the woodchopper), then its drop-off. The box moves off the
+  marked hex; storing the item in the warehouse skips the step.
 - Everything else about the UI is **to be discussed later**.
 
 ## 13. Future items (noted, not designed)

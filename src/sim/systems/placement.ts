@@ -10,6 +10,14 @@ import { isCoveredBy } from './territory';
 
 export const isForest = (state: GameState, i: number) => state.forestPool[i]! > 0;
 
+/** Moving units; everything else crafted is a structure (DESIGN §8). */
+export const UNITS: readonly ItemKind[] = ['carrier', 'forestGuard', 'stoneCutter', 'catapult'];
+
+/** A construction site of any player for a structure on hex (q, r): it takes the hex like the structure will (DESIGN §7.2). */
+export function siteAt(state: GameState, q: number, r: number): boolean {
+  return state.players.some((p) => p.queue.some((j) => j.site && !UNITS.includes(j.item) && j.site.q === q && j.site.r === r));
+}
+
 /** Open land a structure can stand on: not water, forest or rock, and no structure yet. */
 function isOpenLand(state: GameState, ctx: SimContext, i: number): boolean {
   const h = ctx.map.hexes[i]!;
@@ -43,6 +51,7 @@ export function placementError(state: GameState, ctx: SimContext, player: number
     return isRock(state, ctx, i) ? 'rock' : null;
   }
   if (structureAt(state, hex.q, hex.r)) return 'already taken';
+  if (siteAt(state, hex.q, hex.r)) return 'construction site there';
   // Bridges and dams are built on water (DESIGN §8.4, §8.4b).
   if (item === 'bridge') return isWater(state, ctx, i) ? null : 'bridges go on water';
   if (item === 'dam') return isWater(state, ctx, i) ? null : 'dams go on a river';

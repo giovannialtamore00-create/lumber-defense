@@ -172,6 +172,7 @@ function play(st: Strategy) {
   function carrierRoute(): { aQ: number; bQ: number; r: number } | null {
     const served = new Map<string, number>();
     for (const c of state.entities) if (c.type === 'carrier' && c.owner === ME) served.set(`${c.aQ},${c.r}`, (served.get(`${c.aQ},${c.r}`) ?? 0) + 1);
+    for (const j of state.players[ME]!.queue) if (j.item === 'carrier' && j.site) served.set(`${j.site.q},${j.site.r}`, (served.get(`${j.site.q},${j.site.r}`) ?? 0) + 1);
     for (const w of [...mine('woodchopper'), ...mine('dock').filter((d) => !millNear(d))]) {
       if ((served.get(`${w.q},${w.r}`) ?? 0) >= st.carriersPerChopper || pickupError(state, ctx, ME, w.q, w.r)) continue;
       const drops = dropOffs(state, ctx, ME, w.q, w.r);
@@ -235,7 +236,10 @@ function play(st: Strategy) {
     if (count('guard') < st.guardsPerOutpost * outposts) wants.push('forestGuard');
     // Only craft what has a good spot right now (a crafted item with nowhere to go is wasted wood in the warehouse).
     const pick = wants.find((k) => !craftError(state, ctx, ME, k) && (k === 'carrier' ? !!carrierRoute() : canPlaceAnywhere(state, ctx, ME, k) && spot(k) !== null));
-    if (pick) send({ type: 'craft', player: ME, item: pick });
+    if (!pick) return;
+    // Place first: the spot is picked when paying (DESIGN §7.2).
+    const route = pick === 'carrier' ? carrierRoute()! : null;
+    send({ type: 'craft', player: ME, item: pick, site: route ? { q: route.aQ, r: route.r, bQ: route.bQ } : spot(pick)! });
   }
 
   if (PLAYTEST) send({ type: 'setPlaytest', player: ME, on: true });

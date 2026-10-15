@@ -1,10 +1,11 @@
-// Crafting (DESIGN §6.7, §7.2): pay on confirm, queue limited to one slot per factory-mill, items crafted one at a
+// Crafting (DESIGN §6.7, §7.2): pay when the construction site is placed, queue limited to one slot per factory-mill, items crafted one at a
 // time, craft time reduced by the player's factory-mills and the rivers they stand on. Integer math only.
 import { playtestCost, playtestTicks } from '../playtest';
 import { type SimContext, idx } from '../context';
 import { isFactoryLike, structures } from '../state';
 import type { GameState, ItemKind, Structure } from '../types';
-import { canPlaceAnywhere } from './placement';
+import { UNITS, canPlaceAnywhere } from './placement';
+import { placeItem } from './build';
 import { upgradeValue } from '../upgrades';
 import { bonusRow, isWater, riverIdAt } from '../water';
 
@@ -73,10 +74,7 @@ export function craftError(state: GameState, ctx: SimContext, player: number, it
   return null;
 }
 
-/** Moving units; everything else crafted is a structure (DESIGN §8). */
-const UNITS: readonly ItemKind[] = ['carrier', 'forestGuard', 'stoneCutter', 'catapult'];
-
-/** Advances the first item in each player's queue; a finished item goes into the hand. */
+/** Advances the first item in each player's queue; a finished construction site becomes the item on its hex. */
 export function craftingSystem(state: GameState, ctx: SimContext): void {
   for (const p of state.players) {
     const job = p.queue[0];
@@ -87,7 +85,9 @@ export function craftingSystem(state: GameState, ctx: SimContext): void {
       p.queue.shift();
       if (UNITS.includes(job.item)) p.stats.unitsCrafted++;
       else p.stats.structuresCrafted++;
-      // Into the hand, or the warehouse if it can't be placed anywhere right now (DESIGN §7.3b).
+      if (job.site && placeItem(state, ctx, p.id, job.item, job.site)) continue;
+      // No site, or the site is no longer legal: into the hand, or the warehouse if it can't be placed anywhere right
+      // now (DESIGN §7.3b).
       (canPlaceAnywhere(state, ctx, p.id, job.item) ? p.hand : p.warehouse).push(job.item);
     }
   }

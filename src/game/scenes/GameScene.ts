@@ -38,7 +38,8 @@ import { craftTicks } from '../../sim/systems/crafting';
 import { fireStrength } from '../../sim/systems/fire';
 import { kindOf } from '../../sim/state';
 import { MILLI } from '../../sim/fixed';
-import { BIRCH, FONT } from '../ui/theme';
+import { BIRCH, FONT, HUD } from '../ui/theme';
+import { drawEdgeLand } from '../render/edgeLand';
 import { stackStage } from '../../sim/stack';
 import { typeIndex, upgradeLevel } from '../../sim/upgrades';
 import { type WaterFlow, SpritePool, addPackSprite, addWaterSprite, createGreyPack, packLoaded, packScale, usePixelFiltering } from '../render/sprites';
@@ -108,8 +109,6 @@ const IMPACT_MS = 350;
 const NUMBER_MS = 900;
 
 const ZOOM_MAX = 3;
-/** Screen width of the build panel on the right (UIScene), which the map should not hide under. */
-const SIDE_PANEL_PX = 340;
 
 export class GameScene extends Phaser.Scene {
   private coordLabels: Phaser.GameObjects.Text[] = [];
@@ -165,6 +164,7 @@ export class GameScene extends Phaser.Scene {
       usePixelFiltering(this);
     }
     const g = this.add.graphics();
+    drawEdgeLand(this, MAP, this.art);
 
     // Painter's order: north to south, so things further south draw on top (ARCHITECTURE §4 depth sorting).
     for (const h of ORDERED) {
@@ -398,6 +398,19 @@ export class GameScene extends Phaser.Scene {
         drawItemIcon(g, job.item, c.x, box.y + box.s / 2, 18, 0x1e1e1e);
       }
     }
+    // Construction sites (DESIGN §7.2): a plank frame with the item's icon, filling with the owner's colour while built.
+    for (const p of state.players) {
+      p.queue.forEach((j, k) => {
+        if (!j.site) return;
+        const c = hexToScreen(j.site);
+        const progress = k === 0 && j.totalTicks > 0 ? Math.min(1, (j.doneTicks + alpha) / j.totalTicks) : 0;
+        const box = { x: c.x - 14, y: c.y - 24, s: 28 };
+        g.lineStyle(2, 0x8a6a3f, 0.95).strokeRect(box.x - 3, box.y - 3, box.s + 6, box.s + 6);
+        g.fillStyle(0x3a2a1a, 0.85).fillRect(box.x, box.y, box.s, box.s);
+        g.fillStyle(PLAYER_COLORS[p.id]!, 0.9).fillRect(box.x, box.y + box.s * (1 - progress), box.s, box.s * progress);
+        drawItemIcon(g, j.item, c.x, box.y + box.s / 2, 22, 0xd9c7a3);
+      });
+    }
     MAP.hexes.forEach((h, i) => {
       if (state.debris[i]! <= 0) return;
       const c = hexToScreen(h);
@@ -448,7 +461,8 @@ export class GameScene extends Phaser.Scene {
       } else drawCutters(g, here, c, progress, time);
     }
 
-    const piles = entities.filter((e) => e.type === 'pile');
+    // Leftovers under 1 wood aren't shown: once the last whole wood is taken, the pile disappears.
+    const piles = entities.filter((e) => e.type === 'pile' && wholeUnits(e.amount) >= 1);
     while (this.pileLabels.length < piles.length)
       this.pileLabels.push(this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '10px', color: '#ffffff', fontStyle: 'bold', stroke: '#24160d', strokeThickness: 3 }).setOrigin(0, 1).setDepth(3));
     this.pileLabels.forEach((t, k) => {
@@ -885,14 +899,15 @@ export class GameScene extends Phaser.Scene {
       const east = Math.max(...rowHexes.map((p) => p.x));
       const y = rowHexes[0]!.y + HEX_SIZE * 0.75 * ISO_SQUASH;
       this.add
-        .text(east + HEX_SIZE * 1.2, y, ['≈ Waterfall', 'river slope resets'], {
+        // Over the row's last hexes (the map reaches the build column, so there is no room east of it).
+        .text(east + HEX_SIZE * 0.8, y, ['≈ Waterfall', 'river slope resets'], {
           fontFamily: FONT,
           fontSize: '12px',
           color: '#ffffff',
           backgroundColor: '#1d4f9ccc',
           padding: { x: 6, y: 3 },
         })
-        .setOrigin(0, 0.5);
+        .setOrigin(1, 0.5);
     }
   }
 
@@ -948,22 +963,33 @@ export class GameScene extends Phaser.Scene {
   private setupCamera(): void {
     const cam = this.cameras.main;
     const pts = MAP.hexes.map(hexToScreen);
-    const minX = Math.min(...pts.map((p) => p.x)) - HEX_SIZE * 2;
-    const maxX = Math.max(...pts.map((p) => p.x)) + HEX_SIZE * 5; // room for the waterfall label
-    const minY = Math.min(...pts.map((p) => p.y)) - HEX_SIZE * 3;
-    const maxY = Math.max(...pts.map((p) => p.y)) + HEX_SIZE * 3;
-    // The camera stays on the map: the furthest you can zoom out shows the whole map as big as it fits the window,
-    // and you can only zoom in from there.
-    // The build panel covers the right edge of the screen: the map fits left of it, with room to scroll past.
-    const fitZoom = () => Math.min(ZOOM_MAX, (this.scale.width - SIDE_PANEL_PX) / (maxX - minX), this.scale.height / (maxY - minY));
+    const minX = Math.min(...pts.map((p) => p.x)) - HEX_SIZE * 0.9; // half a hex wide, plus a sliver
+    const maxX = Math.max(...pts.map((p) => p.x)) + HEX_SIZE * 0.9;
+    const minY = Math.min(...pts.map((p) => p.y)) - HEX_SIZE * 2.1; // room for the region names
+    const maxY = Math.max(...pts.map((p) => p.y)) + HEX_SIZE * 0.8;
+    // The furthest you can zoom out shows the whole playable map inside the screen space the panels leave free (top
+    // strip, build column, tool dock); edge land fills the screen under the panels. You can only zoom in from there,
+    // and scroll until any edge of the playable map comes out from under its panel.
+    const fitZoom = () =>
+      Math.min(ZOOM_MAX, (this.scale.width - HUD.right - HUD.left) / (maxX - minX), (this.scale.height - HUD.top - HUD.bottom) / (maxY - minY));
     const bound = () => {
-      // Spare height at the furthest zoom goes equally above and below, so the map sits in the middle.
-      const spareY = Math.max(0, (this.scale.height / fitZoom() - (maxY - minY)) / 2);
-      cam.setBounds(minX, minY - spareY, maxX - minX + SIDE_PANEL_PX / fitZoom(), maxY - minY + 2 * spareY);
+      const z = cam.zoom;
+      let x0 = minX - HUD.left / z;
+      let x1 = maxX + HUD.right / z;
+      let y0 = minY - HUD.top / z;
+      let y1 = maxY + HUD.bottom / z;
+      // Wider than needed on one axis at the furthest zoom: spread the spare room evenly on both sides.
+      const spareX = Math.max(0, this.scale.width / z - (x1 - x0)) / 2;
+      const spareY = Math.max(0, this.scale.height / z - (y1 - y0)) / 2;
+      x0 -= spareX;
+      x1 += spareX;
+      y0 -= spareY;
+      y1 += spareY;
+      cam.setBounds(x0, y0, x1 - x0, y1 - y0);
     };
-    bound();
     cam.setZoom(fitZoom());
-    cam.centerOn((minX + maxX) / 2, (minY + maxY) / 2);
+    bound();
+    cam.centerOn((minX + maxX + (HUD.right - HUD.left) / cam.zoom) / 2, (minY + maxY + (HUD.bottom - HUD.top) / cam.zoom) / 2);
 
     // Dev: `?zoom=2.5` zooms onto the local player's first outpost (close-up screenshots with `?demo`).
     const zoomParam = new URLSearchParams(window.location.search).get('zoom');
@@ -971,6 +997,7 @@ export class GameScene extends Phaser.Scene {
     if (import.meta.env.DEV && zoomParam && outpost?.type === 'structure') {
       const c = hexToScreen(outpost);
       cam.setZoom(Number(zoomParam));
+      bound();
       cam.centerOn(c.x, c.y);
     }
 
@@ -985,6 +1012,7 @@ export class GameScene extends Phaser.Scene {
     this.input.on('wheel', (p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
       const before = cam.getWorldPoint(p.x, p.y);
       cam.setZoom(Phaser.Math.Clamp(cam.zoom * (dy > 0 ? 0.9 : 1.1), fitZoom(), ZOOM_MAX));
+      bound();
       cam.preRender();
       const after = cam.getWorldPoint(p.x, p.y);
       cam.scrollX += before.x - after.x;
@@ -993,8 +1021,8 @@ export class GameScene extends Phaser.Scene {
 
     // A resized window changes how far out the whole map fits.
     const refit = () => {
-      bound();
       cam.setZoom(Math.max(cam.zoom, fitZoom()));
+      bound();
     };
     this.scale.on('resize', refit);
     this.events.once('shutdown', () => this.scale.off('resize', refit));

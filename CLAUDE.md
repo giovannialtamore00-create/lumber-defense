@@ -20,7 +20,22 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
   free factory/dock/carrier stay in hand but are optional; bots place a castle and build a mill + dock loop (or castle + dock).
   Castle uses the outpost sprite scaled 1.4 until it has art. Known: two bots placing castles in the same moment can take
   each other's last free riverside hexes (seed 4 slot 2), then the dock stays binned until a spot opens.
-  Next: the designer's new patch.
+  M11 full UI rework, step 1 (uncommitted, awaiting playtest): place first, then build (DESIGN §7.2): Build puts a
+  ghost on the mouse, clicking pays and starts a construction site (`src/sim/systems/build.ts`), hammer on a site
+  cancels it for a full refund; bots and econ-sim pick the spot when paying.
+  Steps 2-4 (uncommitted, awaiting playtest together with step 1): map fills the screen with edge land
+  (`src/game/render/edgeLand.ts`; panel insets in `HUD`, `src/game/ui/theme.ts`), pixel-icon tool dock with hover
+  names, compact build/workshop lists in the right column (`src/game/ui/pixelIcons.ts`); one click on a build row
+  picks the item up (no Build button). Piles under 1 wood are hidden (render only; the leftover stays in the sim). Open: scaffolding sprite for sites? Mountains mostly hidden under the top
+  strip at 768 px.
+  Step 5 (uncommitted, awaiting playtest): Peaceful catapult stance (sim + test), setup guide box with an arrow for
+  the free mill/dock/carrier (`UIScene.guideStep`), trade button removed (trade dormant, code kept).
+  Castle step uses the same guide box with an arrow (old top box and bottom hint removed while placing the castle).
+  Steps 1-5 + castle box pushed (live) at the designer's request before the playtest.
+  Open: a carrier whose A sits next to the river has B = A and drops wood in instantly (beats Log Slide L1): block or keep?
+  Next: designer playtests steps 1-5 together (card: follow the 3 guide boxes; white-flag catapults stop firing; no
+  trade button missed); green = commit "M11: ...". Open: carrier drop-off ring sits on a mill when one is on the row
+  (clear enough?); should bots ever use Peaceful? Guide test script: `C:/tmp/ui/guide.mjs`.
 
 ## Read first
 - **[DESIGN.md](DESIGN.md)** — gameplay. **The source of truth.** Read it fully before any gameplay work.
@@ -65,6 +80,8 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 - `npm run validate-map` — checks map rules from DESIGN §4.3
 - `npm run econ-sim -- tools/econ-strategies/round2.json [--playtest] [--minutes 10] [--allow-long] [--seed 5]` — plays solo matches
   with scripted strategies on the real sim (no rendering, seconds per match) and prints how the economy develops.
+- `npx tsx tools/battle-sim.ts tools/battle-strategies/round1.json --minutes 10` — combat sim (no npm script; the
+  strategy file is required, and so is `--minutes 10`).
 - `npm run share` — builds, serves `dist/` on http://localhost:4180 and opens a Cloudflare tunnel; prints the public
   link for playtests with friends. Ctrl+C stops it.
 - `tools/browser.mjs` — headless-Chrome helper for automated checks and screenshots (dev hooks `window.__runner`,
@@ -76,4 +93,6 @@ Browser tower-defense / territory game (2–4 players, wood floating down rivers
 TypeScript (strict), Phaser 3, Vite, Vitest, PeerJS. Node scripts run with `tsx`.
 
 ## Known mistakes (one line each time Claude gets something wrong)
+- Asked UI questions assuming "click item = place it" without reading DESIGN §7.2 (it was craft first, then place).
 - Ran `battle-sim` for 30 minutes unasked (its own default is 30): always pass `--minutes 10` unless the designer asks for more.
+- Edited files through `node -e` in Bash with template backticks (twice in M11): the shell ate them; use Edit/Write.
